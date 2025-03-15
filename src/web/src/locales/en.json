@@ -1,0 +1,678 @@
+{
+  "app": {
+    "name": "Inventory Management System",
+    "shortName": "IMS",
+    "version": "1.0.0",
+    "copyright": "© 2023 All Rights Reserved"
+  },
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "apply": "Apply",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "close": "Close",
+    "view": "View",
+    "details": "Details",
+    "download": "Download",
+    "upload": "Upload",
+    "clear": "Clear",
+    "clearAll": "Clear All",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "requestInfo": "Request More Information"
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Must be at least {{count}} characters",
+    "maxLength": "Must be at most {{count}} characters",
+    "email": "Invalid email address",
+    "number": "Must be a number",
+    "integer": "Must be an integer",
+    "positive": "Must be a positive number",
+    "negative": "Must be a negative number",
+    "min": "Must be at least {{min}}",
+    "max": "Must be at most {{max}}",
+    "pattern": "Invalid format",
+    "passwordMatch": "Passwords do not match",
+    "invalidCredentials": "Invalid username or password"
+  },
+  "notifications": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "successMessage": "Operation completed successfully",
+    "errorMessage": "An error occurred",
+    "warningMessage": "Warning: {{message}}",
+    "infoMessage": "{{message}}"
+  },
+  "time": {
+    "now": "Now",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "days": "{{count}} days",
+    "hours": "{{count}} hours",
+    "minutes": "{{count}} minutes",
+    "seconds": "{{count}} seconds",
+    "ago": "{{time}} ago",
+    "in": "in {{time}}"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "completed": "Completed",
+    "failed": "Failed",
+    "processing": "Processing",
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived",
+    "deleted": "Deleted"
+  },
+  "errors": {
+    "pageNotFound": "Page Not Found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "serverError": "Server Error",
+    "connectionError": "Connection Error",
+    "timeoutError": "Timeout Error",
+    "validationError": "Validation Error",
+    "dataError": "Data Error",
+    "unknownError": "Unknown Error",
+    "pageNotFoundMessage": "The page you are looking for does not exist.",
+    "unauthorizedMessage": "You are not authorized to access this page.",
+    "forbiddenMessage": "You do not have permission to access this resource.",
+    "serverErrorMessage": "An error occurred on the server.",
+    "connectionErrorMessage": "Unable to connect to the server.",
+    "timeoutErrorMessage": "The request timed out.",
+    "validationErrorMessage": "Please correct the validation errors.",
+    "dataErrorMessage": "An error occurred while processing the data.",
+    "unknownErrorMessage": "An unknown error occurred."
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Sign in to your account",
+      "username": "Username",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Sign In",
+      "loginWithMfa": "Sign In with MFA",
+      "noAccount": "Don't have an account?",
+      "contactAdmin": "Contact your administrator",
+      "welcomeBack": "Welcome back",
+      "welcomeMorning": "Good morning",
+      "welcomeAfternoon": "Good afternoon",
+      "welcomeEvening": "Good evening"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to reset your password",
+      "email": "Email",
+      "submitButton": "Reset Password",
+      "backToLogin": "Back to login",
+      "successMessage": "Password reset instructions have been sent to your email",
+      "errorMessage": "Error sending password reset email"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "submitButton": "Set New Password",
+      "successMessage": "Password has been reset successfully",
+      "errorMessage": "Error resetting password"
+    },
+    "mfa": {
+      "title": "Two-Factor Authentication",
+      "subtitle": "Enter the verification code from your authenticator app",
+      "code": "Verification Code",
+      "verifyButton": "Verify",
+      "backToLogin": "Back to login",
+      "setupTitle": "Set Up Two-Factor Authentication",
+      "setupSubtitle": "Scan the QR code with your authenticator app",
+      "setupInstructions": "1. Download an authenticator app\n2. Scan the QR code\n3. Enter the verification code",
+      "setupCode": "Or enter this code manually:",
+      "setupVerifyButton": "Verify and Activate",
+      "setupSuccessMessage": "Two-factor authentication has been enabled",
+      "setupErrorMessage": "Error setting up two-factor authentication"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Update your password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submitButton": "Change Password",
+      "successMessage": "Password changed successfully",
+      "errorMessage": "Error changing password"
+    },
+    "logout": {
+      "confirmMessage": "Are you sure you want to log out?",
+      "confirmButton": "Yes, log me out",
+      "cancelButton": "No, stay logged in",
+      "successMessage": "You have been logged out successfully"
+    },
+    "session": {
+      "expiring": "Your session is about to expire",
+      "expiringMessage": "Your session will expire in {{time}}. Would you like to stay logged in?",
+      "expired": "Your session has expired",
+      "expiredMessage": "Please log in again to continue",
+      "stayLoggedIn": "Stay Logged In",
+      "logout": "Log Out"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "systemStatus": {
+      "title": "System Status",
+      "uptime": "Uptime",
+      "performance": "Performance",
+      "errors": "Errors",
+      "warnings": "Warnings",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "critical": "Critical",
+      "unknown": "Unknown"
+    },
+    "inventorySummary": {
+      "title": "Inventory Summary",
+      "forLoan": "For Loan",
+      "forPledge": "For Pledge",
+      "htb": "Hard To Borrow",
+      "totalValue": "Total Value",
+      "utilizationRate": "Utilization Rate",
+      "categories": "Categories",
+      "topSecurities": "Top Securities"
+    },
+    "locateRequests": {
+      "title": "Locate Requests",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "today": "Today",
+      "viewAll": "View All",
+      "noRequests": "No pending requests"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "viewAll": "View All",
+      "noActivity": "No recent activity",
+      "locateApproved": "Locate approved: {{security}}",
+      "locateRejected": "Locate rejected: {{security}}",
+      "positionUpdate": "Position update: {{security}}",
+      "shortSellApproved": "Short sell approved: {{security}}",
+      "shortSellRejected": "Short sell rejected: {{security}}",
+      "referenceDataUpdate": "Reference data updated",
+      "marketDataUpdate": "Market data updated"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "viewAll": "View All",
+      "noAlerts": "No alerts",
+      "dataFeedInterruption": "Data feed interruption: {{source}}",
+      "calculationError": "Calculation error: {{type}}",
+      "systemAlert": "System alert: {{message}}",
+      "marketEvent": "Market event: {{event}}"
+    }
+  },
+  "positions": {
+    "title": "Positions",
+    "filters": {
+      "title": "Filters",
+      "security": "Security",
+      "book": "Book",
+      "date": "Date",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters",
+      "save": "Save Filters",
+      "load": "Load Saved Filters"
+    },
+    "summary": {
+      "title": "Summary",
+      "totalLong": "Total Long",
+      "totalShort": "Total Short",
+      "netPosition": "Net Position",
+      "securities": "Securities"
+    },
+    "table": {
+      "security": "Security",
+      "book": "Book",
+      "sodQty": "SOD Qty",
+      "intraday": "Intraday",
+      "current": "Current",
+      "details": "Details"
+    },
+    "settlementLadder": {
+      "title": "Settlement Ladder",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "day2": "Day 2",
+      "day3": "Day 3",
+      "day4": "Day 4",
+      "delivery": "Delivery",
+      "receipt": "Receipt",
+      "net": "Net"
+    },
+    "detail": {
+      "title": "Position Detail",
+      "security": "Security",
+      "book": "Book",
+      "quantity": "Quantity",
+      "value": "Value",
+      "trades": "Trades",
+      "contracts": "Contracts",
+      "history": "History"
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "filters": {
+      "title": "Filters",
+      "date": "Date",
+      "market": "Market",
+      "category": "Category",
+      "security": "Security",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "summary": {
+      "title": "Inventory by Category",
+      "category": "Category",
+      "value": "Value",
+      "percentage": "% of Total",
+      "change": "Change"
+    },
+    "categories": {
+      "longPositions": "Long Positions",
+      "hypothecatable": "Hypothecatable",
+      "pledged": "Pledged",
+      "external": "External"
+    },
+    "topSecurities": {
+      "title": "Top Securities by Availability",
+      "security": "Security",
+      "availability": "Availability",
+      "temperature": "Temperature",
+      "gc": "General Collateral",
+      "htb": "Hard To Borrow",
+      "viewAll": "View All"
+    },
+    "detail": {
+      "title": "Inventory Detail",
+      "security": "Security",
+      "market": "Market",
+      "availability": "Availability",
+      "utilization": "Utilization",
+      "sources": "Sources",
+      "history": "History"
+    }
+  },
+  "locates": {
+    "title": "Locates",
+    "filters": {
+      "title": "Filters",
+      "client": "Client",
+      "security": "Security",
+      "status": "Status",
+      "date": "Date",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "queue": {
+      "title": "Pending Locates",
+      "time": "Time",
+      "client": "Client",
+      "security": "Security",
+      "quantity": "Quantity",
+      "type": "Type",
+      "actions": "Actions",
+      "review": "Review",
+      "noLocates": "No pending locates"
+    },
+    "detail": {
+      "title": "Locate Details",
+      "client": "Client",
+      "security": "Security",
+      "quantity": "Quantity",
+      "available": "Available Inventory",
+      "clientYtdLocates": "Client YTD Locates",
+      "clientYtdUtilization": "Client YTD Utilization",
+      "securityBorrowRate": "Security Borrow Rate",
+      "securityTemperature": "Security Temperature",
+      "requestTime": "Request Time",
+      "requestor": "Requestor",
+      "swapCashIndicator": "Swap/Cash Indicator"
+    },
+    "approval": {
+      "title": "Locate Approval",
+      "approve": "Approve",
+      "reject": "Reject",
+      "requestInfo": "Request More Information",
+      "approveConfirm": "Are you sure you want to approve this locate request?",
+      "rejectConfirm": "Are you sure you want to reject this locate request?",
+      "rejectReason": "Rejection Reason",
+      "approveSuccess": "Locate request approved successfully",
+      "rejectSuccess": "Locate request rejected successfully",
+      "approveError": "Error approving locate request",
+      "rejectError": "Error rejecting locate request"
+    },
+    "history": {
+      "title": "Locate History",
+      "date": "Date",
+      "client": "Client",
+      "security": "Security",
+      "quantity": "Quantity",
+      "status": "Status",
+      "approver": "Approver",
+      "requestor": "Requestor",
+      "noHistory": "No locate history found"
+    }
+  },
+  "exceptions": {
+    "title": "Exceptions",
+    "filters": {
+      "title": "Filters",
+      "type": "Type",
+      "severity": "Severity",
+      "status": "Status",
+      "date": "Date",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "queue": {
+      "title": "Exception Queue",
+      "time": "Time",
+      "type": "Type",
+      "severity": "Severity",
+      "description": "Description",
+      "status": "Status",
+      "actions": "Actions",
+      "view": "View",
+      "noExceptions": "No exceptions found"
+    },
+    "detail": {
+      "title": "Exception Details",
+      "type": "Type",
+      "severity": "Severity",
+      "description": "Description",
+      "status": "Status",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "assignedTo": "Assigned To",
+      "resolution": "Resolution",
+      "resolve": "Resolve",
+      "assign": "Assign",
+      "escalate": "Escalate",
+      "resolveConfirm": "Are you sure you want to resolve this exception?",
+      "resolveSuccess": "Exception resolved successfully",
+      "resolveError": "Error resolving exception"
+    },
+    "types": {
+      "data": "Data Exception",
+      "calculation": "Calculation Exception",
+      "system": "System Exception",
+      "integration": "Integration Exception",
+      "validation": "Validation Exception",
+      "business": "Business Exception"
+    },
+    "severities": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
+  "rules": {
+    "title": "Calculation Rules",
+    "filters": {
+      "title": "Filters",
+      "calculationType": "Calculation Type",
+      "market": "Market",
+      "status": "Status",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "list": {
+      "title": "Rule List",
+      "ruleName": "Rule Name",
+      "market": "Market",
+      "status": "Status",
+      "version": "Version",
+      "actions": "Actions",
+      "view": "View",
+      "edit": "Edit",
+      "noRules": "No rules found"
+    },
+    "detail": {
+      "title": "Rule Definition",
+      "name": "Name",
+      "version": "Version",
+      "status": "Status",
+      "market": "Market",
+      "description": "Description",
+      "include": "Include",
+      "exclude": "Exclude",
+      "save": "Save",
+      "test": "Test",
+      "publish": "Publish",
+      "revert": "Revert",
+      "saveConfirm": "Are you sure you want to save changes to this rule?",
+      "publishConfirm": "Are you sure you want to publish this rule?",
+      "revertConfirm": "Are you sure you want to discard changes?",
+      "saveSuccess": "Rule saved successfully",
+      "publishSuccess": "Rule published successfully",
+      "saveError": "Error saving rule",
+      "publishError": "Error publishing rule"
+    },
+    "editor": {
+      "title": "Rule Editor",
+      "addCondition": "Add Condition",
+      "removeCondition": "Remove",
+      "addGroup": "Add Group",
+      "removeGroup": "Remove Group",
+      "operator": "Operator",
+      "value": "Value",
+      "attribute": "Attribute",
+      "and": "AND",
+      "or": "OR",
+      "equals": "Equals",
+      "notEquals": "Not Equals",
+      "greaterThan": "Greater Than",
+      "lessThan": "Less Than",
+      "contains": "Contains",
+      "notContains": "Not Contains",
+      "startsWith": "Starts With",
+      "endsWith": "Ends With"
+    },
+    "calculationTypes": {
+      "forLoanAvailability": "For Loan Availability",
+      "forPledgeAvailability": "For Pledge Availability",
+      "longSellAvailability": "Long Sell Availability",
+      "shortSellAvailability": "Short Sell Availability",
+      "locateAvailability": "Locate Availability",
+      "overborrow": "Overborrow Identification"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "filters": {
+      "title": "Filters",
+      "dateRange": "Date Range",
+      "market": "Market",
+      "security": "Security",
+      "client": "Client",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "inventory": {
+      "title": "Inventory Analytics",
+      "availabilityTrend": "Availability Trend",
+      "utilizationRate": "Utilization Rate",
+      "categoryBreakdown": "Category Breakdown",
+      "marketComparison": "Market Comparison"
+    },
+    "positions": {
+      "title": "Position Analytics",
+      "positionTrend": "Position Trend",
+      "bookBreakdown": "Book Breakdown",
+      "securityTypeDistribution": "Security Type Distribution",
+      "turnoverRate": "Turnover Rate"
+    },
+    "locates": {
+      "title": "Locate Analytics",
+      "requestVolume": "Request Volume",
+      "approvalRate": "Approval Rate",
+      "clientBreakdown": "Client Breakdown",
+      "securityBreakdown": "Security Breakdown",
+      "processingTime": "Processing Time"
+    },
+    "exceptions": {
+      "title": "Exception Analytics",
+      "exceptionTrend": "Exception Trend",
+      "typeBreakdown": "Type Breakdown",
+      "severityDistribution": "Severity Distribution",
+      "resolutionTime": "Resolution Time"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "user": {
+      "title": "User Settings",
+      "profile": "Profile",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "department": "Department",
+      "role": "Role",
+      "save": "Save Changes",
+      "saveSuccess": "User settings saved successfully",
+      "saveError": "Error saving user settings"
+    },
+    "app": {
+      "title": "Application Settings",
+      "defaultPage": "Default Page",
+      "itemsPerPage": "Items Per Page",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "numberFormat": "Number Format",
+      "save": "Save Changes",
+      "saveSuccess": "Application settings saved successfully",
+      "saveError": "Error saving application settings"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "inApp": "In-App Notifications",
+      "locateRequests": "Locate Requests",
+      "exceptions": "Exceptions",
+      "systemAlerts": "System Alerts",
+      "marketEvents": "Market Events",
+      "save": "Save Changes",
+      "saveSuccess": "Notification settings saved successfully",
+      "saveError": "Error saving notification settings"
+    },
+    "display": {
+      "title": "Display Settings",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System Default",
+      "primaryColor": "Primary Color",
+      "secondaryColor": "Secondary Color",
+      "fontFamily": "Font Family",
+      "fontSize": "Font Size",
+      "borderRadius": "Border Radius",
+      "highContrast": "High Contrast Mode",
+      "animations": "Enable Animations",
+      "save": "Save Changes",
+      "saveSuccess": "Display settings saved successfully",
+      "saveError": "Error saving display settings"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "positions": "Positions",
+    "inventory": "Inventory",
+    "locates": "Locates",
+    "exceptions": "Exceptions",
+    "rules": "Calculation Rules",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "logout": "Logout",
+    "help": "Help",
+    "profile": "Profile"
+  },
+  "security": {
+    "securityType": "Security Type",
+    "issuer": "Issuer",
+    "issueDate": "Issue Date",
+    "maturityDate": "Maturity Date",
+    "currency": "Currency",
+    "market": "Market",
+    "isin": "ISIN",
+    "cusip": "CUSIP",
+    "sedol": "SEDOL",
+    "ticker": "Ticker",
+    "securityTypes": {
+      "equity": "Equity",
+      "bond": "Bond",
+      "etf": "ETF",
+      "future": "Future",
+      "option": "Option",
+      "swap": "Swap",
+      "index": "Index",
+      "basket": "Basket"
+    }
+  },
+  "counterparty": {
+    "name": "Name",
+    "type": "Type",
+    "kycStatus": "KYC Status",
+    "status": "Status",
+    "lei": "LEI",
+    "bic": "BIC",
+    "counterpartyTypes": {
+      "client": "Client",
+      "broker": "Broker",
+      "custodian": "Custodian",
+      "exchange": "Exchange",
+      "clearingHouse": "Clearing House",
+      "bank": "Bank"
+    }
+  },
+  "help": {
+    "title": "Help",
+    "gettingStarted": "Getting Started",
+    "userGuide": "User Guide",
+    "faq": "FAQ",
+    "contactSupport": "Contact Support",
+    "reportIssue": "Report Issue",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "about": "About"
+  }
+}
