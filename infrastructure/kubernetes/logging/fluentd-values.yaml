@@ -1,0 +1,536 @@
+# Fluentd Helm chart values for the Inventory Management System
+# Version: v1.16.1-debian-elasticsearch7-1.1
+
+# Image configuration
+image:
+  repository: fluent/fluentd-kubernetes-daemonset
+  tag: v1.16.1-debian-elasticsearch7-1.1
+  pullPolicy: IfNotPresent
+
+# Override name and fullname
+nameOverride: "fluentd"
+fullnameOverride: "ims-fluentd"
+
+# Resource configuration
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+# Pod priority
+priorityClassName: "medium-priority"
+
+# Security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: "ims-fluentd"
+  annotations: {}
+
+# Tolerations to run on all nodes including master nodes
+tolerations:
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
+- key: node-role.kubernetes.io/control-plane
+  operator: Exists
+  effect: NoSchedule
+- key: dedicated
+  operator: Equal
+  value: logging
+  effect: NoSchedule
+
+# Node selector
+nodeSelector:
+  kubernetes.io/os: linux
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+# Environment variables
+env:
+- name: FLUENT_ELASTICSEARCH_HOST
+  value: "ims-elasticsearch-client"
+- name: FLUENT_ELASTICSEARCH_PORT
+  value: "9200"
+- name: FLUENT_ELASTICSEARCH_SCHEME
+  value: "https"
+- name: FLUENT_ELASTICSEARCH_SSL_VERIFY
+  value: "false"
+- name: FLUENT_ELASTICSEARCH_USER
+  valueFrom:
+    secretKeyRef:
+      name: "ims-elasticsearch-credentials"
+      key: "username"
+- name: FLUENT_ELASTICSEARCH_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: "ims-elasticsearch-credentials"
+      key: "password"
+- name: FLUENTD_SYSTEMD_CONF
+  value: "disable"
+- name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
+  value: "/var/log/containers/fluent*"
+- name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
+  value: "cri"
+- name: FLUENT_CONTAINER_TAIL_PARSER_TIME_FORMAT
+  value: "%Y-%m-%dT%H:%M:%S.%L%z"
+
+# ConfigMap configurations
+configMapConfigs:
+- "fluentd-config"
+
+# Configuration files
+configMaps:
+  fluentd-config:
+    data:
+      fluent.conf: |
+        @include kubernetes.conf
+        @include system.conf
+        @include prometheus.conf
+
+        <match **>
+          @type elasticsearch
+          @id out_elasticsearch
+          @log_level info
+          include_tag_key true
+          host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+          port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+          scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'https'}"
+          ssl_verify "#{ENV['FLUENT_ELASTICSEARCH_SSL_VERIFY'] || 'false'}"
+          user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+          password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+          index_name ims-logs-${tag}-%Y.%m.%d
+          logstash_format true
+          logstash_prefix ims-logs
+          logstash_dateformat %Y.%m.%d
+          time_key @timestamp
+          time_key_format %Y-%m-%dT%H:%M:%S.%LZ
+          include_timestamp true
+          type_name fluentd
+          reconnect_on_error true
+          reload_on_failure true
+          reload_connections false
+          request_timeout 30s
+          <buffer tag,time>
+            @type file
+            path /var/log/fluentd-buffers/kubernetes.system.buffer
+            flush_mode interval
+            retry_type exponential_backoff
+            flush_thread_count 2
+            flush_interval 5s
+            retry_forever true
+            retry_max_interval 30
+            chunk_limit_size 8M
+            queue_limit_length 32
+            overflow_action block
+          </buffer>
+        </match>
+
+      kubernetes.conf: |
+        <source>
+          @type tail
+          @id in_tail_container_logs
+          path /var/log/containers/*.log
+          exclude_path "#{ENV['FLUENT_CONTAINER_TAIL_EXCLUDE_PATH'] || '/var/log/containers/fluent*'}"
+          pos_file /var/log/fluentd-containers.log.pos
+          tag "kubernetes.*"
+          read_from_head true
+          <parse>
+            @type "#{ENV['FLUENT_CONTAINER_TAIL_PARSER_TYPE'] || 'cri'}"
+            time_format "#{ENV['FLUENT_CONTAINER_TAIL_PARSER_TIME_FORMAT'] || '%Y-%m-%dT%H:%M:%S.%L%z'}"
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_minion
+          path /var/log/salt/minion
+          pos_file /var/log/fluentd-salt.pos
+          tag salt
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]* [^ ,]*)[^\[]*\[[^\]]*\]\[(?<severity>[^ \]]*) *\] (?<message>.*)$/
+            time_format %Y-%m-%d %H:%M:%S
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_startupscript
+          path /var/log/startupscript.log
+          pos_file /var/log/fluentd-startupscript.log.pos
+          tag startupscript
+          <parse>
+            @type syslog
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_docker
+          path /var/log/docker.log
+          pos_file /var/log/fluentd-docker.log.pos
+          tag docker
+          <parse>
+            @type regexp
+            expression /^time="(?<time>[^)]*)"s+level=(?<severity>[^\s]+)s+msg="(?<message>[^"]+)"/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_etcd
+          path /var/log/etcd.log
+          pos_file /var/log/fluentd-etcd.log.pos
+          tag etcd
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+\|\s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_kubelet
+          path /var/log/kubelet.log
+          pos_file /var/log/fluentd-kubelet.log.pos
+          tag kubelet
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_kube_proxy
+          path /var/log/kube-proxy.log
+          pos_file /var/log/fluentd-kube-proxy.log.pos
+          tag kube-proxy
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_kube_apiserver
+          path /var/log/kube-apiserver.log
+          pos_file /var/log/fluentd-kube-apiserver.log.pos
+          tag kube-apiserver
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_kube_controller_manager
+          path /var/log/kube-controller-manager.log
+          pos_file /var/log/fluentd-kube-controller-manager.log.pos
+          tag kube-controller-manager
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_kube_scheduler
+          path /var/log/kube-scheduler.log
+          pos_file /var/log/fluentd-kube-scheduler.log.pos
+          tag kube-scheduler
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_audit
+          path /var/log/audit/audit.log
+          pos_file /var/log/fluentd-audit.log.pos
+          tag audit
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]+)s+(?<severity>[^ ]+)s+(?<message>.*)$/
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </source>
+
+        <filter kubernetes.**>
+          @type kubernetes_metadata
+          @id filter_kube_metadata
+          kubernetes_url "#{ENV['KUBERNETES_SERVICE_HOST']}:#{ENV['KUBERNETES_SERVICE_PORT']}"
+          verify_ssl false
+          ca_file /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          skip_labels false
+          skip_container_metadata false
+          skip_master_url false
+          skip_namespace_metadata false
+          watch true
+        </filter>
+
+        <filter kubernetes.**>
+          @type record_transformer
+          @id filter_transform_kube_logs
+          enable_ruby true
+          <record>
+            kubernetes_cluster "#{ENV['KUBERNETES_CLUSTER_NAME'] || 'ims-cluster'}"
+            environment "#{ENV['ENVIRONMENT'] || 'production'}"
+            @timestamp ${time.strftime('%Y-%m-%dT%H:%M:%S.%L%z')}
+            severity ${record["stream"] == "stderr" ? "ERROR" : "INFO"}
+            message ${record["log"]}
+            correlation_id ${record["log"].match(/correlation_id=([\w-]+)/) ? record["log"].match(/correlation_id=([\w-]+)/)[1] : nil}
+          </record>
+        </filter>
+
+        <match kubernetes.var.log.containers.ims-**>
+          @type rewrite_tag_filter
+          <rule>
+            key kubernetes.container_name
+            pattern /^(data-ingestion-service|calculation-service|workflow-service|api-gateway|websocket-service|monitoring-service|auth-service)$/
+            tag ims.${tag_parts[3]}.${tag_parts[4]}.${tag_parts[5]}.${tag_parts[6]}.${tag_parts[7]}
+          </rule>
+        </match>
+
+        <filter ims.**>
+          @type parser
+          key_name message
+          reserve_data true
+          <parse>
+            @type json
+            json_parser json
+            time_key timestamp
+            time_format %Y-%m-%dT%H:%M:%S.%L%z
+          </parse>
+        </filter>
+
+        <filter ims.**>
+          @type grep
+          <regexp>
+            key severity
+            pattern /INFO|WARN|ERROR|DEBUG|TRACE|FATAL/
+          </regexp>
+        </filter>
+
+        <filter audit.**>
+          @type record_transformer
+          <record>
+            index_name audit-logs
+          </record>
+        </filter>
+
+      system.conf: |
+        <source>
+          @type tail
+          @id in_tail_syslog
+          path /var/log/syslog
+          pos_file /var/log/fluentd-syslog.log.pos
+          tag system.syslog
+          <parse>
+            @type syslog
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_auth_log
+          path /var/log/auth.log
+          pos_file /var/log/fluentd-auth.log.pos
+          tag system.auth
+          <parse>
+            @type syslog
+          </parse>
+        </source>
+
+        <source>
+          @type tail
+          @id in_tail_dpkg
+          path /var/log/dpkg.log
+          pos_file /var/log/fluentd-dpkg.log.pos
+          tag system.dpkg
+          <parse>
+            @type regexp
+            expression /^(?<time>[^ ]* [^ ]*) (?<status>[^ ]*) (?<package>[^ ]*) (?<version>[^ ]*) (?<arch>[^ ]*)$/
+            time_format %Y-%m-%d %H:%M:%S
+          </parse>
+        </source>
+
+        <filter system.**>
+          @type record_transformer
+          <record>
+            hostname "#{ENV['HOSTNAME']}"
+            tag ${tag}
+          </record>
+        </filter>
+
+      prometheus.conf: |
+        <source>
+          @type prometheus
+          bind 0.0.0.0
+          port 24231
+          metrics_path /metrics
+        </source>
+
+        <source>
+          @type prometheus_monitor
+          <labels>
+            host ${hostname}
+          </labels>
+        </source>
+
+        <source>
+          @type prometheus_output_monitor
+          <labels>
+            host ${hostname}
+          </labels>
+        </source>
+
+        <source>
+          @type prometheus_tail_monitor
+          <labels>
+            host ${hostname}
+          </labels>
+        </source>
+
+# Additional volume mounts for accessing logs
+extraVolumeMounts:
+- name: varlog
+  mountPath: /var/log
+- name: varlibdockercontainers
+  mountPath: /var/lib/docker/containers
+  readOnly: true
+- name: varlogpods
+  mountPath: /var/log/pods
+  readOnly: true
+- name: varlogaudit
+  mountPath: /var/log/audit
+  readOnly: true
+- name: fluentd-config
+  mountPath: /fluentd/etc/fluent.conf
+  subPath: fluent.conf
+- name: fluentd-config
+  mountPath: /fluentd/etc/kubernetes.conf
+  subPath: kubernetes.conf
+- name: fluentd-config
+  mountPath: /fluentd/etc/system.conf
+  subPath: system.conf
+- name: fluentd-config
+  mountPath: /fluentd/etc/prometheus.conf
+  subPath: prometheus.conf
+
+# Extra volumes
+extraVolumes:
+- name: varlog
+  hostPath:
+    path: /var/log
+- name: varlibdockercontainers
+  hostPath:
+    path: /var/lib/docker/containers
+- name: varlogpods
+  hostPath:
+    path: /var/log/pods
+- name: varlogaudit
+  hostPath:
+    path: /var/log/audit
+- name: fluentd-config
+  configMap:
+    name: fluentd-config
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 24231
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "24231"
+
+# Health probes
+livenessProbe:
+  httpGet:
+    path: /metrics
+    port: 24231
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /metrics
+    port: 24231
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Prometheus ServiceMonitor
+serviceMonitor:
+  enabled: true
+  labels:
+    app: ims
+    prometheus: ims
+  interval: "30s"
+  scrapeTimeout: "10s"
+  path: /metrics
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "24231"
+  prometheus.io/path: "/metrics"
+
+# Pod labels
+podLabels:
+  app.kubernetes.io/component: logging
+  app.kubernetes.io/part-of: ims
+
+# Additional environment variables
+extraEnvVars:
+- name: KUBERNETES_CLUSTER_NAME
+  value: ims-cluster
+- name: ENVIRONMENT
+  value: production
+
+# Required Fluentd plugins
+plugins:
+- fluent-plugin-kubernetes_metadata_filter:2.13.0
+- fluent-plugin-elasticsearch:5.2.4
+- fluent-plugin-prometheus:2.0.3
+- fluent-plugin-rewrite-tag-filter:2.4.0
+- fluent-plugin-parser:1.2.0
+- fluent-plugin-grep:0.7.0
