@@ -1,0 +1,336 @@
+{{- /*
+hpa.yaml - Helm template for generating Kubernetes Horizontal Pod Autoscaler (HPA) resources
+for the Inventory Management System (IMS) microservices.
+
+This template creates HPA resources that automatically scale deployments based on CPU and memory metrics,
+supporting the system's requirement to process 300,000+ events per second and maintain high availability.
+*/}}
+
+{{- /* Data Ingestion Service HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.dataIngestion.enabled .Values.deployments.dataIngestion.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.dataIngestion.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: data-ingestion-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for Data Ingestion Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.dataIngestion.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.dataIngestion.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.dataIngestion.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.dataIngestion.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.dataIngestion.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
+
+{{- /* Calculation Service HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.calculation.enabled .Values.deployments.calculation.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.calculation.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: calculation-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for Calculation Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.calculation.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.calculation.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.calculation.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.calculation.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.calculation.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
+
+{{- /* Workflow Service HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.workflow.enabled .Values.deployments.workflow.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.workflow.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: workflow-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for Workflow Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.workflow.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.workflow.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.workflow.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.workflow.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.workflow.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
+
+{{- /* API Gateway HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.apiGateway.enabled .Values.deployments.apiGateway.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.apiGateway.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: api-gateway
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for API Gateway Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.apiGateway.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.apiGateway.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.apiGateway.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.apiGateway.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.apiGateway.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
+
+{{- /* WebSocket Service HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.websocket.enabled .Values.deployments.websocket.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.websocket.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: websocket-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for WebSocket Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.websocket.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.websocket.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.websocket.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.websocket.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.websocket.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
+
+{{- /* Auth Service HPA */}}
+{{- if and .Values.horizontalPodAutoscaler.auth.enabled .Values.deployments.auth.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployments.auth.name }}-hpa
+  labels:
+    app: {{ template "ims.name" . }}
+    component: auth-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "HPA for Auth Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.deployments.auth.name }}
+  minReplicas: {{ .Values.horizontalPodAutoscaler.auth.minReplicas }}
+  maxReplicas: {{ .Values.horizontalPodAutoscaler.auth.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.auth.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.horizontalPodAutoscaler.auth.targetMemoryUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+{{- end }}
