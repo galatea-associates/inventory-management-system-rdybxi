@@ -1,0 +1,222 @@
+# Istio VirtualService configuration for the Inventory Management System (IMS)
+# This file defines traffic routing rules for directing external and internal traffic
+# to the appropriate backend services.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ims-api-virtualservice
+  namespace: ims
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio VirtualService for API Gateway routing"
+spec:
+  hosts:
+    - "api.ims.example.com"
+    - "api-americas.ims.example.com"
+    - "api-europe.ims.example.com"
+    - "api-apac.ims.example.com"
+  gateways:
+    - "ims-gateway"
+  http:
+    # Authentication-related paths
+    - match:
+        - uri:
+            prefix: "/api/v1/auth"
+      route:
+        - destination:
+            host: auth-service
+            port:
+              number: 8084
+      retries:
+        attempts: 3
+        perTryTimeout: "2s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "5s"
+    
+    # Data ingestion paths
+    - match:
+        - uri:
+            prefix: "/api/v1/ingestion"
+      route:
+        - destination:
+            host: data-ingestion-service
+            port:
+              number: 8081
+      retries:
+        attempts: 3
+        perTryTimeout: "2s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "10s"
+    
+    # Calculation paths
+    - match:
+        - uri:
+            prefix: "/api/v1/calculation"
+      route:
+        - destination:
+            host: calculation-service
+            port:
+              number: 8082
+      retries:
+        attempts: 3
+        perTryTimeout: "2s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "5s"
+    
+    # Workflow and locate paths
+    - match:
+        - uri:
+            prefix: "/api/v1/locate"
+        - uri:
+            prefix: "/api/v1/workflow"
+      route:
+        - destination:
+            host: workflow-service
+            port:
+              number: 8083
+      retries:
+        attempts: 3
+        perTryTimeout: "1s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "5s"
+    
+    # Monitoring and health check paths
+    - match:
+        - uri:
+            prefix: "/api/v1/metrics"
+        - uri:
+            prefix: "/api/v1/health"
+      route:
+        - destination:
+            host: monitoring-service
+            port:
+              number: 8086
+      retries:
+        attempts: 3
+        perTryTimeout: "1s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "3s"
+    
+    # Default route for all other API calls
+    - route:
+        - destination:
+            host: api-gateway-service
+            port:
+              number: 8080
+            subset: "v1"
+      retries:
+        attempts: 3
+        perTryTimeout: "2s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "5s"
+
+---
+# WebSocket VirtualService for real-time data streaming
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ims-websocket-virtualservice
+  namespace: ims
+  labels:
+    app: ims
+    component: websocket
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio VirtualService for WebSocket routing"
+spec:
+  hosts:
+    - "ws.ims.example.com"
+    - "ws-americas.ims.example.com"
+    - "ws-europe.ims.example.com"
+    - "ws-apac.ims.example.com"
+  gateways:
+    - "ims-gateway"
+  http:
+    - match:
+        - uri:
+            prefix: "/ws"
+      route:
+        - destination:
+            host: websocket-service
+            port:
+              number: 8085
+            subset: "v1"
+      # Limited retries for WebSocket connections
+      retries:
+        attempts: 1
+        perTryTimeout: "5s"
+        retryOn: "connect-failure,refused-stream,unavailable"
+      # Long timeout for WebSocket connections
+      timeout: "3600s"
+
+---
+# Web UI VirtualService for frontend routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ims-web-virtualservice
+  namespace: ims
+  labels:
+    app: ims
+    component: web-ui
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio VirtualService for Web UI routing"
+spec:
+  hosts:
+    - "*.ims.example.com"
+  gateways:
+    - "ims-gateway"
+  http:
+    - match:
+        - uri:
+            prefix: "/"
+      route:
+        - destination:
+            host: web-ui-service
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: "1s"
+        retryOn: "connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,5xx"
+      timeout: "30s"
+
+---
+# Special VirtualService for Short Sell approval with optimized performance settings
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ims-short-sell-virtualservice
+  namespace: ims
+  labels:
+    app: ims
+    component: workflow
+    function: short-sell
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio VirtualService for Short Sell approval with optimized performance settings"
+spec:
+  hosts:
+    - "workflow-service" # Internal service-to-service communication
+  http:
+    - match:
+        - uri:
+            exact: "/api/v1/orders/validate"
+          headers:
+            order-type:
+              exact: "short-sell"
+      route:
+        - destination:
+            host: workflow-service
+            port:
+              number: 8083
+            subset: "short-sell"
+      # No retries for short sell validation to ensure 150ms SLA
+      retries:
+        attempts: 0
+      # Strict timeout matching the 150ms SLA requirement
+      timeout: "150ms"
