@@ -1,0 +1,513 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Market Data Schema",
+  "description": "JSON Schema for validating market data including prices, NAVs, volatility curves, and FX rates",
+  "type": "object",
+  "required": ["metadata", "prices", "basketNavs", "volatilityCurves", "fxRates"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["generatedAt", "source", "version"],
+      "properties": {
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the market data was generated"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source system that generated the market data"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the market data format"
+        },
+        "batchId": {
+          "type": "string",
+          "description": "Batch identifier for grouped market data"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description of the market data"
+        }
+      }
+    },
+    "prices": {
+      "type": "array",
+      "description": "Collection of security price data",
+      "items": {
+        "type": "object",
+        "required": ["securityId", "eventTime", "source"],
+        "properties": {
+          "securityId": {
+            "type": "string",
+            "description": "Internal identifier of the security"
+          },
+          "eventTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the price was recorded"
+          },
+          "price": {
+            "type": ["number", "null"],
+            "description": "Trade or mid price of the security"
+          },
+          "bidPrice": {
+            "type": ["number", "null"],
+            "description": "Bid price of the security"
+          },
+          "askPrice": {
+            "type": ["number", "null"],
+            "description": "Ask price of the security"
+          },
+          "volume": {
+            "type": ["number", "null"],
+            "description": "Trading volume"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the price"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the price data (e.g., Reuters, Bloomberg)"
+          },
+          "priceType": {
+            "type": "string",
+            "enum": ["TRADE", "QUOTE", "CLOSING", "OPENING", "INTRADAY", "THEORETICAL"],
+            "description": "Type of price"
+          },
+          "isComposite": {
+            "type": "boolean",
+            "description": "Indicates if the price is a composite from multiple sources",
+            "default": false
+          },
+          "additionalAttributes": {
+            "type": "object",
+            "description": "Additional source-specific attributes",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "oneOf": [
+          {"required": ["price"]},
+          {"required": ["bidPrice", "askPrice"]}
+        ]
+      }
+    },
+    "basketNavs": {
+      "type": "array",
+      "description": "Collection of basket/ETF NAV data",
+      "items": {
+        "type": "object",
+        "required": ["basketId", "eventTime", "navValue", "currency", "source"],
+        "properties": {
+          "basketId": {
+            "type": "string",
+            "description": "Internal identifier of the basket/ETF security"
+          },
+          "eventTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the NAV was calculated"
+          },
+          "navValue": {
+            "type": "number",
+            "description": "Net Asset Value of the basket/ETF"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the NAV"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the NAV data"
+          },
+          "navType": {
+            "type": "string",
+            "enum": ["EOD", "INAV", "INDICATIVE", "ESTIMATED"],
+            "description": "Type of NAV value"
+          },
+          "constituents": {
+            "type": "array",
+            "description": "Constituent securities and their weights",
+            "items": {
+              "type": "object",
+              "required": ["securityId", "weight"],
+              "properties": {
+                "securityId": {
+                  "type": "string",
+                  "description": "Internal identifier of the constituent security"
+                },
+                "weight": {
+                  "type": "number",
+                  "description": "Weight of the constituent in the basket"
+                },
+                "units": {
+                  "type": "number",
+                  "description": "Number of units of the constituent in the basket"
+                }
+              }
+            }
+          },
+          "isComposite": {
+            "type": "boolean",
+            "description": "Indicates if the NAV is a composite from multiple sources",
+            "default": false
+          },
+          "additionalAttributes": {
+            "type": "object",
+            "description": "Additional source-specific attributes",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "volatilityCurves": {
+      "type": "array",
+      "description": "Collection of volatility curve data",
+      "items": {
+        "type": "object",
+        "required": ["securityId", "eventTime", "curveType", "points", "source"],
+        "properties": {
+          "securityId": {
+            "type": "string",
+            "description": "Internal identifier of the security"
+          },
+          "eventTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the volatility curve was recorded"
+          },
+          "curveType": {
+            "type": "string",
+            "enum": ["IMPLIED", "HISTORICAL", "FORECAST", "SURFACE"],
+            "description": "Type of volatility curve"
+          },
+          "points": {
+            "type": "array",
+            "description": "Points on the volatility curve",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["tenor", "volatility"],
+              "properties": {
+                "tenor": {
+                  "type": "integer",
+                  "description": "Tenor in days"
+                },
+                "volatility": {
+                  "type": "number",
+                  "description": "Volatility value as a percentage"
+                },
+                "strike": {
+                  "type": ["number", "null"],
+                  "description": "Strike price for volatility surface"
+                }
+              }
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the volatility data"
+          },
+          "isComposite": {
+            "type": "boolean",
+            "description": "Indicates if the volatility is a composite from multiple sources",
+            "default": false
+          },
+          "additionalAttributes": {
+            "type": "object",
+            "description": "Additional source-specific attributes",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "fxRates": {
+      "type": "array",
+      "description": "Collection of FX rate data",
+      "items": {
+        "type": "object",
+        "required": ["baseCurrency", "quoteCurrency", "eventTime", "rate", "source"],
+        "properties": {
+          "baseCurrency": {
+            "type": "string",
+            "description": "Base currency in the currency pair"
+          },
+          "quoteCurrency": {
+            "type": "string",
+            "description": "Quote currency in the currency pair"
+          },
+          "eventTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the FX rate was recorded"
+          },
+          "rate": {
+            "type": "number",
+            "description": "Exchange rate value"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the FX rate data"
+          },
+          "rateType": {
+            "type": "string",
+            "enum": ["SPOT", "FORWARD", "FIXING", "WMCO"],
+            "description": "Type of FX rate"
+          },
+          "isComposite": {
+            "type": "boolean",
+            "description": "Indicates if the rate is a composite from multiple sources",
+            "default": false
+          },
+          "additionalAttributes": {
+            "type": "object",
+            "description": "Additional source-specific attributes",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "priceData": {
+      "type": "object",
+      "required": ["securityId", "eventTime", "source"],
+      "properties": {
+        "securityId": {
+          "type": "string",
+          "description": "Internal identifier of the security"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the price was recorded"
+        },
+        "price": {
+          "type": ["number", "null"],
+          "description": "Trade or mid price of the security"
+        },
+        "bidPrice": {
+          "type": ["number", "null"],
+          "description": "Bid price of the security"
+        },
+        "askPrice": {
+          "type": ["number", "null"],
+          "description": "Ask price of the security"
+        },
+        "volume": {
+          "type": ["number", "null"],
+          "description": "Trading volume"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the price"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the price data (e.g., Reuters, Bloomberg)"
+        },
+        "priceType": {
+          "type": "string",
+          "enum": ["TRADE", "QUOTE", "CLOSING", "OPENING", "INTRADAY", "THEORETICAL"],
+          "description": "Type of price"
+        },
+        "isComposite": {
+          "type": "boolean",
+          "description": "Indicates if the price is a composite from multiple sources",
+          "default": false
+        },
+        "additionalAttributes": {
+          "type": "object",
+          "description": "Additional source-specific attributes",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "oneOf": [
+        {"required": ["price"]},
+        {"required": ["bidPrice", "askPrice"]}
+      ]
+    },
+    "navData": {
+      "type": "object",
+      "required": ["basketId", "eventTime", "navValue", "currency", "source"],
+      "properties": {
+        "basketId": {
+          "type": "string",
+          "description": "Internal identifier of the basket/ETF security"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the NAV was calculated"
+        },
+        "navValue": {
+          "type": "number",
+          "description": "Net Asset Value of the basket/ETF"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the NAV"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the NAV data"
+        },
+        "navType": {
+          "type": "string",
+          "enum": ["EOD", "INAV", "INDICATIVE", "ESTIMATED"],
+          "description": "Type of NAV value"
+        },
+        "constituents": {
+          "type": "array",
+          "description": "Constituent securities and their weights",
+          "items": {
+            "type": "object",
+            "required": ["securityId", "weight"],
+            "properties": {
+              "securityId": {
+                "type": "string",
+                "description": "Internal identifier of the constituent security"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Weight of the constituent in the basket"
+              },
+              "units": {
+                "type": "number",
+                "description": "Number of units of the constituent in the basket"
+              }
+            }
+          }
+        },
+        "isComposite": {
+          "type": "boolean",
+          "description": "Indicates if the NAV is a composite from multiple sources",
+          "default": false
+        },
+        "additionalAttributes": {
+          "type": "object",
+          "description": "Additional source-specific attributes",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "volatilityData": {
+      "type": "object",
+      "required": ["securityId", "eventTime", "curveType", "points", "source"],
+      "properties": {
+        "securityId": {
+          "type": "string",
+          "description": "Internal identifier of the security"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the volatility curve was recorded"
+        },
+        "curveType": {
+          "type": "string",
+          "enum": ["IMPLIED", "HISTORICAL", "FORECAST", "SURFACE"],
+          "description": "Type of volatility curve"
+        },
+        "points": {
+          "type": "array",
+          "description": "Points on the volatility curve",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["tenor", "volatility"],
+            "properties": {
+              "tenor": {
+                "type": "integer",
+                "description": "Tenor in days"
+              },
+              "volatility": {
+                "type": "number",
+                "description": "Volatility value as a percentage"
+              },
+              "strike": {
+                "type": ["number", "null"],
+                "description": "Strike price for volatility surface"
+              }
+            }
+          }
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the volatility data"
+        },
+        "isComposite": {
+          "type": "boolean",
+          "description": "Indicates if the volatility is a composite from multiple sources",
+          "default": false
+        },
+        "additionalAttributes": {
+          "type": "object",
+          "description": "Additional source-specific attributes",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fxRateData": {
+      "type": "object",
+      "required": ["baseCurrency", "quoteCurrency", "eventTime", "rate", "source"],
+      "properties": {
+        "baseCurrency": {
+          "type": "string",
+          "description": "Base currency in the currency pair"
+        },
+        "quoteCurrency": {
+          "type": "string",
+          "description": "Quote currency in the currency pair"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the FX rate was recorded"
+        },
+        "rate": {
+          "type": "number",
+          "description": "Exchange rate value"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the FX rate data"
+        },
+        "rateType": {
+          "type": "string",
+          "enum": ["SPOT", "FORWARD", "FIXING", "WMCO"],
+          "description": "Type of FX rate"
+        },
+        "isComposite": {
+          "type": "boolean",
+          "description": "Indicates if the rate is a composite from multiple sources",
+          "default": false
+        },
+        "additionalAttributes": {
+          "type": "object",
+          "description": "Additional source-specific attributes",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
