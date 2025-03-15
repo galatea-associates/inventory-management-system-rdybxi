@@ -1,0 +1,1019 @@
+# Common configuration for all IMS services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-common-config
+  labels:
+    app: ims
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SPRING_PROFILES_ACTIVE: test
+  LOG_LEVEL: DEBUG
+  KAFKA_BOOTSTRAP_SERVERS: ims-test-kafka:9092
+  CORS_ALLOWED_ORIGINS: "*"
+  CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
+  CORS_ALLOWED_HEADERS: Authorization,Content-Type,X-Requested-With,Accept,X-Correlation-ID
+  CORS_ALLOW_CREDENTIALS: "true"
+  CORS_MAX_AGE: "3600"
+  JWT_ISSUER_URI: http://ims-test-auth-service:8084/
+  JWT_AUDIENCE: ims-api-test
+  EUREKA_SERVICE_URL: http://ims-test-service-registry:8761/eureka/
+  MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus,metrics
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+  JAVA_OPTS: -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xms512m -Xmx1g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs/heapdump.hprof
+---
+# Data Ingestion Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-data-ingestion-config
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8081"
+  SPRING_APPLICATION_NAME: data-ingestion-service
+  DATASOURCE_URL: jdbc:postgresql://ims-test-data-ingestion-db:5432/ims_ingestion_test
+  DATASOURCE_USERNAME: ims_test
+  KAFKA_GROUP_ID: data-ingestion-service-test
+  KAFKA_TOPIC_REFERENCE_DATA: test-reference-data
+  KAFKA_TOPIC_MARKET_DATA: test-market-data
+  KAFKA_TOPIC_TRADE_DATA: test-trade-data
+  KAFKA_TOPIC_CONTRACT_DATA: test-contract-data
+  KAFKA_TOPIC_MARKET_DATA_INPUT: test-market-data-input
+  REFERENCE_DATA_BATCH_DIR: /data/reference-data/batch
+  TRADE_DATA_BATCH_DIR: /data/trade-data/batch
+  CONTRACT_DATA_BATCH_DIR: /data/contract-data/batch
+  REUTERS_API_URL: http://ims-test-mock-reuters:8080/api/v1
+  BLOOMBERG_API_URL: http://ims-test-mock-bloomberg:8080/api/v1
+  MARKIT_API_URL: http://ims-test-mock-markit:8080/api/v1
+  ULTUMUS_API_URL: http://ims-test-mock-ultumus:8080/api/v1
+  RIMES_API_URL: http://ims-test-mock-rimes:8080/api/v1
+  REUTERS_BATCH_PATH: /data/reuters/batch
+  BLOOMBERG_BATCH_PATH: /data/bloomberg/batch
+  MARKIT_BATCH_PATH: /data/markit/batch
+  ULTUMUS_BATCH_PATH: /data/ultumus/batch
+  RIMES_BATCH_PATH: /data/rimes/batch
+  INGESTION_BATCH_MAX_BATCH_SIZE: "1000"
+  INGESTION_BATCH_PROCESSING_THREADS: "3"
+  INGESTION_BATCH_RETRY_ATTEMPTS: "3"
+  INGESTION_BATCH_RETRY_DELAY_MS: "1000"
+  INGESTION_VALIDATION_ENABLED: "true"
+  INGESTION_VALIDATION_STRICT_MODE: "false"
+  INGESTION_SCHEDULING_REFERENCE_DATA_UPDATE: 0 */10 * * * *
+  INGESTION_SCHEDULING_MARKET_DATA_CLEANUP: 0 */30 * * * *
+  INGESTION_SCHEDULING_HEALTH_CHECK: 0 */5 * * * *
+---
+# Calculation Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-calculation-config
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8082"
+  SPRING_APPLICATION_NAME: calculation-service
+  DATASOURCE_URL: jdbc:postgresql://ims-test-calculation-db:5432/ims_calculation_test
+  DATASOURCE_USERNAME: ims_test
+  KAFKA_BOOTSTRAP_SERVERS: ims-test-kafka:9092
+  KAFKA_CONSUMER_GROUP_ID: calculation-service-test
+  KAFKA_TOPICS_POSITION_EVENT: test-position-events
+  KAFKA_TOPICS_INVENTORY_EVENT: test-inventory-events
+  KAFKA_TOPICS_MARKET_DATA_EVENT: test-market-data-events
+  KAFKA_TOPICS_WORKFLOW_EVENT: test-workflow-events
+  HAZELCAST_CLUSTER_NAME: ims-calculation-test-cluster
+  HAZELCAST_INSTANCE_NAME: calculation-service-test
+  HAZELCAST_MULTICAST_ENABLED: "false"
+  HAZELCAST_TCP_IP_MEMBERS: localhost
+  HAZELCAST_PORT: "5701"
+  HAZELCAST_BACKUP_COUNT: "0"
+  HAZELCAST_POSITION_MAP_TTL_SECONDS: "3600"
+  HAZELCAST_INVENTORY_MAP_TTL_SECONDS: "1800"
+  HAZELCAST_RULE_MAP_TTL_SECONDS: "7200"
+  HAZELCAST_MAX_SIZE_PER_NODE: "1000"
+  CALCULATION_POSITION_CACHE_ENABLED: "true"
+  CALCULATION_POSITION_CACHE_TTL_SECONDS: "3600"
+  CALCULATION_INVENTORY_CACHE_ENABLED: "true"
+  CALCULATION_INVENTORY_CACHE_TTL_SECONDS: "1800"
+  CALCULATION_LIMIT_CACHE_ENABLED: "true"
+  CALCULATION_LIMIT_CACHE_TTL_SECONDS: "1800"
+  CALCULATION_RULE_CACHE_ENABLED: "true"
+  CALCULATION_RULE_CACHE_TTL_SECONDS: "7200"
+  CALCULATION_PERFORMANCE_THREAD_POOL_SIZE: "10"
+  CALCULATION_PERFORMANCE_QUEUE_CAPACITY: "100"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_AUTOMATICTRANSITIONFROMOPENTOHALF_OPENENABLED: "true"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_WAITDURATIONINOPENSTATE: 10s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_POSITIONCALCULATION_FAILURERATETHTHRESHOLD: "50"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_AUTOMATICTRANSITIONFROMOPENTOHALF_OPENENABLED: "true"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_WAITDURATIONINOPENSTATE: 10s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_INVENTORYCALCULATION_FAILURERATETHTHRESHOLD: "50"
+---
+# Workflow Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-workflow-config
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8083"
+  SPRING_APPLICATION_NAME: workflow-service
+  DATASOURCE_URL: jdbc:postgresql://ims-test-workflow-db:5432/ims_workflow_test
+  DATASOURCE_USERNAME: ims_test
+  KAFKA_GROUP_ID: workflow-service-test
+  KAFKA_TOPIC_WORKFLOW_EVENT: test-workflow-events
+  KAFKA_TOPIC_LOCATE_EVENT: test-locate-events
+  KAFKA_TOPIC_INVENTORY_EVENT: test-inventory-events
+  KAFKA_TOPIC_LIMIT_EVENT: test-limit-events
+  CAMUNDA_ADMIN_USER: admin
+  CALCULATION_SERVICE_URL: http://ims-test-calculation-service:8082/api/v1
+  WORKFLOW_ASYNC_PROCESSING_ENABLED: "true"
+  WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED: "true"
+  WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY: "10000"
+  WORKFLOW_LOCATE_AUTO_APPROVAL_MIN_INVENTORY_RATIO: "2.0"
+  WORKFLOW_LOCATE_AUTO_APPROVAL_EXPIRY_HOURS: "24"
+  WORKFLOW_LOCATE_MANUAL_REVIEW_TIMEOUT_MINUTES: "60"
+  WORKFLOW_LOCATE_MANUAL_REVIEW_NOTIFICATION_ENABLED: "true"
+  WORKFLOW_LOCATE_PERFORMANCE_THREAD_POOL_SIZE: "5"
+  WORKFLOW_LOCATE_PERFORMANCE_QUEUE_CAPACITY: "50"
+  WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS: "150"
+  WORKFLOW_SHORT_SELL_VALIDATION_CACHE_TTL_SECONDS: "300"
+  WORKFLOW_SHORT_SELL_VALIDATION_BATCH_SIZE: "50"
+  WORKFLOW_SHORT_SELL_PERFORMANCE_THREAD_POOL_SIZE: "10"
+  WORKFLOW_SHORT_SELL_PERFORMANCE_QUEUE_CAPACITY: "100"
+  WORKFLOW_SCHEDULING_CLEANUP_EXPIRED_LOCATES: 0 */15 * * * *
+  WORKFLOW_SCHEDULING_PROCESS_PENDING_VALIDATIONS: 0 */5 * * * *
+  WORKFLOW_SCHEDULING_HEALTH_CHECK: 0 */5 * * * *
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_AUTOMATICTRANSITIONFROMOPENTOHALF_OPENENABLED: "true"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_WAITDURATIONINOPENSTATE: 10s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_LOCATEWORKFLOW_FAILURERATETHTHRESHOLD: "50"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_AUTOMATICTRANSITIONFROMOPENTOHALF_OPENENABLED: "true"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_WAITDURATIONINOPENSTATE: 10s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLWORKFLOW_FAILURERATETHTHRESHOLD: "50"
+  RESILIENCE4J_RATELIMITER_INSTANCES_SHORTSELLWORKFLOW_LIMITFORPERIOD: "500"
+  RESILIENCE4J_RATELIMITER_INSTANCES_SHORTSELLWORKFLOW_LIMITREFRESHPERIOD: 1s
+  RESILIENCE4J_RATELIMITER_INSTANCES_SHORTSELLWORKFLOW_TIMEOUTDURATION: 150ms
+---
+# API Gateway configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-api-gateway-config
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8080"
+  SPRING_APPLICATION_NAME: api-gateway
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_CONNECT_TIMEOUT: "5000"
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_RESPONSE_TIMEOUT: "5000"
+  EUREKA_SERVICE_URL: http://ims-test-service-registry:8761/eureka/
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  JWT_ISSUER_URI: http://ims-test-auth-service:8084/auth
+  JWT_JWK_SET_URI: http://ims-test-auth-service:8084/auth/.well-known/jwks.json
+  APP_SECURITY_CORS_ALLOWED_ORIGINS: "*"
+  APP_SECURITY_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
+  APP_SECURITY_CORS_ALLOWED_HEADERS: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+  APP_SECURITY_CORS_ALLOW_CREDENTIALS: "true"
+  APP_SECURITY_CORS_MAX_AGE: "3600"
+  APP_RATE_LIMITING_ENABLED: "false"
+  APP_RATE_LIMITING_KEY_RESOLVER: principalKeyResolver
+  APP_RATE_LIMITING_FALLBACK_RESOLVER: ipAddressKeyResolver
+  APP_TRACING_ENABLED: "true"
+  APP_TRACING_CORRELATION_HEADER: X-Correlation-ID
+  APP_TRACING_SAMPLING_RATE: "1.0"
+  APP_LOGGING_INCLUDE_HEADERS: "true"
+  APP_LOGGING_INCLUDE_BODY: "true"
+  APP_LOGGING_INCLUDE_QUERY_PARAMS: "true"
+  APP_SERVICES_AUTH_SERVICE_URL: http://ims-test-auth-service:8084
+  APP_SERVICES_DATA_INGESTION_SERVICE_URL: http://ims-test-data-ingestion-service:8081
+  APP_SERVICES_CALCULATION_SERVICE_URL: http://ims-test-calculation-service:8082
+  APP_SERVICES_WORKFLOW_SERVICE_URL: http://ims-test-workflow-service:8083
+  APP_SERVICES_WEBSOCKET_SERVICE_URL: http://ims-test-websocket-service:8085
+  APP_SERVICES_MONITORING_SERVICE_URL: http://ims-test-monitoring-service:8086
+  APP_SERVICES_SHORT_SELL_SERVICE_URL: http://ims-test-workflow-service:8083
+  APP_SERVICES_SHORT_SELL_SERVICE_TIMEOUT: "150"
+  APP_SERVICES_SHORT_SELL_SERVICE_RETRY_ATTEMPTS: "1"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLSERVICE_WAITDURATIONINOPENSTATE: 5s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLSERVICE_FAILURERATETHTHRESHOLD: "30"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLSERVICE_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLSERVICE_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_SHORTSELLSERVICE_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "2"
+  RESILIENCE4J_RETRY_INSTANCES_SHORTSELLSERVICE_MAXATTEMPTS: "1"
+  RESILIENCE4J_RETRY_INSTANCES_SHORTSELLSERVICE_WAITDURATION: 50ms
+  RESILIENCE4J_RETRY_INSTANCES_SHORTSELLSERVICE_ENABLEEXPONENTIALBACKOFF: "false"
+  RESILIENCE4J_BULKHEAD_INSTANCES_SHORTSELLSERVICE_MAXCONCURRENTCALLS: "50"
+  RESILIENCE4J_BULKHEAD_INSTANCES_SHORTSELLSERVICE_MAXWAITDURATION: 50ms
+---
+# WebSocket Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-websocket-config
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8085"
+  SPRING_APPLICATION_NAME: websocket-service
+  KAFKA_BOOTSTRAP_SERVERS: ims-test-kafka:9092
+  KAFKA_GROUP_ID: websocket-service-test
+  KAFKA_TOPIC_POSITION: test-position-events
+  KAFKA_TOPIC_INVENTORY: test-inventory-events
+  KAFKA_TOPIC_LOCATE: test-locate-events
+  KAFKA_TOPIC_ALERT: test-alert-events
+  JWT_ISSUER_URI: http://ims-test-auth-service:8084
+  JWT_AUDIENCE: ims-api-test
+  WEBSOCKET_ALLOWED_ORIGINS: "*"
+  WEBSOCKET_SEND_TIMEOUT_MS: "5000"
+  WEBSOCKET_SEND_BUFFER_SIZE_LIMIT: "524288"
+  WEBSOCKET_MESSAGE_BUFFER_SIZE_LIMIT: "65536"
+  APP_WEBSOCKET_CLIENT_INACTIVITY_TIMEOUT: "300000"
+  APP_WEBSOCKET_MAX_SESSIONS_PER_USER: "5"
+  APP_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE: "65536"
+  APP_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE: "65536"
+  APP_WEBSOCKET_HEARTBEAT_INTERVAL: "25000"
+  APP_SECURITY_REQUIRED_ROLES_POSITIONS: ROLE_POSITION_VIEW
+  APP_SECURITY_REQUIRED_ROLES_INVENTORY: ROLE_INVENTORY_VIEW
+  APP_SECURITY_REQUIRED_ROLES_LOCATES: ROLE_LOCATE_VIEW
+  APP_SECURITY_REQUIRED_ROLES_ALERTS: ROLE_ALERT_VIEW
+  APP_PERFORMANCE_THREAD_POOL_SIZE: "10"
+  APP_PERFORMANCE_QUEUE_CAPACITY: "100"
+  APP_PERFORMANCE_MESSAGE_BATCH_SIZE: "50"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_SLIDINGWINDOWSIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_MINIMUMNUMBEROFCALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_WAITDURATIONINOPENSTATE: 10s
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_FAILURERATETHTHRESHOLD: "50"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_PERMITTEDNUMBEROFCALLSINHALFOPENSTATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_INSTANCES_WEBSOCKETCONNECTIONS_AUTOMATICTRANSITIONFROMOPENTOHALF_OPENENABLED: "true"
+  RESILIENCE4J_RATELIMITER_INSTANCES_WEBSOCKETCONNECTIONS_LIMITFORPERIOD: "500"
+  RESILIENCE4J_RATELIMITER_INSTANCES_WEBSOCKETCONNECTIONS_LIMITREFRESHPERIOD: 1s
+  RESILIENCE4J_RATELIMITER_INSTANCES_WEBSOCKETCONNECTIONS_TIMEOUTDURATION: 0s
+---
+# Monitoring Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-monitoring-config
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8086"
+  SPRING_APPLICATION_NAME: ims-monitoring-service
+  DATASOURCE_URL: jdbc:postgresql://ims-test-monitoring-db:5432/ims_monitoring_test
+  DATASOURCE_USERNAME: ims_test
+  KAFKA_BOOTSTRAP_SERVERS: ims-test-kafka:9092
+  KAFKA_CONSUMER_GROUP_ID: ims-monitoring-service-test
+  KAFKA_TOPICS_SYSTEM_EVENTS: test.system.events
+  KAFKA_TOPICS_ALERTS: test.monitoring.alerts
+  KAFKA_TOPICS_METRICS: test.monitoring.metrics
+  KAFKA_TOPICS_HEALTH_EVENTS: test.monitoring.health
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  MONITORING_PROMETHEUS_STEP_SIZE: 15s
+  MONITORING_METRICS_SYSTEM_COLLECTION_RATE: "15000"
+  MONITORING_METRICS_SYSTEM_RETENTION_DAYS: "7"
+  MONITORING_METRICS_APPLICATION_COLLECTION_RATE: "15000"
+  MONITORING_METRICS_APPLICATION_RETENTION_DAYS: "7"
+  MONITORING_METRICS_BUSINESS_COLLECTION_RATE: "30000"
+  MONITORING_METRICS_BUSINESS_RETENTION_DAYS: "7"
+  MONITORING_METRICS_DATABASE_COLLECTION_RATE: "30000"
+  MONITORING_METRICS_DATABASE_RETENTION_DAYS: "7"
+  MONITORING_METRICS_INTEGRATION_COLLECTION_RATE: "30000"
+  MONITORING_METRICS_INTEGRATION_RETENTION_DAYS: "7"
+  MONITORING_METRICS_THRESHOLD_CHECK_RATE: "60000"
+  MONITORING_HEALTH_CHECK_RATE: "30000"
+  MONITORING_HEALTH_SERVICE_TIMEOUT: "5000"
+  MONITORING_HEALTH_DEPENDENCY_TIMEOUT: "5000"
+  MONITORING_ALERTS_PROCESSING_RATE: "60000"
+  MONITORING_ALERTS_METRIC_CHECK_RATE: "60000"
+  MONITORING_ALERTS_HEALTH_CHECK_RATE: "60000"
+  MONITORING_ALERTS_RETENTION_ACTIVE_DAYS: "7"
+  MONITORING_ALERTS_RETENTION_RESOLVED_DAYS: "7"
+  MONITORING_ALERTS_RETENTION_ARCHIVED_DAYS: "7"
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_EMAIL_ENABLED: "false"
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_EMAIL_RECIPIENTS: test@example.com
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_EMAIL_CRITICAL_RECIPIENTS: test-critical@example.com
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_SLACK_ENABLED: "false"
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_SLACK_WEBHOOK_URL: https://hooks.slack.com/services/test/webhook/url
+  MONITORING_ALERTS_NOTIFICATION_CHANNELS_SLACK_CHANNEL: "#test-monitoring-alerts"
+  MONITORING_THRESHOLDS_SYSTEM_CPU_USAGE_WARNING: "70"
+  MONITORING_THRESHOLDS_SYSTEM_CPU_USAGE_CRITICAL: "85"
+  MONITORING_THRESHOLDS_SYSTEM_CPU_USAGE_DURATION: "300"
+  MONITORING_THRESHOLDS_SYSTEM_MEMORY_USAGE_WARNING: "75"
+  MONITORING_THRESHOLDS_SYSTEM_MEMORY_USAGE_CRITICAL: "90"
+  MONITORING_THRESHOLDS_SYSTEM_MEMORY_USAGE_DURATION: "300"
+  MONITORING_THRESHOLDS_SYSTEM_DISK_USAGE_WARNING: "80"
+  MONITORING_THRESHOLDS_SYSTEM_DISK_USAGE_CRITICAL: "90"
+  MONITORING_THRESHOLDS_SYSTEM_DISK_USAGE_DURATION: "300"
+  MONITORING_THRESHOLDS_APPLICATION_RESPONSE_TIME_WARNING: "500"
+  MONITORING_THRESHOLDS_APPLICATION_RESPONSE_TIME_CRITICAL: "1000"
+  MONITORING_THRESHOLDS_APPLICATION_RESPONSE_TIME_DURATION: "300"
+  MONITORING_THRESHOLDS_APPLICATION_ERROR_RATE_WARNING: "1"
+  MONITORING_THRESHOLDS_APPLICATION_ERROR_RATE_CRITICAL: "5"
+  MONITORING_THRESHOLDS_APPLICATION_ERROR_RATE_DURATION: "300"
+  MONITORING_THRESHOLDS_BUSINESS_EVENT_PROCESSING_LATENCY_WARNING: "150"
+  MONITORING_THRESHOLDS_BUSINESS_EVENT_PROCESSING_LATENCY_CRITICAL: "200"
+  MONITORING_THRESHOLDS_BUSINESS_EVENT_PROCESSING_LATENCY_DURATION: "300"
+  MONITORING_THRESHOLDS_BUSINESS_SHORT_SELL_VALIDATION_TIME_WARNING: "100"
+  MONITORING_THRESHOLDS_BUSINESS_SHORT_SELL_VALIDATION_TIME_CRITICAL: "150"
+  MONITORING_THRESHOLDS_BUSINESS_SHORT_SELL_VALIDATION_TIME_DURATION: "300"
+---
+# Auth Service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-auth-config
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  SERVER_PORT: "8084"
+  SPRING_APPLICATION_NAME: ims-auth-service
+  DATASOURCE_URL: jdbc:postgresql://ims-test-auth-db:5432/ims_auth_test
+  DATASOURCE_USERNAME: ims_test
+  KAFKA_BOOTSTRAP_SERVERS: ims-test-kafka:9092
+  KAFKA_CONSUMER_GROUP_ID: auth-service-test
+  KAFKA_TOPICS_USER_EVENTS: test-user-events
+  KAFKA_TOPICS_AUTH_EVENTS: test-auth-events
+  SECURITY_JWT_EXPIRATION: "3600"
+  SECURITY_JWT_REFRESH_EXPIRATION: "86400"
+  SECURITY_PASSWORD_HISTORY_COUNT: "5"
+  SECURITY_PASSWORD_MAX_AGE_DAYS: "90"
+  SECURITY_PASSWORD_MIN_LENGTH: "8"
+  SECURITY_PASSWORD_COMPLEXITY_REGEX: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$
+  SECURITY_ACCOUNT_MAX_FAILED_ATTEMPTS: "5"
+  SECURITY_ACCOUNT_LOCK_DURATION_MINUTES: "30"
+  SECURITY_SESSION_MAX_CONCURRENT: "5"
+  SECURITY_SESSION_TIMEOUT_SECONDS: "3600"
+  OAUTH_CLIENT_ID: ims-test-client
+  OAUTH_REDIRECT_URIS: http://localhost:3000/callback
+  OAUTH_IDENTITY_PROVIDER_URL: http://ims-test-auth-service:8084/
+  MFA_ENABLED: "false"
+  MFA_REQUIRED_ROLES: ADMIN
+  MFA_TOTP_TIME_STEP_SECONDS: "30"
+  MFA_TOTP_CODE_DIGITS: "6"
+  MFA_TOTP_WINDOW_SIZE: "1"
+  AUDIT_ENABLED: "true"
+  AUDIT_EVENTS_AUTHENTICATION: "true"
+  AUDIT_EVENTS_AUTHORIZATION: "true"
+  AUDIT_EVENTS_USER_MANAGEMENT: "true"
+  AUDIT_RETENTION_DAYS: "30"
+---
+# Auth Users configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-auth-users-config
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  test-users.json: |
+    {
+      "users": [
+        {
+          "username": "admin",
+          "email": "admin@example.com",
+          "firstName": "Admin",
+          "lastName": "User",
+          "roles": ["ADMIN", "TRADER", "OPERATIONS", "COMPLIANCE"]
+        },
+        {
+          "username": "trader",
+          "email": "trader@example.com",
+          "firstName": "Test",
+          "lastName": "Trader",
+          "roles": ["TRADER"]
+        },
+        {
+          "username": "operations",
+          "email": "operations@example.com",
+          "firstName": "Test",
+          "lastName": "Operations",
+          "roles": ["OPERATIONS"]
+        },
+        {
+          "username": "compliance",
+          "email": "compliance@example.com",
+          "firstName": "Test",
+          "lastName": "Compliance",
+          "roles": ["COMPLIANCE"]
+        }
+      ]
+    }
+---
+# Test data for Reuters mock
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-reuters-data
+  labels:
+    app: ims
+    component: mock-reuters
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  securities.json: |
+    {
+      "securities": [
+        {
+          "ric": "AAPL.O",
+          "isin": "US0378331005",
+          "name": "APPLE INC",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        },
+        {
+          "ric": "MSFT.O",
+          "isin": "US5949181045",
+          "name": "MICROSOFT CORP",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        },
+        {
+          "ric": "AMZN.O",
+          "isin": "US0231351067",
+          "name": "AMAZON.COM INC",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        }
+      ]
+    }
+  prices.json: |
+    {
+      "prices": [
+        {
+          "ric": "AAPL.O",
+          "price": 150.25,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ric": "MSFT.O",
+          "price": 320.75,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ric": "AMZN.O",
+          "price": 125.50,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        }
+      ]
+    }
+---
+# Test data for Bloomberg mock
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-bloomberg-data
+  labels:
+    app: ims
+    component: mock-bloomberg
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  securities.json: |
+    {
+      "securities": [
+        {
+          "ticker": "AAPL US",
+          "isin": "US0378331005",
+          "name": "APPLE INC",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        },
+        {
+          "ticker": "MSFT US",
+          "isin": "US5949181045",
+          "name": "MICROSOFT CORP",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        },
+        {
+          "ticker": "AMZN US",
+          "isin": "US0231351067",
+          "name": "AMAZON.COM INC",
+          "type": "EQUITY",
+          "exchange": "NASDAQ",
+          "currency": "USD"
+        }
+      ]
+    }
+  prices.json: |
+    {
+      "prices": [
+        {
+          "ticker": "AAPL US",
+          "price": 150.30,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ticker": "MSFT US",
+          "price": 320.80,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ticker": "AMZN US",
+          "price": 125.55,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        }
+      ]
+    }
+---
+# Test data for MarkIT mock
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-markit-data
+  labels:
+    app: ims
+    component: mock-markit
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  etfs.json: |
+    {
+      "etfs": [
+        {
+          "ticker": "SPY",
+          "isin": "US78462F1030",
+          "name": "SPDR S&P 500 ETF TRUST",
+          "nav": 415.75,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ticker": "QQQ",
+          "isin": "US46090E1038",
+          "name": "INVESCO QQQ TRUST SERIES 1",
+          "nav": 350.25,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        }
+      ]
+    }
+---
+# Test data for Ultumus mock
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-ultumus-data
+  labels:
+    app: ims
+    component: mock-ultumus
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  compositions.json: |
+    {
+      "compositions": [
+        {
+          "ticker": "SPY",
+          "isin": "US78462F1030",
+          "name": "SPDR S&P 500 ETF TRUST",
+          "constituents": [
+            {
+              "ticker": "AAPL US",
+              "isin": "US0378331005",
+              "weight": 0.0675,
+              "shares": 1500000
+            },
+            {
+              "ticker": "MSFT US",
+              "isin": "US5949181045",
+              "weight": 0.0625,
+              "shares": 1200000
+            },
+            {
+              "ticker": "AMZN US",
+              "isin": "US0231351067",
+              "weight": 0.0325,
+              "shares": 800000
+            }
+          ]
+        }
+      ]
+    }
+---
+# Test data for RIMES mock
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-rimes-data
+  labels:
+    app: ims
+    component: mock-rimes
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  indices.json: |
+    {
+      "indices": [
+        {
+          "ticker": "SPX",
+          "name": "S&P 500 INDEX",
+          "value": 4150.25,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        },
+        {
+          "ticker": "NDX",
+          "name": "NASDAQ 100 INDEX",
+          "value": 14250.75,
+          "currency": "USD",
+          "timestamp": "2023-06-15T09:30:00Z"
+        }
+      ]
+    }
+---
+# Data Ingestion DB initialization script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-data-ingestion-db-init
+  labels:
+    app: ims
+    component: data-ingestion-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS reference_data;
+    CREATE SCHEMA IF NOT EXISTS market_data;
+    CREATE SCHEMA IF NOT EXISTS trade_data;
+    CREATE SCHEMA IF NOT EXISTS contract_data;
+    
+    -- Reference Data Tables
+    CREATE TABLE IF NOT EXISTS reference_data.security (
+      id SERIAL PRIMARY KEY,
+      internal_id VARCHAR(50) UNIQUE NOT NULL,
+      security_type VARCHAR(20) NOT NULL,
+      issuer VARCHAR(100),
+      issue_date DATE,
+      maturity_date DATE,
+      currency VARCHAR(3),
+      status VARCHAR(10) NOT NULL,
+      market VARCHAR(20),
+      version INT NOT NULL DEFAULT 1,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS reference_data.security_identifier (
+      id SERIAL PRIMARY KEY,
+      security_id INT NOT NULL REFERENCES reference_data.security(id),
+      identifier_type VARCHAR(20) NOT NULL,
+      identifier_value VARCHAR(50) NOT NULL,
+      source VARCHAR(20) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(identifier_type, identifier_value)
+    );
+    
+    -- Market Data Tables
+    CREATE TABLE IF NOT EXISTS market_data.price (
+      id SERIAL PRIMARY KEY,
+      security_id INT NOT NULL REFERENCES reference_data.security(id),
+      price DECIMAL(18,6) NOT NULL,
+      currency VARCHAR(3) NOT NULL,
+      source VARCHAR(20) NOT NULL,
+      price_type VARCHAR(20) NOT NULL,
+      event_time TIMESTAMP NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create test user with appropriate permissions
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA reference_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA market_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA trade_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA contract_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA reference_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA market_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA trade_data TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA contract_data TO ims_test;
+---
+# Calculation DB initialization script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-calculation-db-init
+  labels:
+    app: ims
+    component: calculation-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS position;
+    CREATE SCHEMA IF NOT EXISTS inventory;
+    CREATE SCHEMA IF NOT EXISTS calculation;
+    
+    -- Position Tables
+    CREATE TABLE IF NOT EXISTS position.position (
+      id SERIAL PRIMARY KEY,
+      book_id VARCHAR(50) NOT NULL,
+      security_id VARCHAR(50) NOT NULL,
+      business_date DATE NOT NULL,
+      contractual_qty DECIMAL(18,6) NOT NULL,
+      settled_qty DECIMAL(18,6) NOT NULL,
+      sd0_deliver DECIMAL(18,6) NOT NULL,
+      sd0_receipt DECIMAL(18,6) NOT NULL,
+      sd1_deliver DECIMAL(18,6) NOT NULL,
+      sd1_receipt DECIMAL(18,6) NOT NULL,
+      sd2_deliver DECIMAL(18,6) NOT NULL,
+      sd2_receipt DECIMAL(18,6) NOT NULL,
+      sd3_deliver DECIMAL(18,6) NOT NULL,
+      sd3_receipt DECIMAL(18,6) NOT NULL,
+      sd4_deliver DECIMAL(18,6) NOT NULL,
+      sd4_receipt DECIMAL(18,6) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(book_id, security_id, business_date)
+    );
+    
+    -- Inventory Tables
+    CREATE TABLE IF NOT EXISTS inventory.inventory_availability (
+      id SERIAL PRIMARY KEY,
+      security_id VARCHAR(50) NOT NULL,
+      calculation_type VARCHAR(20) NOT NULL,
+      business_date DATE NOT NULL,
+      quantity DECIMAL(18,6) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(security_id, calculation_type, business_date)
+    );
+    
+    -- Calculation Rules Tables
+    CREATE TABLE IF NOT EXISTS calculation.calculation_rule (
+      id SERIAL PRIMARY KEY,
+      rule_id VARCHAR(50) NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      description TEXT,
+      rule_type VARCHAR(20) NOT NULL,
+      priority INT NOT NULL,
+      effective_date DATE NOT NULL,
+      expiry_date DATE,
+      status VARCHAR(10) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(rule_id)
+    );
+    
+    -- Create test user with appropriate permissions
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA position TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA inventory TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA calculation TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA position TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA inventory TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA calculation TO ims_test;
+---
+# Workflow DB initialization script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-workflow-db-init
+  labels:
+    app: ims
+    component: workflow-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS workflow;
+    
+    -- Locate Tables
+    CREATE TABLE IF NOT EXISTS workflow.locate_request (
+      id SERIAL PRIMARY KEY,
+      request_id VARCHAR(50) UNIQUE NOT NULL,
+      requestor_id VARCHAR(50) NOT NULL,
+      client_id VARCHAR(50) NOT NULL,
+      security_id VARCHAR(50) NOT NULL,
+      locate_type VARCHAR(20) NOT NULL,
+      requested_quantity DECIMAL(18,6) NOT NULL,
+      request_timestamp TIMESTAMP NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      swap_cash_indicator VARCHAR(10),
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS workflow.locate_approval (
+      id SERIAL PRIMARY KEY,
+      approval_id VARCHAR(50) UNIQUE NOT NULL,
+      request_id VARCHAR(50) NOT NULL REFERENCES workflow.locate_request(request_id),
+      approved_quantity DECIMAL(18,6) NOT NULL,
+      decrement_quantity DECIMAL(18,6) NOT NULL,
+      approval_timestamp TIMESTAMP NOT NULL,
+      approved_by VARCHAR(50) NOT NULL,
+      expiry_date DATE NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS workflow.locate_rejection (
+      id SERIAL PRIMARY KEY,
+      rejection_id VARCHAR(50) UNIQUE NOT NULL,
+      request_id VARCHAR(50) NOT NULL REFERENCES workflow.locate_request(request_id),
+      rejection_reason VARCHAR(200) NOT NULL,
+      rejection_timestamp TIMESTAMP NOT NULL,
+      rejected_by VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Order Validation Tables
+    CREATE TABLE IF NOT EXISTS workflow.order_validation (
+      id SERIAL PRIMARY KEY,
+      validation_id VARCHAR(50) UNIQUE NOT NULL,
+      order_id VARCHAR(50) NOT NULL,
+      order_type VARCHAR(20) NOT NULL,
+      security_id VARCHAR(50) NOT NULL,
+      client_id VARCHAR(50) NOT NULL,
+      aggregation_unit_id VARCHAR(50) NOT NULL,
+      quantity DECIMAL(18,6) NOT NULL,
+      validation_timestamp TIMESTAMP NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      rejection_reason VARCHAR(200),
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create test user with appropriate permissions
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA workflow TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA workflow TO ims_test;
+---
+# Auth DB initialization script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ims-test-auth-db-init
+  labels:
+    app: ims
+    component: auth-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS auth;
+    
+    -- User Tables
+    CREATE TABLE IF NOT EXISTS auth.user (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(50) UNIQUE NOT NULL,
+      password VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      first_name VARCHAR(50) NOT NULL,
+      last_name VARCHAR(50) NOT NULL,
+      enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      account_non_expired BOOLEAN NOT NULL DEFAULT TRUE,
+      account_non_locked BOOLEAN NOT NULL DEFAULT TRUE,
+      credentials_non_expired BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS auth.role (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(50) UNIQUE NOT NULL,
+      description VARCHAR(200),
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS auth.permission (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(50) UNIQUE NOT NULL,
+      description VARCHAR(200),
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS auth.user_role (
+      user_id INT NOT NULL REFERENCES auth.user(id),
+      role_id INT NOT NULL REFERENCES auth.role(id),
+      PRIMARY KEY (user_id, role_id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS auth.role_permission (
+      role_id INT NOT NULL REFERENCES auth.role(id),
+      permission_id INT NOT NULL REFERENCES auth.permission(id),
+      PRIMARY KEY (role_id, permission_id)
+    );
+    
+    -- Token Tables
+    CREATE TABLE IF NOT EXISTS auth.token (
+      id SERIAL PRIMARY KEY,
+      token_id VARCHAR(100) UNIQUE NOT NULL,
+      user_id INT NOT NULL REFERENCES auth.user(id),
+      token_type VARCHAR(20) NOT NULL,
+      token_value TEXT NOT NULL,
+      issued_at TIMESTAMP NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      revoked BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Insert default roles
+    INSERT INTO auth.role (name, description) VALUES
+    ('ADMIN', 'Administrator role with full system access'),
+    ('TRADER', 'Trader role with access to trading functions'),
+    ('OPERATIONS', 'Operations role with access to operational functions'),
+    ('COMPLIANCE', 'Compliance role with access to compliance functions');
+    
+    -- Insert default permissions
+    INSERT INTO auth.permission (name, description) VALUES
+    ('POSITION_VIEW', 'View positions'),
+    ('POSITION_EDIT', 'Edit positions'),
+    ('INVENTORY_VIEW', 'View inventory'),
+    ('INVENTORY_EDIT', 'Edit inventory'),
+    ('LOCATE_VIEW', 'View locates'),
+    ('LOCATE_APPROVE', 'Approve locates'),
+    ('LOCATE_REQUEST', 'Request locates'),
+    ('SHORT_SELL_APPROVE', 'Approve short sells'),
+    ('USER_ADMIN', 'Administer users'),
+    ('SYSTEM_ADMIN', 'Administer system');
+    
+    -- Assign permissions to roles
+    INSERT INTO auth.role_permission (role_id, permission_id)
+    SELECT r.id, p.id FROM auth.role r, auth.permission p WHERE r.name = 'ADMIN';
+    
+    INSERT INTO auth.role_permission (role_id, permission_id)
+    SELECT r.id, p.id FROM auth.role r, auth.permission p 
+    WHERE r.name = 'TRADER' AND p.name IN ('POSITION_VIEW', 'INVENTORY_VIEW', 'LOCATE_VIEW', 'LOCATE_REQUEST');
+    
+    INSERT INTO auth.role_permission (role_id, permission_id)
+    SELECT r.id, p.id FROM auth.role r, auth.permission p 
+    WHERE r.name = 'OPERATIONS' AND p.name IN ('POSITION_VIEW', 'POSITION_EDIT', 'INVENTORY_VIEW', 'INVENTORY_EDIT', 'LOCATE_VIEW', 'LOCATE_APPROVE');
+    
+    INSERT INTO auth.role_permission (role_id, permission_id)
+    SELECT r.id, p.id FROM auth.role r, auth.permission p 
+    WHERE r.name = 'COMPLIANCE' AND p.name IN ('POSITION_VIEW', 'INVENTORY_VIEW', 'LOCATE_VIEW', 'SHORT_SELL_APPROVE');
+    
+    -- Create test user with appropriate permissions
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA auth TO ims_test;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA auth TO ims_test;
