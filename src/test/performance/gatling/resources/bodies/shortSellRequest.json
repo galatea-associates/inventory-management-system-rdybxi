@@ -1,0 +1,15 @@
+{
+  "orderId": "${orderId}",
+  "orderType": "SHORT_SELL",
+  "security": {
+    "internalId": "${securityId}"
+  },
+  "client": {
+    "counterpartyId": "${clientId}"
+  },
+  "aggregationUnit": {
+    "aggregationUnitId": "${aggregationUnitId}"
+  },
+  "quantity": "${quantity}",
+  "status": "PENDING"
+}
