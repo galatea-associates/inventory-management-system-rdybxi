@@ -1,0 +1,258 @@
+# Spring Boot 3.1.0 production configuration for WebSocket Service
+# This configuration is optimized for high-throughput, resilient websocket communication
+
+spring:
+  profiles: prod
+  application:
+    name: websocket-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka-prod-1.ims.com:9092,kafka-prod-2.ims.com:9092,kafka-prod-3.ims.com:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:websocket-service-prod}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.ims.common.event
+        max.poll.records: 500
+        fetch.min.bytes: 1024
+        fetch.max.wait.ms: 500
+        enable.auto.commit: false
+        security.protocol: SSL
+        ssl.truststore.location: ${KAFKA_TRUSTSTORE_LOCATION:/etc/ims/security/kafka.truststore.jks}
+        ssl.truststore.password: ${KAFKA_TRUSTSTORE_PASSWORD}
+        ssl.keystore.location: ${KAFKA_KEYSTORE_LOCATION:/etc/ims/security/kafka.keystore.jks}
+        ssl.keystore.password: ${KAFKA_KEYSTORE_PASSWORD}
+        ssl.key.password: ${KAFKA_KEY_PASSWORD}
+    listener:
+      concurrency: 10
+      ack-mode: MANUAL_IMMEDIATE
+      missing-topics-fatal: false
+      idle-between-polls: 100
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.ims.com}
+          jwk-set-uri: ${JWT_JWK_SET_URI:https://auth.ims.com/.well-known/jwks.json}
+          audience: ${JWT_AUDIENCE:ims-api-prod}
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: true
+        name: websocket-service-config
+      secrets:
+        enabled: true
+        name: websocket-service-secrets
+      reload:
+        enabled: true
+        mode: polling
+        period: 60000
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+server:
+  port: 8085
+  servlet:
+    context-path: /api/v1/websocket
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  tomcat:
+    max-threads: 400
+    min-spare-threads: 40
+    max-connections: 20000
+    connection-timeout: 5000
+    accept-count: 500
+    max-keep-alive-requests: 1000
+    keep-alive-timeout: 60000
+  http2:
+    enabled: true
+  shutdown: graceful
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH:/etc/ims/security/keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: ims-websocket
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: ADMIN
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,kafka,discoveryComposite
+        liveness:
+          include: livenessState,ping
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.consumer.records: true
+        websocket.sessions: true
+      percentiles:
+        http.server.requests: [0.5, 0.9, 0.95, 0.99, 0.999]
+        kafka.consumer.records: [0.5, 0.9, 0.95, 0.99, 0.999]
+        websocket.sessions: [0.5, 0.9, 0.95, 0.99, 0.999]
+    tags:
+      application: ${spring.application.name}
+      environment: production
+  health:
+    kafka:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 10GB
+
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.springframework.web.socket: INFO
+    org.springframework.kafka: INFO
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/ims/websocket-service.log
+    max-size: 500MB
+    max-history: 60
+    total-size-cap: 20GB
+  logback:
+    rollingpolicy:
+      file-name-pattern: /var/log/ims/websocket-service-%d{yyyy-MM-dd}.%i.log.gz
+      clean-history-on-start: false
+
+# Application-specific Kafka topics
+kafka:
+  topic:
+    position: position-events-prod
+    inventory: inventory-events-prod
+    locate: locate-events-prod
+    alert: alert-events-prod
+    workflow: workflow-events-prod
+  group:
+    websocket: websocket-service-prod
+  consumer:
+    max-poll-records: 500
+    concurrency: 10
+    retry:
+      max-attempts: 3
+      initial-interval: 1000
+      multiplier: 2.0
+      max-interval: 10000
+
+# WebSocket configuration
+websocket:
+  endpoints:
+    positions: /ws/positions
+    inventory: /ws/inventory
+    locates: /ws/locates
+    alerts: /ws/alerts
+  allowed-origins: https://app.ims.com,https://api.ims.com
+  allowed-methods: GET,POST,OPTIONS
+  allowed-headers: Content-Type,Authorization,X-Requested-With,Accept,Origin,X-Correlation-ID
+  allow-credentials: true
+  max-age: 3600
+  message:
+    max-size: 65536
+  session:
+    timeout: 300000
+
+# Application specific settings
+app:
+  security:
+    jwt:
+      audience: ims-api-prod
+      required-role: WEBSOCKET_USER
+    cors:
+      allowed-origins: https://app.ims.com,https://api.ims.com
+      allowed-methods: GET,POST,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+      allow-credentials: true
+      max-age: 3600
+  websocket:
+    client-inactivity-timeout: 300000
+    max-sessions-per-user: 5
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+    heartbeat-interval: 25000
+    compression:
+      enabled: true
+      level: 6
+  performance:
+    thread-pool-size: 40
+    queue-capacity: 1000
+    message-batch-size: 100
+    buffer-flush-interval: 200
+  tracing:
+    enabled: true
+    correlation-header: X-Correlation-ID
+    sample-rate: 0.1
+  metrics:
+    websocket:
+      session-count: true
+      message-count: true
+      bytes-transferred: true
+    kafka:
+      consumer-lag: true
+      processing-time: true
+      error-count: true
+
+# Resilience4j circuit breakers, rate limiters, bulkheads, and retry configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      websocketConnections:
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      kafkaConsumer:
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    configs:
+      default:
+        registerHealthIndicator: true
+  ratelimiter:
+    instances:
+      websocketConnections:
+        limitForPeriod: 5000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+  bulkhead:
+    instances:
+      websocketSessions:
+        maxConcurrentCalls: 1000
+        maxWaitDuration: 10ms
+  retry:
+    instances:
+      kafkaConsumer:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
