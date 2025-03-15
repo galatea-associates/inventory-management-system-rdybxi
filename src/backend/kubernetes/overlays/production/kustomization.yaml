@@ -1,0 +1,165 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: ims-production
+resources:
+  - ../../base
+namespace: ims-production
+commonLabels:
+  environment: production
+  app: ims
+  part-of: inventory-management-system
+  managed-by: kustomize
+commonAnnotations:
+  environment: production
+  description: "Production environment for Inventory Management System"
+  version: "1.0.0"
+images:
+  - name: ims-registry/data-ingestion-service
+    newName: ims-registry/data-ingestion-service
+    newTag: 1.0.0
+  - name: ims-registry/calculation-service
+    newName: ims-registry/calculation-service
+    newTag: 1.0.0
+  - name: ims-registry/workflow-service
+    newName: ims-registry/workflow-service
+    newTag: 1.0.0
+  - name: ims-registry/api-gateway
+    newName: ims-registry/api-gateway
+    newTag: 1.0.0
+  - name: ims-registry/websocket-service
+    newName: ims-registry/websocket-service
+    newTag: 1.0.0
+  - name: ims-registry/monitoring-service
+    newName: ims-registry/monitoring-service
+    newTag: 1.0.0
+  - name: ims-registry/auth-service
+    newName: ims-registry/auth-service
+    newTag: 1.0.0
+replicas:
+  - name: ims-data-ingestion-service
+    count: 5
+  - name: ims-calculation-service
+    count: 8
+  - name: ims-workflow-service
+    count: 5
+  - name: ims-api-gateway
+    count: 5
+  - name: ims-websocket-service
+    count: 5
+  - name: ims-monitoring-service
+    count: 3
+  - name: ims-auth-service
+    count: 5
+patchesStrategicMerge: []
+configMapGenerator:
+  - name: ims-common-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-prod-1.internal:9092,kafka-prod-2.internal:9092,kafka-prod-3.internal:9092,kafka-prod-4.internal:9092,kafka-prod-5.internal:9092
+      - EUREKA_SERVICE_URL=http://ims-service-registry.ims-production.svc.cluster.local:8761/eureka/
+      - SERVICE_DOMAIN=ims-production.svc.cluster.local
+      - CORS_ALLOWED_ORIGINS=https://ims.com,https://admin.ims.com
+  - name: ims-data-ingestion-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-prod-db.internal:5432/ims_ingestion_prod
+      - INGESTION_VALIDATION_STRICT_MODE=true
+      - INGESTION_BATCH_PROCESSING_THREADS=15
+  - name: ims-calculation-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-prod-db.internal:5432/ims_calculation_prod
+      - CALCULATION_PERFORMANCE_THREAD_POOL_SIZE=40
+      - CALCULATION_PERFORMANCE_QUEUE_CAPACITY=1000
+  - name: ims-workflow-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-prod-db.internal:5432/ims_workflow_prod
+      - WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED=true
+      - WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY=1000000
+      - WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS=150
+  - name: ims-api-gateway-config
+    behavior: merge
+    literals:
+      - RATE_LIMIT_DEFAULT_REPLENISH_RATE=10000
+      - RATE_LIMIT_DEFAULT_BURST_CAPACITY=20000
+  - name: ims-websocket-config
+    behavior: merge
+    literals:
+      - WEBSOCKET_MAX_SESSIONS_PER_USER=50
+  - name: ims-monitoring-config
+    behavior: merge
+    literals:
+      - MONITORING_ALERT_ENABLED=true
+      - MONITORING_ALERT_RECIPIENTS=prod-alerts@example.com,ops-team@example.com
+  - name: ims-auth-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-prod-db.internal:5432/ims_auth_prod
+      - AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS=3600
+      - AUTH_PASSWORD_POLICY_MIN_LENGTH=12
+      - AUTH_MFA_ENABLED=true
+secretGenerator:
+  - name: ims-common-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - JWT_SECRET=prod-jwt-secret-placeholder-replace-in-vault
+      - ENCRYPTION_KEY=prod-encryption-key-placeholder-replace-in-vault
+  - name: ims-data-ingestion-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - DB_PASSWORD=prod-password-placeholder-replace-in-vault
+      - REUTERS_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - REUTERS_API_SECRET=prod-api-secret-placeholder-replace-in-vault
+      - BLOOMBERG_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - BLOOMBERG_API_SECRET=prod-api-secret-placeholder-replace-in-vault
+      - MARKIT_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - MARKIT_API_SECRET=prod-api-secret-placeholder-replace-in-vault
+      - ULTUMUS_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - ULTUMUS_API_SECRET=prod-api-secret-placeholder-replace-in-vault
+      - RIMES_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - RIMES_API_SECRET=prod-api-secret-placeholder-replace-in-vault
+  - name: ims-calculation-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - DB_PASSWORD=prod-password-placeholder-replace-in-vault
+      - HAZELCAST_CLUSTER_PASSWORD=prod-password-placeholder-replace-in-vault
+      - REDIS_PASSWORD=prod-password-placeholder-replace-in-vault
+  - name: ims-workflow-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - DB_PASSWORD=prod-password-placeholder-replace-in-vault
+      - CAMUNDA_ADMIN_PASSWORD=prod-password-placeholder-replace-in-vault
+      - NOTIFICATION_SERVICE_API_KEY=prod-api-key-placeholder-replace-in-vault
+  - name: ims-api-gateway-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - RATE_LIMIT_REDIS_PASSWORD=prod-password-placeholder-replace-in-vault
+  - name: ims-websocket-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - REDIS_PASSWORD=prod-password-placeholder-replace-in-vault
+  - name: ims-monitoring-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - ALERT_SMTP_PASSWORD=prod-password-placeholder-replace-in-vault
+      - PAGERDUTY_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - SLACK_WEBHOOK_URL=prod-webhook-url-placeholder-replace-in-vault
+  - name: ims-auth-secrets
+    behavior: merge
+    type: Opaque
+    literals:
+      - DB_PASSWORD=prod-password-placeholder-replace-in-vault
+      - AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET=prod-client-secret-placeholder-replace-in-vault
+      - AUTH_SMS_PROVIDER_API_KEY=prod-api-key-placeholder-replace-in-vault
+      - AUTH_EMAIL_PROVIDER_API_KEY=prod-api-key-placeholder-replace-in-vault
