@@ -1,0 +1,145 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:workflow_test;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    consumer:
+      group-id: workflow-service-test
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 1
+    topics:
+      workflow-event: workflow-events-test
+      locate-event: locate-events-test
+      inventory-event: inventory-events-test
+      limit-event: limit-events-test
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/ims-test
+          audience: ims-api-test
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+      allow-credentials: true
+      max-age: 3600
+
+server:
+  port: 0
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.camunda: WARN
+  file:
+    name: logs/workflow-service-test.log
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    job-execution:
+      core-pool-size: 1
+      max-pool-size: 3
+    metrics:
+      enabled: false
+      db-reporter-activate: false
+    history-level: FULL
+    auto-deployment-enabled: true
+    deployment-resource-pattern: classpath:processes/*.bpmn
+
+workflow:
+  async-processing-enabled: false
+  locate:
+    auto-approval:
+      enabled: true
+      max-quantity: 1000
+      min-inventory-ratio: 1.5
+      expiry-hours: 24
+    manual-review:
+      timeout-minutes: 60
+      notification-enabled: false
+    performance:
+      thread-pool-size: 2
+      queue-capacity: 10
+  short-sell:
+    validation:
+      timeout-ms: 150
+      cache-ttl-seconds: 60
+      batch-size: 10
+    performance:
+      thread-pool-size: 2
+      queue-capacity: 10
+  scheduling:
+    cleanup-expired-locates: '0 */10 * * * *'
+    process-pending-validations: '0 */5 * * * *'
+    health-check: '0 */5 * * * *'
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      locateWorkflow:
+        waitDurationInOpenState: '5s'
+        failureRateThreshold: 50
+      shortSellWorkflow:
+        waitDurationInOpenState: '5s'
+        failureRateThreshold: 50
+  retry:
+    instances:
+      locateWorkflow:
+        maxAttempts: 2
+        waitDuration: '100ms'
+      shortSellWorkflow:
+        maxAttempts: 2
+        waitDuration: '100ms'
+  ratelimiter:
+    instances:
+      locateWorkflow:
+        limitForPeriod: 50
+        limitRefreshPeriod: '1s'
+        timeoutDuration: '100ms'
+      shortSellWorkflow:
+        limitForPeriod: 100
+        limitRefreshPeriod: '1s'
+        timeoutDuration: '100ms'
+
+feign:
+  client:
+    config:
+      calculation-service:
+        url: http://localhost:8082
+  httpclient:
+    enabled: false
+  okhttp:
+    enabled: true
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
