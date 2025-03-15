@@ -1,0 +1,44 @@
+// Gradle 8.1
+rootProject.name = 'ims-backend'
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url 'https://repo.spring.io/milestone' }
+    }
+    plugins {
+        id 'org.springframework.boot' version '3.1.0'
+        id 'io.spring.dependency-management' version '1.1.0'
+        id 'com.palantir.docker' version '0.35.0'
+        id 'com.diffplug.spotless' version '6.18.0'
+        id 'com.github.spotbugs' version '5.0.14'
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven { url 'https://repo.spring.io/milestone' }
+    }
+}
+
+// Include all subprojects that make up the microservices architecture
+include 'common-lib' // Common library with shared models, utilities, and exceptions
+include 'data-ingestion-service' // Service for ingesting reference data, market data, trade data, and contract data
+include 'calculation-service' // Service for performing position calculations, inventory calculations, and limit calculations
+include 'workflow-service' // Service for managing locate approval and short sell approval workflows
+include 'api-gateway' // API Gateway for routing requests to appropriate services
+include 'websocket-service' // Service for real-time data streaming via WebSocket connections
+include 'monitoring-service' // Service for system monitoring, health checks, and alerting
+include 'auth-service' // Service for authentication, authorization, and identity management
+
+// Configure project paths to match the directory structure
+project(':common-lib').projectDir = file('common-lib')
+project(':data-ingestion-service').projectDir = file('data-ingestion-service')
+project(':calculation-service').projectDir = file('calculation-service')
+project(':workflow-service').projectDir = file('workflow-service')
+project(':api-gateway').projectDir = file('api-gateway')
+project(':websocket-service').projectDir = file('websocket-service')
+project(':monitoring-service').projectDir = file('monitoring-service')
+project(':auth-service').projectDir = file('auth-service')
