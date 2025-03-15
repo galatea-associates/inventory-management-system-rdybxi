@@ -1,0 +1,798 @@
+# Staging environment specific values for the Inventory Management System (IMS) Helm chart
+# This file overrides defaults in values.yaml for the staging environment
+
+# Global configuration for staging environment
+global:
+  environment: staging
+  logLevel: INFO
+  domain: staging.ims.example.com
+  region: us-east-1
+  clusterName: ims-staging-cluster
+
+# Service definitions remain mostly the same as in values.yaml
+services:
+  dataIngestion:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8081"
+  calculation:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8082"
+  workflow:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8083"
+  apiGateway:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8080"
+  websocket:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8085"
+    sessionAffinity: ClientIP
+    sessionAffinityConfig:
+      clientIP:
+        timeoutSeconds: 10800
+  monitoring:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8086"
+  auth:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8084"
+
+# Deployment configurations with reduced resources and replica counts for staging
+deployments:
+  dataIngestion:
+    enabled: true
+    image:
+      repository: ims-registry/data-ingestion-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - data-ingestion-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 60
+  calculation:
+    enabled: true
+    image:
+      repository: ims-registry/calculation-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      - name: HAZELCAST_CLUSTER_NAME
+        value: ims-calculation-cluster
+      - name: HAZELCAST_MULTICAST_ENABLED
+        value: "false"
+      - name: HAZELCAST_TCP_IP_MEMBERS
+        value: ims-calculation-service-0.ims-calculation-service.$(NAMESPACE).svc.cluster.local,ims-calculation-service-1.ims-calculation-service.$(NAMESPACE).svc.cluster.local,ims-calculation-service-2.ims-calculation-service.$(NAMESPACE).svc.cluster.local
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - calculation-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+  workflow:
+    enabled: true
+    image:
+      repository: ims-registry/workflow-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      - name: CALCULATION_SERVICE_URL
+        value: http://ims-calculation-service:8082
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - workflow-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 60
+  apiGateway:
+    enabled: true
+    image:
+      repository: ims-registry/api-gateway
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - api-gateway
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 60
+  websocket:
+    enabled: true
+    image:
+      repository: ims-registry/websocket-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - websocket-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 60
+  monitoring:
+    enabled: true
+    image:
+      repository: ims-registry/monitoring-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - monitoring-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 30
+  auth:
+    enabled: true
+    image:
+      repository: ims-registry/auth-service
+      tag: staging-latest
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: staging
+      - name: LOG_LEVEL
+        value: INFO
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - auth-service
+            topologyKey: kubernetes.io/hostname
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 60
+
+# Ingress configuration for staging environment
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+  hosts:
+    - host: staging.ims.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+        - path: /ws
+          pathType: Prefix
+          service: websocket-service
+          port: 8085
+  tls:
+    - secretName: ims-staging-tls-cert
+      hosts:
+        - staging.ims.example.com
+
+# ConfigMap configurations for staging environment
+configMaps:
+  common:
+    enabled: true
+    data:
+      ENVIRONMENT: staging
+      LOG_LEVEL: INFO
+      KAFKA_BOOTSTRAP_SERVERS: kafka-headless.kafka.svc.cluster.local:9092
+      EUREKA_SERVICE_URL: http://ims-service-registry:8761/eureka/
+      SERVICE_DOMAIN: ims.svc.cluster.local
+      CORS_ALLOWED_ORIGINS: https://staging.ims.example.com
+      JWT_ISSUER_URI: https://auth.staging.ims.example.com/
+      JWT_AUDIENCE: ims-api-staging
+  dataIngestion:
+    enabled: true
+    data:
+      INGESTION_BATCH_MAX_BATCH_SIZE: "5000"
+      INGESTION_BATCH_PROCESSING_THREADS: "5"
+      INGESTION_VALIDATION_STRICT_MODE: "true"
+      INGESTION_BATCH_RETRY_ATTEMPTS: "3"
+      INGESTION_BATCH_RETRY_DELAY_MS: "1000"
+      REUTERS_API_URL: https://api-staging.reuters.com/data/v1
+      BLOOMBERG_API_URL: https://api-staging.bloomberg.com/data/v1
+      MARKIT_API_URL: https://api-staging.markit.com/data/v1
+      ULTUMUS_API_URL: https://api-staging.ultumus.com/data/v1
+      RIMES_API_URL: https://api-staging.rimes.com/data/v1
+  calculation:
+    enabled: true
+    data:
+      CALCULATION_POSITION_CACHE_TTL_SECONDS: "1800"
+      CALCULATION_INVENTORY_CACHE_TTL_SECONDS: "900"
+      CALCULATION_LIMIT_CACHE_TTL_SECONDS: "900"
+      CALCULATION_RULE_CACHE_TTL_SECONDS: "3600"
+      CALCULATION_PERFORMANCE_THREAD_POOL_SIZE: "10"
+      CALCULATION_PERFORMANCE_QUEUE_CAPACITY: "500"
+  workflow:
+    enabled: true
+    data:
+      WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED: "true"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY: "50000"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MIN_INVENTORY_RATIO: "2.0"
+      WORKFLOW_LOCATE_MANUAL_REVIEW_TIMEOUT_MINUTES: "30"
+      WORKFLOW_LOCATE_PERFORMANCE_THREAD_POOL_SIZE: "10"
+      WORKFLOW_LOCATE_PERFORMANCE_QUEUE_CAPACITY: "100"
+      WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS: "200"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_THREAD_POOL_SIZE: "10"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_QUEUE_CAPACITY: "100"
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_DEFAULT_REPLENISH_RATE: "500"
+      RATE_LIMIT_DEFAULT_BURST_CAPACITY: "1000"
+      RATE_LIMIT_CRITICAL_REPLENISH_RATE: "5000"
+      RATE_LIMIT_CRITICAL_BURST_CAPACITY: "10000"
+  websocket:
+    enabled: true
+    data:
+      WEBSOCKET_MAX_TEXT_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_BINARY_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_FRAME_SIZE: "65536"
+      WEBSOCKET_IDLE_TIMEOUT: "300000"
+      WEBSOCKET_MAX_SESSIONS_PER_USER: "5"
+  monitoring:
+    enabled: true
+    data:
+      MONITORING_HEALTH_CHECK_INTERVAL_SECONDS: "30"
+      MONITORING_METRICS_RETENTION_DAYS: "14"
+      MONITORING_ALERT_ENABLED: "true"
+      MONITORING_ALERT_RECIPIENTS: staging-ops@example.com,staging-alerts@example.com
+  auth:
+    enabled: true
+    data:
+      AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS: "3600"
+      AUTH_TOKEN_REFRESH_TOKEN_VALIDITY_SECONDS: "86400"
+      AUTH_PASSWORD_POLICY_MIN_LENGTH: "12"
+      AUTH_PASSWORD_POLICY_REQUIRE_SPECIAL_CHAR: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_DIGIT: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_UPPERCASE: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_LOWERCASE: "true"
+      AUTH_PASSWORD_POLICY_MAX_AGE_DAYS: "90"
+      AUTH_PASSWORD_POLICY_HISTORY_COUNT: "12"
+      AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS: "5"
+      AUTH_ACCOUNT_LOCKOUT_DURATION_MINUTES: "30"
+      AUTH_MFA_ENABLED: "true"
+      AUTH_MFA_METHODS: "totp,sms"
+
+# Secret configurations for staging environment
+secrets:
+  common:
+    enabled: true
+    data:
+      JWT_SECRET: ""
+      ENCRYPTION_KEY: ""
+  dataIngestion:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      REUTERS_API_KEY: ""
+      REUTERS_API_SECRET: ""
+      BLOOMBERG_API_KEY: ""
+      BLOOMBERG_API_SECRET: ""
+      MARKIT_API_KEY: ""
+      MARKIT_API_SECRET: ""
+      ULTUMUS_API_KEY: ""
+      ULTUMUS_API_SECRET: ""
+      RIMES_API_KEY: ""
+      RIMES_API_SECRET: ""
+  calculation:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      HAZELCAST_CLUSTER_PASSWORD: ""
+      REDIS_PASSWORD: ""
+  workflow:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      CAMUNDA_ADMIN_PASSWORD: ""
+      NOTIFICATION_SERVICE_API_KEY: ""
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_REDIS_PASSWORD: ""
+  websocket:
+    enabled: true
+    data:
+      REDIS_PASSWORD: ""
+  monitoring:
+    enabled: true
+    data:
+      ALERT_SMTP_PASSWORD: ""
+      PAGERDUTY_API_KEY: ""
+      SLACK_WEBHOOK_URL: ""
+  auth:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET: ""
+      AUTH_SMS_PROVIDER_API_KEY: ""
+      AUTH_EMAIL_PROVIDER_API_KEY: ""
+
+# Horizontal Pod Autoscaler configurations for staging environment
+horizontalPodAutoscaler:
+  dataIngestion:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  calculation:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  workflow:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  apiGateway:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  websocket:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  auth:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget configurations for staging environment
+podDisruptionBudget:
+  dataIngestion:
+    enabled: true
+    minAvailable: 1
+  calculation:
+    enabled: true
+    minAvailable: 2
+  workflow:
+    enabled: true
+    minAvailable: 1
+  apiGateway:
+    enabled: true
+    minAvailable: 1
+  websocket:
+    enabled: true
+    minAvailable: 1
+  auth:
+    enabled: true
+    minAvailable: 1
+
+# Persistence configurations for staging environment
+persistence:
+  enabled: true
+  storageClass: standard
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# PostgreSQL database configurations for staging environment
+postgresql:
+  enabled: true
+  auth:
+    username: ims_app
+    password: ""
+    database: ims_db
+    postgresPassword: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+  readReplicas:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+# Redis cache configurations for staging environment
+redis:
+  enabled: true
+  auth:
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+  replica:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+# Kafka message broker configurations for staging environment
+kafka:
+  enabled: true
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  persistence:
+    enabled: true
+    size: 50Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+  externalAccess:
+    enabled: false
+  metrics:
+    jmx:
+      enabled: true
+    kafka:
+      enabled: true
+
+# TimescaleDB time-series database configurations for staging environment
+timescaledb:
+  enabled: true
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  persistence:
+    enabled: true
+    size: 50Gi
+  credentials:
+    username: ims_app
+    password: ""
+
+# Elasticsearch search engine configurations for staging environment
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 3
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    persistence:
+      enabled: true
+      size: 10Gi
+  data:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    persistence:
+      enabled: true
+      size: 50Gi
+  coordinating:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+  security:
+    enabled: true
+    elasticPassword: ""
+
+# Prometheus monitoring configurations for staging environment
+prometheus:
+  enabled: true
+  server:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    persistentVolume:
+      enabled: true
+      size: 20Gi
+    retention: "14d"
+  alertmanager:
+    enabled: true
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: 512Mi
+      limits:
+        cpu: "0.5"
+        memory: 1Gi
+    persistentVolume:
+      enabled: true
+      size: 5Gi
+  nodeExporter:
+    enabled: true
+  pushgateway:
+    enabled: true
+  serviceMonitors:
+    enabled: true
+
+# Grafana visualization configurations for staging environment
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: "0.3"
+      memory: 512Mi
+    limits:
+      cpu: "0.5"
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 5Gi
+  adminPassword: ""
