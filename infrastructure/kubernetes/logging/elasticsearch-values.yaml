@@ -1,0 +1,436 @@
+# Values for Elasticsearch Helm chart
+# This configuration sets up a production-grade Elasticsearch cluster for the
+# Inventory Management System with master, data, and client nodes.
+
+# Cluster configuration
+clusterName: ims-elasticsearch
+nodeGroup: master
+masterService:
+  name: ims-elasticsearch-master
+
+# Node roles
+roles:
+  master: "true"
+  ingest: "false"
+  data: "false"
+
+# Cluster sizing
+replicas: 3
+minimumMasterNodes: 2
+esMajorVersion: 7
+clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+
+# Docker image
+image:
+  repository: docker.elastic.co/elasticsearch/elasticsearch
+  tag: 7.17.3
+  pullPolicy: IfNotPresent
+
+# JVM configuration
+esJavaOpts: "-Xmx1g -Xms1g"
+
+# Resources
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+# Prioritize Elasticsearch pods
+priorityClassName: high-priority
+
+# Storage configuration
+volumeClaimTemplate:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: standard-rwo
+
+# RBAC
+rbac:
+  create: true
+
+# Security contexts
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+
+securityContext:
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Pod placement
+antiAffinity: hard
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+
+nodeSelector:
+  role: logging
+
+tolerations:
+- key: dedicated
+  operator: Equal
+  value: logging
+  effect: NoSchedule
+
+# Ingress
+ingress:
+  enabled: false
+
+# Service
+service:
+  type: ClusterIP
+  annotations: {}
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+
+podManagementPolicy: Parallel
+
+# Network configuration
+protocol: https
+httpPort: 9200
+transportPort: 9300
+
+# High availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+maxUnavailable: 1
+
+persistence:
+  enabled: true
+
+# Environment variables
+extraEnvs:
+- name: ELASTIC_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: ims-elasticsearch-credentials
+      key: password
+- name: ELASTIC_USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: ims-elasticsearch-credentials
+      key: username
+
+# Additional volumes
+extraVolumes:
+- name: elasticsearch-config
+  configMap:
+    name: ims-elasticsearch-config
+    defaultMode: 420
+
+extraVolumeMounts:
+- name: elasticsearch-config
+  mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+  subPath: elasticsearch.yml
+  readOnly: true
+
+# Init containers
+extraInitContainers:
+- name: sysctl
+  image: busybox:1.34.1
+  command: ['sysctl', '-w', 'vm.max_map_count=262144']
+  securityContext:
+    privileged: true
+
+secretMounts: []
+
+# Health checks
+readinessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  exec:
+    command:
+    - sh
+    - -c
+    - curl -s --cacert /usr/share/elasticsearch/config/certs/ca.crt https://localhost:9200/_cluster/health?local=true | grep -v '"status":"red"'
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  exec:
+    command:
+    - sh
+    - -c
+    - curl -s --cacert /usr/share/elasticsearch/config/certs/ca.crt https://localhost:9200/_cluster/health?local=true | grep -v '"status":"red"'
+
+# Elasticsearch configuration
+esConfig:
+  elasticsearch.yml: |
+    cluster.name: ${CLUSTER_NAME}
+    node.name: ${NODE_NAME}
+    network.host: 0.0.0.0
+    discovery.seed_hosts: ${DISCOVERY_SERVICE}
+    cluster.initial_master_nodes: ${MASTER_NODES}
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.transport.ssl.verification_mode: certificate
+    xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+    xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+    xpack.security.http.ssl.enabled: true
+    xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+    xpack.security.http.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+    xpack.monitoring.collection.enabled: true
+    bootstrap.memory_lock: true
+    indices.fielddata.cache.size: 20%
+    indices.queries.cache.size: 30%
+    indices.memory.index_buffer_size: 30%
+    thread_pool.write.queue_size: 1000
+    thread_pool.search.queue_size: 2000
+
+# Client node configuration
+client:
+  name: client
+  replicas: 2
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  heapSize: 1g
+  antiAffinity: soft
+  service:
+    name: ims-elasticsearch-client
+    type: ClusterIP
+    port: 9200
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9200"
+  ingress:
+    enabled: false
+  nodeSelector:
+    role: logging
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: logging
+    effect: NoSchedule
+  roles:
+    master: "false"
+    ingest: "true"
+    data: "false"
+
+# Data node configuration
+data:
+  name: data
+  replicas: 3
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  heapSize: 3g
+  antiAffinity: soft
+  persistence:
+    enabled: true
+    accessModes: ["ReadWriteOnce"]
+    size: 100Gi
+    storageClassName: standard-rwo
+  nodeSelector:
+    role: logging
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: logging
+    effect: NoSchedule
+  roles:
+    master: "false"
+    ingest: "false"
+    data: "true"
+
+# Master node configuration
+master:
+  name: master
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  heapSize: 1g
+  antiAffinity: hard
+  persistence:
+    enabled: true
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+    storageClassName: standard-rwo
+  nodeSelector:
+    role: logging
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: logging
+    effect: NoSchedule
+  roles:
+    master: "true"
+    ingest: "false"
+    data: "false"
+
+# Prometheus integration
+serviceMonitor:
+  enabled: true
+  labels:
+    app: ims
+    prometheus: ims
+  interval: 30s
+  scrapeTimeout: 10s
+  scheme: https
+  insecureSkipVerify: true
+  tlsConfig:
+    caFile: /etc/prometheus/secrets/elasticsearch-certs/ca.crt
+
+# Lifecycle hooks
+lifecycle:
+  postStart:
+    exec:
+      command:
+      - sh
+      - -c
+      - |
+        #!/bin/bash
+        sleep 30
+        if [[ "${NODE_NAME}" == "${CLUSTER_NAME}-master-0" ]]; then
+          curl -s -k -u "${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}" -X PUT "https://localhost:9200/_ilm/policy/logs-policy" -H 'Content-Type: application/json' -d'
+          {
+            "policy": {
+              "phases": {
+                "hot": {
+                  "min_age": "0ms",
+                  "actions": {
+                    "rollover": {
+                      "max_age": "1d",
+                      "max_size": "50gb"
+                    },
+                    "set_priority": {
+                      "priority": 100
+                    }
+                  }
+                },
+                "warm": {
+                  "min_age": "3d",
+                  "actions": {
+                    "shrink": {
+                      "number_of_shards": 1
+                    },
+                    "forcemerge": {
+                      "max_num_segments": 1
+                    },
+                    "set_priority": {
+                      "priority": 50
+                    }
+                  }
+                },
+                "cold": {
+                  "min_age": "30d",
+                  "actions": {
+                    "set_priority": {
+                      "priority": 0
+                    }
+                  }
+                },
+                "delete": {
+                  "min_age": "90d",
+                  "actions": {
+                    "delete": {}
+                  }
+                }
+              }
+            }
+          }'
+        fi
+
+# System tuning
+sysctlInitContainer:
+  enabled: true
+
+keystore: []
+
+# Network policies
+networkPolicy:
+  enabled: true
+  ingressNSMatchLabels:
+    app: ims
+  ingressNSPodMatchLabels:
+    app: ims
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9200"
+  prometheus.io/path: "/_prometheus/metrics"
+
+# Additional Kubernetes objects
+extraObjects:
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: ims-elasticsearch-credentials
+    namespace: logging
+  type: Opaque
+  data:
+    username: ${ELASTICSEARCH_USERNAME_BASE64}
+    password: ${ELASTICSEARCH_PASSWORD_BASE64}
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ims-elasticsearch-config
+    namespace: logging
+  data:
+    elasticsearch.yml: |
+      cluster.name: ims-elasticsearch
+      node.name: ${NODE_NAME}
+      network.host: 0.0.0.0
+      discovery.seed_hosts: ${DISCOVERY_SERVICE}
+      cluster.initial_master_nodes: ${MASTER_NODES}
+      xpack.security.enabled: true
+      xpack.security.transport.ssl.enabled: true
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      xpack.security.http.ssl.enabled: true
+      xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      xpack.security.http.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      xpack.monitoring.collection.enabled: true
+      bootstrap.memory_lock: true
+      indices.fielddata.cache.size: 20%
+      indices.queries.cache.size: 30%
+      indices.memory.index_buffer_size: 30%
+      thread_pool.write.queue_size: 1000
+      thread_pool.search.queue_size: 2000
