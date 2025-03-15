@@ -1,0 +1,1204 @@
+# Default values for the Inventory Management System (IMS) Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Global configuration values used across all services
+global:
+  environment: production
+  logLevel: INFO
+  domain: ims.example.com
+  region: us-east-1
+  clusterName: ims-cluster
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: ""
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ims-service-role
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+# Container security context
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+# Service definitions for all IMS microservices
+services:
+  dataIngestion:
+    enabled: true
+    name: data-ingestion-service
+    type: ClusterIP
+    port: 8081
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8081"
+  calculation:
+    enabled: true
+    name: calculation-service
+    type: ClusterIP
+    port: 8082
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8082"
+  workflow:
+    enabled: true
+    name: workflow-service
+    type: ClusterIP
+    port: 8083
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8083"
+  apiGateway:
+    enabled: true
+    name: api-gateway
+    type: ClusterIP
+    port: 8080
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8080"
+  websocket:
+    enabled: true
+    name: websocket-service
+    type: ClusterIP
+    port: 8085
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8085"
+    sessionAffinity: ClientIP
+    sessionAffinityConfig:
+      clientIP:
+        timeoutSeconds: 10800
+  monitoring:
+    enabled: true
+    name: monitoring-service
+    type: ClusterIP
+    port: 8086
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8086"
+  auth:
+    enabled: true
+    name: auth-service
+    type: ClusterIP
+    port: 8084
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8084"
+
+# Deployment configurations for each microservice
+deployments:
+  dataIngestion:
+    enabled: true
+    name: data-ingestion-service
+    image:
+      repository: ims-registry/data-ingestion-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: data-ingestion-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8081
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8081
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8081
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - data-ingestion-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+  calculation:
+    enabled: true
+    name: calculation-service
+    image:
+      repository: ims-registry/calculation-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: calculation-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8082
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8082
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8082
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - calculation-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+  workflow:
+    enabled: true
+    name: workflow-service
+    image:
+      repository: ims-registry/workflow-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: workflow-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8083
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8083
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8083
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - workflow-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+  apiGateway:
+    enabled: true
+    name: api-gateway
+    image:
+      repository: ims-registry/api-gateway
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: api-gateway-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - api-gateway
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+  websocket:
+    enabled: true
+    name: websocket-service
+    image:
+      repository: ims-registry/websocket-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: websocket-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8085
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8085
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8085
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - websocket-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+  monitoring:
+    enabled: true
+    name: monitoring-service
+    image:
+      repository: ims-registry/monitoring-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 2
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: monitoring-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8086
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8086
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: medium-priority
+
+  auth:
+    enabled: true
+    name: auth-service
+    image:
+      repository: ims-registry/auth-service
+      tag: ""
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "{{ .Values.global.environment }}"
+      - name: LOG_LEVEL
+        value: "{{ .Values.global.logLevel }}"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+      - name: tmp-volume
+        mountPath: /tmp
+    volumes:
+      - name: config-volume
+        configMap:
+          name: auth-configmap
+      - name: tmp-volume
+        emptyDir: {}
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8084
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8084
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8084
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 12
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - auth-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 60
+    priorityClassName: high-priority
+
+# Ingress configuration for external access
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: ims.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+        - path: /ws
+          pathType: Prefix
+          service: websocket-service
+          port: 8085
+  tls:
+    - secretName: ims-tls-cert
+      hosts:
+        - ims.example.com
+
+# ConfigMap definitions for all services
+configMaps:
+  common:
+    enabled: true
+    name: common-configmap
+    data:
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      KAFKA_BOOTSTRAP_SERVERS: kafka-headless.kafka.svc.cluster.local:9092
+      EUREKA_SERVICE_URL: http://ims-service-registry:8761/eureka/
+      SERVICE_DOMAIN: ims.svc.cluster.local
+      CORS_ALLOWED_ORIGINS: https://ims.example.com
+      JWT_ISSUER_URI: https://auth.ims.example.com/
+      JWT_AUDIENCE: ims-api
+
+  dataIngestion:
+    enabled: true
+    name: data-ingestion-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      DB_URL: jdbc:postgresql://ims-postgresql:5432/ims_db
+      DB_USERNAME: ims_app
+      KAFKA_GROUP_ID: data-ingestion-service
+      SERVER_PORT: "8081"
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      INGESTION_BATCH_MAX_BATCH_SIZE: "10000"
+      INGESTION_BATCH_PROCESSING_THREADS: "10"
+      INGESTION_BATCH_RETRY_ATTEMPTS: "3"
+      INGESTION_BATCH_RETRY_DELAY_MS: "1000"
+      INGESTION_VALIDATION_ENABLED: "true"
+      INGESTION_VALIDATION_STRICT_MODE: "true"
+      INGESTION_SCHEDULING_REFERENCE_DATA_UPDATE: "0 0 1 * * SUN"
+      INGESTION_SCHEDULING_MARKET_DATA_CLEANUP: "0 0 2 * * *"
+      INGESTION_SCHEDULING_HEALTH_CHECK: "0 */5 * * * *"
+      REUTERS_API_URL: https://api.reuters.com/data/v1
+      REUTERS_BATCH_PATH: /data/reference
+      BLOOMBERG_API_URL: https://api.bloomberg.com/data/v1
+      BLOOMBERG_BATCH_PATH: /data/reference
+      MARKIT_API_URL: https://api.markit.com/data/v1
+      MARKIT_BATCH_PATH: /data/reference
+      ULTUMUS_API_URL: https://api.ultumus.com/data/v1
+      ULTUMUS_BATCH_PATH: /data/reference
+      RIMES_API_URL: https://api.rimes.com/data/v1
+      RIMES_BATCH_PATH: /data/reference
+
+  calculation:
+    enabled: true
+    name: calculation-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      DB_URL: jdbc:postgresql://ims-postgresql:5432/ims_db
+      DB_USERNAME: ims_app
+      KAFKA_GROUP_ID: calculation-service
+      SERVER_PORT: "8082"
+      JAVA_OPTS: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      HAZELCAST_CLUSTER_NAME: ims-calculation-cluster
+      HAZELCAST_MULTICAST_ENABLED: "false"
+      HAZELCAST_TCP_IP_MEMBERS: calculation-service-0.calculation-service.ims.svc.cluster.local,calculation-service-1.calculation-service.ims.svc.cluster.local,calculation-service-2.calculation-service.ims.svc.cluster.local
+      KAFKA_TOPIC_POSITION_EVENT: position-events
+      KAFKA_TOPIC_INVENTORY_EVENT: inventory-events
+      KAFKA_TOPIC_MARKET_DATA_EVENT: market-data-events
+      KAFKA_TOPIC_WORKFLOW_EVENT: workflow-events
+      CALCULATION_POSITION_CACHE_ENABLED: "true"
+      CALCULATION_POSITION_CACHE_TTL_SECONDS: "3600"
+      CALCULATION_INVENTORY_CACHE_ENABLED: "true"
+      CALCULATION_INVENTORY_CACHE_TTL_SECONDS: "1800"
+      CALCULATION_LIMIT_CACHE_ENABLED: "true"
+      CALCULATION_LIMIT_CACHE_TTL_SECONDS: "1800"
+      CALCULATION_RULE_CACHE_ENABLED: "true"
+      CALCULATION_RULE_CACHE_TTL_SECONDS: "7200"
+      CALCULATION_PERFORMANCE_THREAD_POOL_SIZE: "20"
+      CALCULATION_PERFORMANCE_QUEUE_CAPACITY: "1000"
+
+  workflow:
+    enabled: true
+    name: workflow-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      DB_URL: jdbc:postgresql://ims-postgresql:5432/ims_db
+      DB_USERNAME: ims_app
+      KAFKA_GROUP_ID: workflow-service
+      SERVER_PORT: "8083"
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      CALCULATION_SERVICE_URL: http://calculation-service:8082
+      KAFKA_TOPIC_WORKFLOW_EVENT: workflow-events
+      KAFKA_TOPIC_LOCATE_EVENT: locate-events
+      KAFKA_TOPIC_INVENTORY_EVENT: inventory-events
+      KAFKA_TOPIC_LIMIT_EVENT: limit-events
+      CAMUNDA_ADMIN_USER: admin
+      WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED: "true"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY: "100000"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MIN_INVENTORY_RATIO: "2.0"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_EXPIRY_HOURS: "24"
+      WORKFLOW_LOCATE_MANUAL_REVIEW_TIMEOUT_MINUTES: "30"
+      WORKFLOW_LOCATE_MANUAL_REVIEW_NOTIFICATION_ENABLED: "true"
+      WORKFLOW_LOCATE_PERFORMANCE_THREAD_POOL_SIZE: "10"
+      WORKFLOW_LOCATE_PERFORMANCE_QUEUE_CAPACITY: "100"
+      WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS: "150"
+      WORKFLOW_SHORT_SELL_VALIDATION_CACHE_TTL_SECONDS: "300"
+      WORKFLOW_SHORT_SELL_VALIDATION_BATCH_SIZE: "100"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_THREAD_POOL_SIZE: "20"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_QUEUE_CAPACITY: "500"
+      WORKFLOW_SCHEDULING_CLEANUP_EXPIRED_LOCATES: "0 0 * * * *"
+      WORKFLOW_SCHEDULING_PROCESS_PENDING_VALIDATIONS: "0 */5 * * * *"
+      WORKFLOW_SCHEDULING_HEALTH_CHECK: "0 */5 * * * *"
+
+  apiGateway:
+    enabled: true
+    name: api-gateway-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      SERVER_PORT: "8080"
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      SPRING_CLOUD_GATEWAY_ROUTES_DATA_INGESTION_URI: http://data-ingestion-service:8081
+      SPRING_CLOUD_GATEWAY_ROUTES_CALCULATION_URI: http://calculation-service:8082
+      SPRING_CLOUD_GATEWAY_ROUTES_WORKFLOW_URI: http://workflow-service:8083
+      SPRING_CLOUD_GATEWAY_ROUTES_AUTH_URI: http://auth-service:8084
+      SPRING_CLOUD_GATEWAY_ROUTES_WEBSOCKET_URI: http://websocket-service:8085
+      SPRING_CLOUD_GATEWAY_ROUTES_MONITORING_URI: http://monitoring-service:8086
+      RATE_LIMIT_DEFAULT_REPLENISH_RATE: "1000"
+      RATE_LIMIT_DEFAULT_BURST_CAPACITY: "2000"
+      RATE_LIMIT_CRITICAL_REPLENISH_RATE: "10000"
+      RATE_LIMIT_CRITICAL_BURST_CAPACITY: "20000"
+
+  websocket:
+    enabled: true
+    name: websocket-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      KAFKA_GROUP_ID: websocket-service
+      SERVER_PORT: "8085"
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      WEBSOCKET_MAX_TEXT_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_BINARY_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_FRAME_SIZE: "65536"
+      WEBSOCKET_IDLE_TIMEOUT: "300000"
+      WEBSOCKET_MAX_SESSIONS_PER_USER: "5"
+      WEBSOCKET_POSITION_TOPIC: position-updates
+      WEBSOCKET_INVENTORY_TOPIC: inventory-updates
+      WEBSOCKET_LOCATE_TOPIC: locate-updates
+      WEBSOCKET_ALERT_TOPIC: alert-notifications
+
+  monitoring:
+    enabled: true
+    name: monitoring-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      SERVER_PORT: "8086"
+      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      MONITORING_HEALTH_CHECK_INTERVAL_SECONDS: "10"
+      MONITORING_METRICS_RETENTION_DAYS: "30"
+      MONITORING_ALERT_ENABLED: "true"
+      MONITORING_ALERT_RECIPIENTS: ops@example.com,alerts@example.com
+      MONITORING_SERVICES_DATA_INGESTION_URL: http://data-ingestion-service:8081
+      MONITORING_SERVICES_CALCULATION_URL: http://calculation-service:8082
+      MONITORING_SERVICES_WORKFLOW_URL: http://workflow-service:8083
+      MONITORING_SERVICES_AUTH_URL: http://auth-service:8084
+      MONITORING_SERVICES_WEBSOCKET_URL: http://websocket-service:8085
+      MONITORING_SERVICES_API_GATEWAY_URL: http://api-gateway:8080
+
+  auth:
+    enabled: true
+    name: auth-configmap
+    data:
+      SPRING_PROFILES_ACTIVE: "{{ .Values.global.environment }}"
+      DB_URL: jdbc:postgresql://ims-postgresql:5432/ims_db
+      DB_USERNAME: ims_app
+      SERVER_PORT: "8084"
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS: "3600"
+      AUTH_TOKEN_REFRESH_TOKEN_VALIDITY_SECONDS: "86400"
+      AUTH_OAUTH2_PROVIDER_OKTA_ENABLED: "true"
+      AUTH_OAUTH2_PROVIDER_OKTA_ISSUER_URI: "https://example.okta.com/oauth2/default"
+      AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_ID: "ims-client-id"
+      AUTH_PASSWORD_POLICY_MIN_LENGTH: "12"
+      AUTH_PASSWORD_POLICY_REQUIRE_SPECIAL_CHAR: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_DIGIT: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_UPPERCASE: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_LOWERCASE: "true"
+      AUTH_PASSWORD_POLICY_MAX_AGE_DAYS: "90"
+      AUTH_PASSWORD_POLICY_HISTORY_COUNT: "24"
+      AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS: "5"
+      AUTH_ACCOUNT_LOCKOUT_DURATION_MINUTES: "30"
+      AUTH_MFA_ENABLED: "true"
+      AUTH_MFA_METHODS: "totp,push,sms"
+
+# Secret templates for sensitive data
+secrets:
+  common:
+    enabled: true
+    name: common-secrets
+    data:
+      JWT_SECRET: ""
+      ENCRYPTION_KEY: ""
+
+  dataIngestion:
+    enabled: true
+    name: data-ingestion-secrets
+    data:
+      DB_PASSWORD: ""
+      REUTERS_API_KEY: ""
+      REUTERS_API_SECRET: ""
+      BLOOMBERG_API_KEY: ""
+      BLOOMBERG_API_SECRET: ""
+      MARKIT_API_KEY: ""
+      MARKIT_API_SECRET: ""
+      ULTUMUS_API_KEY: ""
+      ULTUMUS_API_SECRET: ""
+      RIMES_API_KEY: ""
+      RIMES_API_SECRET: ""
+
+  calculation:
+    enabled: true
+    name: calculation-secrets
+    data:
+      DB_PASSWORD: ""
+      HAZELCAST_CLUSTER_PASSWORD: ""
+      REDIS_PASSWORD: ""
+
+  workflow:
+    enabled: true
+    name: workflow-secrets
+    data:
+      DB_PASSWORD: ""
+      CAMUNDA_ADMIN_PASSWORD: ""
+      NOTIFICATION_SERVICE_API_KEY: ""
+
+  apiGateway:
+    enabled: true
+    name: api-gateway-secrets
+    data:
+      RATE_LIMIT_REDIS_PASSWORD: ""
+
+  websocket:
+    enabled: true
+    name: websocket-secrets
+    data:
+      REDIS_PASSWORD: ""
+
+  monitoring:
+    enabled: true
+    name: monitoring-secrets
+    data:
+      ALERT_SMTP_PASSWORD: ""
+      PAGERDUTY_API_KEY: ""
+      SLACK_WEBHOOK_URL: ""
+
+  auth:
+    enabled: true
+    name: auth-secrets
+    data:
+      DB_PASSWORD: ""
+      AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET: ""
+      AUTH_SMS_PROVIDER_API_KEY: ""
+      AUTH_EMAIL_PROVIDER_API_KEY: ""
+
+# Horizontal Pod Autoscaler configuration for each service
+horizontalPodAutoscaler:
+  dataIngestion:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  calculation:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  workflow:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  apiGateway:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  websocket:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  auth:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+# Pod Disruption Budget configuration for high availability
+podDisruptionBudget:
+  dataIngestion:
+    enabled: true
+    minAvailable: 2
+
+  calculation:
+    enabled: true
+    minAvailable: 3
+
+  workflow:
+    enabled: true
+    minAvailable: 2
+
+  apiGateway:
+    enabled: true
+    minAvailable: 2
+
+  websocket:
+    enabled: true
+    minAvailable: 2
+
+  auth:
+    enabled: true
+    minAvailable: 2
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: standard
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# PostgreSQL dependency configuration
+postgresql:
+  enabled: true
+  auth:
+    username: ims_app
+    password: ""
+    database: ims_db
+    postgresPassword: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+  readReplicas:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+# Redis dependency configuration
+redis:
+  enabled: true
+  auth:
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+# Kafka dependency configuration
+kafka:
+  enabled: true
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "2"
+      memory: 4Gi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+  persistence:
+    enabled: true
+    size: 100Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+  externalAccess:
+    enabled: false
+  metrics:
+    jmx:
+      enabled: true
+    kafka:
+      enabled: true
+
+# TimescaleDB configuration for time-series data
+timescaledb:
+  enabled: true
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "2"
+      memory: 4Gi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+  persistence:
+    enabled: true
+    size: 100Gi
+  credentials:
+    username: ims_app
+    password: ""
+
+# Elasticsearch configuration for log storage and search
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 3
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    persistence:
+      enabled: true
+      size: 10Gi
+  data:
+    replicaCount: 3
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+    persistence:
+      enabled: true
+      size: 100Gi
+  coordinating:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+  security:
+    enabled: true
+    elasticPassword: ""
+
+# Prometheus configuration for metrics collection
+prometheus:
+  enabled: true
+  server:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+  alertmanager:
+    enabled: true
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    persistentVolume:
+      enabled: true
+      size: 5Gi
+  nodeExporter:
+    enabled: true
+  pushgateway:
+    enabled: true
+  serviceMonitors:
+    enabled: true
+
+# Grafana configuration for metrics visualization
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 5Gi
+  adminPassword: ""
