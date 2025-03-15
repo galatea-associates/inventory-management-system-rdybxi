@@ -1,0 +1,464 @@
+package com.primerbroker.ims.model;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+
+/**
+ * Entity representing an inventory record in the Inventory Management System.
+ * This class models various types of inventory calculations for securities
+ * including for loan, for pledge, locate availability, and short sell availability.
+ */
+@Entity
+@Table(name = "inventory", indexes = {
+    @Index(name = "idx_inventory_security_id", columnList = "security_internal_id"),
+    @Index(name = "idx_inventory_counterparty_id", columnList = "counterparty_id"),
+    @Index(name = "idx_inventory_business_date", columnList = "business_date"),
+    @Index(name = "idx_inventory_calculation_type", columnList = "calculation_type"),
+    @Index(name = "idx_inventory_market", columnList = "market"),
+    @Index(name = "idx_inventory_aggregation_unit", columnList = "aggregation_unit_id")
+})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Inventory {
+
+    /**
+     * Unique identifier for the inventory record
+     */
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    /**
+     * Security associated with this inventory record
+     */
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "internalId", column = @Column(name = "security_internal_id"))
+    })
+    @NotNull
+    private Security security;
+
+    /**
+     * Counterparty associated with this inventory record
+     */
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "counterpartyId", column = @Column(name = "counterparty_id"))
+    })
+    @NotNull
+    private Counterparty counterparty;
+
+    /**
+     * Aggregation unit for regulatory reporting
+     */
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "id", column = @Column(name = "aggregation_unit_id")),
+        @AttributeOverride(name = "name", column = @Column(name = "aggregation_unit_name")),
+        @AttributeOverride(name = "market", column = @Column(name = "aggregation_unit_market"))
+    })
+    @NotNull
+    private AggregationUnit aggregationUnit;
+
+    /**
+     * Business date for this inventory record
+     */
+    @Column(name = "business_date")
+    @NotNull
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate businessDate;
+
+    /**
+     * Type of inventory calculation
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "calculation_type")
+    @NotNull
+    private CalculationType calculationType;
+
+    /**
+     * Gross quantity of the security
+     */
+    @Column(name = "gross_quantity")
+    @NotNull
+    @PositiveOrZero
+    private long grossQuantity;
+
+    /**
+     * Net quantity after considering various adjustments
+     */
+    @Column(name = "net_quantity")
+    @NotNull
+    private long netQuantity;
+
+    /**
+     * Quantity available for operations such as lending or pledging
+     */
+    @Column(name = "available_quantity")
+    @NotNull
+    @PositiveOrZero
+    private long availableQuantity;
+
+    /**
+     * Quantity reserved and not available for operations
+     */
+    @Column(name = "reserved_quantity")
+    @NotNull
+    @PositiveOrZero
+    private long reservedQuantity;
+
+    /**
+     * Decrement quantity for locate approvals
+     */
+    @Column(name = "decrement_quantity")
+    @NotNull
+    @PositiveOrZero
+    private long decrementQuantity;
+
+    /**
+     * Market identifier
+     */
+    @Column(name = "market")
+    @NotBlank
+    private String market;
+
+    /**
+     * Indicates how difficult the security is to borrow
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_temperature")
+    @NotNull
+    private SecurityTemperature securityTemperature;
+
+    /**
+     * Rate associated with borrowing this security
+     */
+    @Column(name = "borrow_rate", precision = 10, scale = 4)
+    @NotNull
+    @PositiveOrZero
+    private BigDecimal borrowRate;
+
+    /**
+     * Identifier of the calculation rule used
+     */
+    @Column(name = "calculation_rule_id")
+    @NotBlank
+    private String calculationRuleId;
+
+    /**
+     * Version of the calculation rule used
+     */
+    @Column(name = "calculation_rule_version")
+    @NotBlank
+    private String calculationRuleVersion;
+
+    /**
+     * Indicates if the inventory source is external
+     */
+    @Column(name = "is_external_source")
+    @NotNull
+    private boolean isExternalSource;
+
+    /**
+     * Name of external source if applicable
+     */
+    @Column(name = "external_source_name")
+    private String externalSourceName;
+
+    /**
+     * Current status of the inventory record
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    @NotNull
+    private InventoryStatus status;
+
+    /**
+     * User or system that created this record
+     */
+    @Column(name = "created_by")
+    @NotBlank
+    private String createdBy;
+
+    /**
+     * Timestamp when this record was created
+     */
+    @Column(name = "created_at")
+    @CreationTimestamp
+    @NotNull
+    @PastOrPresent
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private ZonedDateTime createdAt;
+
+    /**
+     * User or system that last modified this record
+     */
+    @Column(name = "last_modified_by")
+    @NotBlank
+    private String lastModifiedBy;
+
+    /**
+     * Timestamp when this record was last modified
+     */
+    @Column(name = "last_modified_at")
+    @UpdateTimestamp
+    @NotNull
+    @PastOrPresent
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private ZonedDateTime lastModifiedAt;
+
+    /**
+     * Version for optimistic locking
+     */
+    @Version
+    @Column(name = "version")
+    @NotNull
+    @PositiveOrZero
+    private long version;
+
+    /**
+     * Types of inventory calculations
+     */
+    public enum CalculationType {
+        /**
+         * Calculation for securities available for lending
+         */
+        FOR_LOAN,
+        
+        /**
+         * Calculation for securities available for pledging
+         */
+        FOR_PLEDGE,
+        
+        /**
+         * Calculation for locate availability
+         */
+        LOCATE,
+        
+        /**
+         * Calculation for short sell availability
+         */
+        SHORT_SELL,
+        
+        /**
+         * Calculation for identifying overborrows
+         */
+        OVERBORROW
+    }
+
+    /**
+     * Possible statuses for inventory records
+     */
+    public enum InventoryStatus {
+        /**
+         * Record is active and valid
+         */
+        ACTIVE,
+        
+        /**
+         * Record is inactive
+         */
+        INACTIVE,
+        
+        /**
+         * Record is pending activation
+         */
+        PENDING,
+        
+        /**
+         * Record has been cancelled
+         */
+        CANCELLED
+    }
+
+    /**
+     * Classification of securities based on borrowing difficulty
+     */
+    public enum SecurityTemperature {
+        /**
+         * General Collateral - easy to borrow
+         */
+        GC,
+        
+        /**
+         * Hard to Borrow - difficult to borrow, typically with higher fees
+         */
+        HTB
+    }
+
+    /**
+     * Security information
+     */
+    @Embeddable
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Security {
+        /**
+         * Internal identifier for the security
+         */
+        @Column(name = "security_internal_id")
+        @NotBlank
+        private String internalId;
+    }
+
+    /**
+     * Counterparty information
+     */
+    @Embeddable
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Counterparty {
+        /**
+         * Identifier for the counterparty
+         */
+        @Column(name = "counterparty_id")
+        @NotBlank
+        private String counterpartyId;
+    }
+
+    /**
+     * Aggregation unit information for regulatory reporting
+     */
+    @Embeddable
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AggregationUnit {
+        /**
+         * Identifier for the aggregation unit
+         */
+        @Column(name = "aggregation_unit_id")
+        @NotBlank
+        private String id;
+        
+        /**
+         * Name of the aggregation unit
+         */
+        @Column(name = "aggregation_unit_name")
+        @NotBlank
+        private String name;
+        
+        /**
+         * Market associated with the aggregation unit
+         */
+        @Column(name = "aggregation_unit_market")
+        @NotBlank
+        private String market;
+    }
+    
+    /**
+     * Calculate total quantity that is not available.
+     * This is the sum of reserved quantity and decrement quantity.
+     *
+     * @return total quantity that is not available
+     */
+    @Transient
+    public long getUnavailableQuantity() {
+        return reservedQuantity + decrementQuantity;
+    }
+    
+    /**
+     * Check if this inventory has any available quantity.
+     *
+     * @return true if available quantity is greater than zero
+     */
+    @Transient
+    public boolean hasAvailability() {
+        return availableQuantity > 0;
+    }
+    
+    /**
+     * Check if this is a hard-to-borrow security.
+     *
+     * @return true if the security temperature is HTB
+     */
+    @Transient
+    public boolean isHardToBorrow() {
+        return securityTemperature == SecurityTemperature.HTB;
+    }
+    
+    /**
+     * Check if this inventory record is from an external source.
+     *
+     * @return true if this is from an external source
+     */
+    @Transient
+    public boolean isExternal() {
+        return isExternalSource;
+    }
+    
+    /**
+     * Calculate utilization percentage of this inventory.
+     * This is the percentage of gross quantity that is unavailable.
+     *
+     * @return utilization percentage as a decimal between 0 and 1
+     */
+    @Transient
+    public double getUtilizationPercentage() {
+        if (grossQuantity == 0) {
+            return 0.0;
+        }
+        return (double) (grossQuantity - availableQuantity) / grossQuantity;
+    }
+    
+    /**
+     * Creates a copy of this inventory record with updated quantities.
+     * This is useful for creating new versions with modified availability.
+     *
+     * @param newAvailableQty the new available quantity
+     * @param newReservedQty the new reserved quantity
+     * @param newDecrementQty the new decrement quantity
+     * @return a new Inventory instance with updated quantities
+     */
+    public Inventory withUpdatedQuantities(long newAvailableQty, long newReservedQty, long newDecrementQty) {
+        return Inventory.builder()
+                .id(this.id)
+                .security(this.security)
+                .counterparty(this.counterparty)
+                .aggregationUnit(this.aggregationUnit)
+                .businessDate(this.businessDate)
+                .calculationType(this.calculationType)
+                .grossQuantity(this.grossQuantity)
+                .netQuantity(this.netQuantity)
+                .availableQuantity(newAvailableQty)
+                .reservedQuantity(newReservedQty)
+                .decrementQuantity(newDecrementQty)
+                .market(this.market)
+                .securityTemperature(this.securityTemperature)
+                .borrowRate(this.borrowRate)
+                .calculationRuleId(this.calculationRuleId)
+                .calculationRuleVersion(this.calculationRuleVersion)
+                .isExternalSource(this.isExternalSource)
+                .externalSourceName(this.externalSourceName)
+                .status(this.status)
+                .createdBy(this.createdBy)
+                .createdAt(this.createdAt)
+                .lastModifiedBy(this.lastModifiedBy)
+                .lastModifiedAt(this.lastModifiedAt)
+                .version(this.version)
+                .build();
+    }
+}
