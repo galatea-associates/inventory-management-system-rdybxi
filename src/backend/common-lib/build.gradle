@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'io.freefair.lombok' version '8.0.1'
+}
+
+group = 'com.ims.common'
+version = '0.1.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Built-By': System.properties['user.name'],
+            'Built-Date': new Date(),
+            'Built-JDK': System.properties['java.version']
+        )
+    }
+    archiveBaseName = 'common-lib'
+}
+
+dependencies {
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'com.google.guava:guava:31.1-jre'
+    
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.1'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+javadoc {
+    options {
+        title = "IMS Common Library API"
+        windowTitle = "IMS Common Library API"
+        memberLevel = JavadocMemberLevel.PROTECTED
+        
+        links "https://docs.oracle.com/en/java/javase/17/docs/api/"
+        links "https://docs.spring.io/spring-framework/docs/current/javadoc-api/"
+        links "https://fasterxml.github.io/jackson-databind/javadoc/2.15/"
+    }
+}
