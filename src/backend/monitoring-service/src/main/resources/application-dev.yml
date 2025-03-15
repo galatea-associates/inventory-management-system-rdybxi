@@ -1,0 +1,198 @@
+# Development environment configuration for the Monitoring Service
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ims_monitoring_dev
+    username: ims_dev
+    password: ims_dev_password
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+  redis:
+    host: localhost
+    port: 6379
+    password: ''
+
+server:
+  port: 8085
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+  file:
+    name: logs/monitoring-service-dev.log
+
+monitoring:
+  metrics:
+    system:
+      collection-rate: 30000
+      retention-days: 7
+    application:
+      collection-rate: 30000
+      retention-days: 7
+    business:
+      collection-rate: 60000
+      retention-days: 14
+    database:
+      collection-rate: 60000
+      retention-days: 7
+    integration:
+      collection-rate: 60000
+      retention-days: 7
+    threshold-check-rate: 120000
+  health:
+    check-rate: 60000
+    service-timeout: 10000
+    dependency-timeout: 10000
+  alerts:
+    processing-rate: 120000
+    metric-check-rate: 120000
+    health-check-rate: 120000
+    retention:
+      active-days: 7
+      resolved-days: 14
+      archived-days: 30
+    notification:
+      channels:
+        email:
+          enabled: true
+          recipients: dev-team@example.com
+          critical-recipients: dev-oncall@example.com
+        slack:
+          enabled: true
+          webhook-url: https://hooks.slack.com/services/dev/webhook/url
+          channel: '#monitoring-dev'
+        pagerduty:
+          enabled: false
+          service-key: dev-service-key
+  services:
+    - id: data-ingestion-service
+      name: Data Ingestion Service
+      url: http://localhost:8081/actuator/health
+      critical: true
+    - id: calculation-service
+      name: Calculation Service
+      url: http://localhost:8082/actuator/health
+      critical: true
+    - id: workflow-service
+      name: Workflow Service
+      url: http://localhost:8083/actuator/health
+      critical: true
+    - id: api-gateway
+      name: API Gateway
+      url: http://localhost:8080/actuator/health
+      critical: true
+    - id: websocket-service
+      name: WebSocket Service
+      url: http://localhost:8084/actuator/health
+      critical: false
+    - id: auth-service
+      name: Authentication Service
+      url: http://localhost:8086/actuator/health
+      critical: true
+  dependencies:
+    databases:
+      - name: PostgreSQL
+        url: jdbc:postgresql://localhost:5432/ims_monitoring_dev
+        username: ims_dev
+        password: ims_dev_password
+        driver-class-name: org.postgresql.Driver
+        query: SELECT 1
+    message-brokers:
+      - name: Kafka
+        bootstrap-servers: localhost:9092
+    caches:
+      - name: Redis
+        host: localhost
+        port: 6379
+    external-services:
+      - name: Auth Server
+        url: http://localhost:8086/auth/realms/ims/.well-known/openid-configuration
+        timeout: 10000
+  thresholds:
+    system:
+      cpu.usage:
+        warning: 80
+        critical: 90
+        duration: 300
+      memory.usage:
+        warning: 80
+        critical: 90
+        duration: 300
+      disk.usage:
+        warning: 80
+        critical: 90
+        duration: 300
+    application:
+      response.time:
+        warning: 1000
+        critical: 2000
+        duration: 300
+      error.rate:
+        warning: 5
+        critical: 10
+        duration: 300
+      request.rate:
+        warning: 1000
+        critical: 2000
+        duration: 300
+    business:
+      event.processing.latency:
+        warning: 300
+        critical: 500
+        duration: 300
+      calculation.time:
+        warning: 300
+        critical: 500
+        duration: 300
+      locate.approval.time:
+        warning: 5000
+        critical: 10000
+        duration: 300
+      short.sell.validation.time:
+        warning: 200
+        critical: 300
+        duration: 300
+    database:
+      connection.usage:
+        warning: 80
+        critical: 90
+        duration: 300
+      query.time:
+        warning: 500
+        critical: 1000
+        duration: 300
+    integration:
+      api.response.time:
+        warning: 1000
+        critical: 2000
+        duration: 300
+      api.error.rate:
+        warning: 5
+        critical: 10
+        duration: 300
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
