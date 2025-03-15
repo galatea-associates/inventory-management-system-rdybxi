@@ -1,0 +1,68 @@
+*.class
+build/
+*/build/
+out/
+*/out/
+target/
+*/target/
+
+# Gradle specific
+.gradle/
+*/.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# IntelliJ IDEA specific
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse specific
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code specific
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# Environment specific files
+*.env
+application-local.yml
+application-local.properties
+
+# Generated files
+generated/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+docker/volumes/
+
+# Test reports
+test-results/
+reports/
+
+# Sensitive information
+*.pem
+*.key
+*.p12
+*.jks
+
+# Node modules (for any frontend dependencies in backend)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
