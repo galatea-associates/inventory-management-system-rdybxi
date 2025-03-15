@@ -1,0 +1,341 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+      branches: ['main']
+  pull_request:
+    branches: ['main', 'develop']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to scan'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      scan_type:
+        description: 'Type of security scan to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sast
+          - dast
+          - sca
+          - container
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.10'
+  ZAP_VERSION: '2.12.0'
+  TRIVY_VERSION: '0.38.0'
+  SEVERITY_THRESHOLD: 'HIGH'
+
+jobs:
+  static-analysis:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'sast' || github.event_name != 'workflow_dispatch' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java, javascript, python
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Build Java code for analysis
+        working-directory: ./src/backend
+        run: ./gradlew compileJava compileTestJava
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'src/web/package-lock.json'
+
+      - name: Install frontend dependencies
+        working-directory: ./src/web
+        run: npm ci
+
+      - name: Run ESLint security plugin
+        working-directory: ./src/web
+        run: npm run lint:security
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Run SpotBugs security checks
+        working-directory: ./src/backend
+        run: ./gradlew spotbugsMain
+
+      - name: Upload static analysis results
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-analysis-results
+          path: |
+            src/backend/**/build/reports/spotbugs/**
+            src/web/eslint-report.json
+            results/codeql-results.sarif
+
+  dependency-check:
+    name: Software Composition Analysis
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'sca' || github.event_name != 'workflow_dispatch' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Make dependency check script executable
+        run: chmod +x src/test/security/owasp-dependency-check/run.sh
+
+      - name: Run OWASP Dependency Check for backend
+        run: src/test/security/owasp-dependency-check/run.sh -p src/backend -o build/reports/dependency-check -s src/test/security/owasp-dependency-check/suppressions.xml -f HTML,JSON,XML -t HIGH
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'src/web/package-lock.json'
+
+      - name: Install frontend dependencies
+        working-directory: ./src/web
+        run: npm ci
+
+      - name: Run npm audit for frontend
+        working-directory: ./src/web
+        run: "npm audit --json > npm-audit.json || echo 'Vulnerabilities found but continuing build'"
+
+      - name: Run Snyk for frontend
+        working-directory: ./src/web
+        run: "npx snyk test --json > snyk-report.json || echo 'Vulnerabilities found but continuing build'"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Upload dependency check results
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-results
+          path: |
+            build/reports/dependency-check/**
+            src/web/npm-audit.json
+            src/web/snyk-report.json
+
+      - name: Check for critical vulnerabilities
+        run: python src/test/security/scripts/check_vulnerabilities.py --owasp-report build/reports/dependency-check/dependency-check-report.json --npm-audit src/web/npm-audit.json --snyk-report src/web/snyk-report.json --severity ${{ env.SEVERITY_THRESHOLD }}
+        continue-on-error: true
+
+  container-scan:
+    name: Container Image Scanning
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'container' || github.event_name != 'workflow_dispatch' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/backend
+          push: false
+          tags: ims/backend:security-scan
+          load: true
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/web
+          push: false
+          tags: ims/frontend:security-scan
+          load: true
+
+      - name: Run Trivy vulnerability scanner for backend image
+        uses: aquasecurity/trivy-action@0.10.0
+        with:
+          image-ref: 'ims/backend:security-scan'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Run Trivy vulnerability scanner for frontend image
+        uses: aquasecurity/trivy-action@0.10.0
+        with:
+          image-ref: 'ims/frontend:security-scan'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-results
+          path: |
+            trivy-backend-results.sarif
+            trivy-frontend-results.sarif
+
+      - name: Check for critical container vulnerabilities
+        run: python src/test/security/scripts/check_container_vulnerabilities.py --backend-report trivy-backend-results.sarif --frontend-report trivy-frontend-results.sarif --severity ${{ env.SEVERITY_THRESHOLD }}
+        continue-on-error: true
+
+  api-scan:
+    name: API Security Testing
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'dast' || github.event_name == 'schedule' }}
+    needs: ['static-analysis', 'dependency-check']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Start backend services for testing
+        working-directory: ./src/backend
+        run: "./gradlew bootRun --args='--spring.profiles.active=test' &"
+        env:
+          SPRING_DATASOURCE_URL: 'jdbc:h2:mem:testdb'
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: 'org.h2.Driver'
+          SPRING_DATASOURCE_USERNAME: 'sa'
+          SPRING_DATASOURCE_PASSWORD: 'password'
+
+      - name: Wait for services to start
+        run: sleep 60
+
+      - name: Run ZAP API scan
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: 'http://localhost:8080/api/v1'
+          rules_file_name: 'src/test/security/zap/rules.conf'
+          cmd_options: '-c src/test/security/zap/api-scan.yaml'
+
+      - name: Upload ZAP API scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-api-scan-results
+          path: 'zap-api-scan-results.json'
+
+      - name: Check for critical API vulnerabilities
+        run: python src/test/security/scripts/check_zap_results.py --report zap-api-scan-results.json --severity ${{ env.SEVERITY_THRESHOLD }}
+        continue-on-error: true
+
+  web-scan:
+    name: Web Application Security Testing
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'dast' || github.event_name == 'schedule' }}
+    needs: ['static-analysis', 'dependency-check']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'src/web/package-lock.json'
+
+      - name: Install frontend dependencies
+        working-directory: ./src/web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./src/web
+        run: npm run build
+
+      - name: Start frontend server
+        working-directory: ./src/web
+        run: npm run serve &
+
+      - name: Wait for services to start
+        run: sleep 30
+
+      - name: Run ZAP full scan
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: 'src/test/security/zap/rules.conf'
+          cmd_options: '-c src/test/security/zap/web-scan.yaml'
+
+      - name: Upload ZAP web scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-web-scan-results
+          path: 'zap-full-scan-results.json'
+
+      - name: Check for critical web vulnerabilities
+        run: python src/test/security/scripts/check_zap_results.py --report zap-full-scan-results.json --severity ${{ env.SEVERITY_THRESHOLD }}
+        continue-on-error: true
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: ['static-analysis', 'dependency-check', 'container-scan', 'api-scan', 'web-scan']
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install report generation dependencies
+        run: pip install pandas matplotlib jinja2 markdown pyyaml
+
+      - name: Download all scan results
+        uses: actions/download-artifact@v3
+        with:
+          path: security-results
+
+      - name: Generate consolidated security report
+        run: "python src/test/security/scripts/generate_security_report.py --input-dir security-results --output-file security-report.html --environment ${{ github.event.inputs.environment || 'development' }}"
+
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v3
+        with:
+          name: consolidated-security-report
+          path: security-report.html
+
+      - name: Check overall security status
+        run: python src/test/security/scripts/check_overall_security.py --input-dir security-results --severity ${{ env.SEVERITY_THRESHOLD }}
+        continue-on-error: true
+
+      - name: Send security report notification
+        if: "github.event_name == 'schedule'"
+        run: 'curl -X POST -H \'Content-type: application/json\' --data \'{"text":"📊 Weekly security scan completed for IMS. Report available at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}\' ${{ secrets.SLACK_WEBHOOK_URL }}'
