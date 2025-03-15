@@ -1,0 +1,505 @@
+# Prometheus values configuration for the Inventory Management System (IMS)
+# This file configures the Prometheus deployment for monitoring the IMS components
+# Package version: prometheus-community/kube-prometheus-stack v45.7.1
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    replicas: 2  # High availability with multiple replicas
+    podMetadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/part-of: ims
+    image:
+      repository: quay.io/prometheus/prometheus
+      tag: v2.44.0
+    retention: 15d  # Data retention period
+    retentionSize: 50GB  # Maximum storage size before data is removed
+    scrapeInterval: 15s  # How frequently to scrape targets
+    evaluationInterval: 15s  # How frequently to evaluate rules
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard-rwo
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+    externalUrl: https://prometheus.ims.example.com
+    enableAdminAPI: false
+    enableRemoteWriteReceiver: false
+    enableFeatures:
+      - exemplar-storage
+      - memory-snapshot-on-shutdown
+    walCompression: true
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
+    nodeSelector:
+      role: monitoring
+    tolerations:
+      - key: monitoring
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - prometheus
+              topologyKey: kubernetes.io/hostname
+    readinessProbe:
+      httpGet:
+        path: /-/ready
+        port: 9090
+      initialDelaySeconds: 30
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    livenessProbe:
+      httpGet:
+        path: /-/healthy
+        port: 9090
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      periodSeconds: 15
+      successThreshold: 1
+      failureThreshold: 3
+    additionalScrapeConfigs:
+      # Scrape cAdvisor metrics from Kubernetes nodes
+      - job_name: kubernetes-nodes-cadvisor
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      
+      # Slower scrape for some pods that have long processing time
+      - job_name: kubernetes-pods-slow
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape_slow]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+    
+    # Thanos integration for long-term storage
+    thanos:
+      image: quay.io/thanos/thanos:v0.31.0
+      objectStorageConfig:
+        key: thanos.yaml
+        name: thanos-objstore-config
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 200m
+          memory: 512Mi
+    
+    # Selectors for finding PrometheusRules, ServiceMonitors, etc.
+    ruleSelector:
+      matchLabels:
+        app: ims
+        prometheus: ims
+    serviceMonitorSelector:
+      matchLabels:
+        app: ims
+        prometheus: ims
+    podMonitorSelector:
+      matchLabels:
+        app: ims
+        prometheus: ims
+    probeSelector:
+      matchLabels:
+        app: ims
+        prometheus: ims
+    
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - namespace: monitoring
+          name: alertmanager-operated
+          port: web
+          pathPrefix: /
+  
+  # Ingress configuration for Prometheus
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    hosts:
+      - prometheus.ims.example.com
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.ims.example.com
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9090"
+  
+  # ServiceMonitor for Prometheus itself
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+    labels:
+      app: ims
+      prometheus: ims
+  
+  # ServiceAccount for Prometheus
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: prometheus-ims
+  
+  # Thanos service configuration
+  thanosService:
+    enabled: true
+    type: ClusterIP
+    port: 10901
+    targetPort: 10901
+    annotations: {}
+  
+  # ServiceMonitor for Thanos
+  thanosServiceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+    labels:
+      app: ims
+      prometheus: ims
+  
+  # Thanos ingress configuration
+  thanosIngress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - thanos.ims.example.com
+    tls:
+      - secretName: thanos-tls
+        hosts:
+          - thanos.ims.example.com
+
+# Alertmanager configuration
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'job', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: default
+      routes:
+        - match:
+            severity: critical
+          receiver: pagerduty
+          group_wait: 0s
+          repeat_interval: 15m
+          continue: true
+        - match:
+            severity: high
+          receiver: slack-high
+          group_wait: 30s
+          repeat_interval: 1h
+          continue: true
+        - match:
+            severity: medium
+          receiver: slack-medium
+          group_wait: 1m
+          repeat_interval: 4h
+          continue: true
+        - match:
+            severity: low
+          receiver: email
+          group_wait: 5m
+          repeat_interval: 12h
+    receivers:
+      - name: default
+        email_configs:
+          - to: alerts@ims.example.com
+            send_resolved: true
+      - name: pagerduty
+        pagerduty_configs:
+          - service_key: ${PAGERDUTY_SERVICE_KEY}
+            send_resolved: true
+      - name: slack-high
+        slack_configs:
+          - channel: '#alerts-high'
+            send_resolved: true
+            icon_url: https://avatars3.githubusercontent.com/u/3380462
+            title: '{{ .CommonAnnotations.summary }}'
+            text: >-
+              {{ range .Alerts }}*Alert:* {{ .Annotations.summary }}
+              *Description:* {{ .Annotations.description }}
+              *Severity:* {{ .Labels.severity }}
+              *Service:* {{ .Labels.service }}
+              *Instance:* {{ .Labels.instance }}
+              {{ end }}
+      - name: slack-medium
+        slack_configs:
+          - channel: '#alerts-medium'
+            send_resolved: true
+            icon_url: https://avatars3.githubusercontent.com/u/3380462
+            title: '{{ .CommonAnnotations.summary }}'
+            text: >-
+              {{ range .Alerts }}*Alert:* {{ .Annotations.summary }}
+              *Description:* {{ .Annotations.description }}
+              *Severity:* {{ .Labels.severity }}
+              *Service:* {{ .Labels.service }}
+              *Instance:* {{ .Labels.instance }}
+              {{ end }}
+      - name: email
+        email_configs:
+          - to: alerts@ims.example.com
+            send_resolved: true
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: ${GRAFANA_ADMIN_PASSWORD}
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - grafana.ims.example.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.ims.example.com
+  persistence:
+    enabled: true
+    storageClassName: standard-rwo
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-server
+          access: proxy
+          isDefault: true
+          jsonData:
+            timeInterval: 15s
+            queryTimeout: 60s
+            httpMethod: POST
+        - name: Loki
+          type: loki
+          url: http://loki-gateway
+          access: proxy
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+        - name: ims
+          orgId: 1
+          folder: 'IMS'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/ims
+  dashboards:
+    default:
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: Prometheus
+      node-exporter:
+        gnetId: 1860
+        revision: 21
+        datasource: Prometheus
+      kafka:
+        gnetId: 7589
+        revision: 5
+        datasource: Prometheus
+      postgresql:
+        gnetId: 9628
+        revision: 7
+        datasource: Prometheus
+      redis:
+        gnetId: 763
+        revision: 4
+        datasource: Prometheus
+      jvm:
+        gnetId: 4701
+        revision: 4
+        datasource: Prometheus
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: '1'
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: '1'
+      searchNamespace: ALL
+
+# Kubernetes monitoring components
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+  tls:
+    enabled: true
+  createCustomResource: true
+
+thanosRuler:
+  enabled: false
+
+# Kube-state-metrics configuration
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - pods=[app,component,tier]
+    - deployments=[app,component,tier]
+    - services=[app,component,tier]
+
+# Default alerting rules
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    general: true
+    k8s: true
+    kubeApiserver: true
+    kubeApiserverAvailability: true
+    kubeApiserverError: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeAlerting: true
+    kubePrometheusNodeRecording: true
+    kubernetesAbsent: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeScheduler: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    prometheus: true
+    prometheusOperator: true
+    time: true
+
+# Custom Prometheus rules for IMS
+additionalPrometheusRules:
+  - name: ims-rules
+    groups:
+      - name: ims-recording-rules
+        interval: 30s
+        rules:
+          # Critical business performance metrics
+          - record: ims:api_request_duration_seconds:p95
+            expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~".*ims.*"}[5m])) by (le, job, instance))
+          - record: ims:api_request_duration_seconds:p99
+            expr: histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job=~".*ims.*"}[5m])) by (le, job, instance))
+          - record: ims:api_error_rate:ratio
+            expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~".*ims.*"}[5m])) by (job, instance) / sum(rate(http_server_requests_seconds_count{job=~".*ims.*"}[5m])) by (job, instance)
+          - record: ims:event_processing_latency_seconds:p99
+            expr: histogram_quantile(0.99, sum(rate(ims_business_event_processing_seconds_bucket[5m])) by (le))
+          - record: ims:short_sell_validation_seconds:p99
+            expr: histogram_quantile(0.99, sum(rate(ims_business_short_sell_validation_seconds_bucket[5m])) by (le))
+          - record: ims:locate_approval_seconds:p95
+            expr: histogram_quantile(0.95, sum(rate(ims_business_locate_approval_seconds_bucket[5m])) by (le))
+          - record: ims:events_processed:rate5m
+            expr: sum(rate(ims_business_events_processed_total[5m]))
