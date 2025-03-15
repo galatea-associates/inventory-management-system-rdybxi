@@ -1,0 +1,107 @@
+# Spring Boot 3.1.0
+# Spring Kafka 3.0.7
+# Spring Security 6.0.2
+
+# Development Profile Configuration
+spring:
+  profiles: dev
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: websocket-service-dev
+      auto-offset-reset: earliest
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth
+          jwk-set-uri: http://localhost:8080/auth/.well-known/jwks.json
+  cloud:
+    netflix:
+      eureka:
+        client:
+          enabled: false
+          service-url:
+            defaultZone: http://localhost:8761/eureka/
+        instance:
+          prefer-ip-address: true
+
+# Server Configuration
+server:
+  port: 8085
+  compression:
+    enabled: true
+  netty:
+    max-connections: 1000
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.security: INFO
+  file:
+    name: logs/websocket-service-dev.log
+
+# Kafka Topics Configuration
+kafka:
+  topic:
+    position: position-events-dev
+    inventory: inventory-events-dev
+    locate: locate-events-dev
+    alert: alert-events-dev
+    workflow: workflow-events-dev
+  group:
+    websocket: websocket-service-dev
+  consumer:
+    max-poll-records: 100
+    concurrency: 2
+
+# WebSocket Configuration
+websocket:
+  endpoints:
+    positions: /ws/positions
+    inventory: /ws/inventory
+    locates: /ws/locates
+    alerts: /ws/alerts
+  allowed-origins: http://localhost:3000,http://localhost:8080
+  session:
+    timeout: 300000
+
+# Application-specific Configuration
+app:
+  security:
+    jwt:
+      audience: ims-clients-dev
+      required-role: WEBSOCKET_USER
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:8080
+      allowed-methods: GET,POST,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+      allow-credentials: true
+      max-age: 3600
+  websocket:
+    client-inactivity-timeout: 300000
+    max-sessions-per-user: 10
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+    heartbeat-interval: 25000
+  performance:
+    thread-pool-size: 10
+    queue-capacity: 200
+    message-batch-size: 50
+  tracing:
+    enabled: true
+    correlation-header: X-Correlation-ID
