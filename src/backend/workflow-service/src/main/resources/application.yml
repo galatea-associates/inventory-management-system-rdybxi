@@ -1,0 +1,229 @@
+spring:
+  application:
+    name: workflow-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/ims_workflow
+    username: ims_user
+    password: ims_password
+    hikari:
+      connection-timeout: 20000
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:workflow-service}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.ims.common.event,com.ims.workflow.model
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 10
+      batch-size: 16384
+      buffer-memory: 33554432
+      properties:
+        linger.ms: 5
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+        compression.type: snappy
+    topics:
+      workflow-event: ${KAFKA_TOPIC_WORKFLOW_EVENT:workflow-events}
+      locate-event: ${KAFKA_TOPIC_LOCATE_EVENT:locate-events}
+      inventory-event: ${KAFKA_TOPIC_INVENTORY_EVENT:inventory-events}
+      limit-event: ${KAFKA_TOPIC_LIMIT_EVENT:limit-events}
+    listener:
+      concurrency: 5
+      ack-mode: MANUAL_IMMEDIATE
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.example.com/}
+          audience: ${JWT_AUDIENCE:ims-api}
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+      allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+      allowed-headers: ${CORS_ALLOWED_HEADERS:Authorization,Content-Type,X-Requested-With,Accept}
+      allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+      max-age: ${CORS_MAX_AGE:3600}
+
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    context-path: /api/v1
+  tomcat:
+    max-threads: 100
+    min-spare-threads: 20
+    max-connections: 10000
+    connection-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.ims: ${LOG_LEVEL:INFO}
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.camunda: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n'
+  file:
+    name: ${LOG_FILE:logs/workflow-service.log}
+    max-size: 100MB
+    max-history: 30
+
+camunda:
+  bpm:
+    admin-user:
+      id: ${CAMUNDA_ADMIN_USER:admin}
+      password: ${CAMUNDA_ADMIN_PASSWORD:admin}
+    job-execution:
+      core-pool-size: 5
+      max-pool-size: 10
+      queue-capacity: 100
+    metrics:
+      enabled: true
+      db-reporter-activate: true
+    history-level: FULL
+    auto-deployment-enabled: true
+    deployment-resource-pattern: classpath:processes/*.bpmn
+
+calculation:
+  service:
+    url: ${CALCULATION_SERVICE_URL:http://localhost:8082/api/v1}
+
+workflow:
+  async-processing-enabled: true
+  locate:
+    auto-approval:
+      enabled: true
+      max-quantity: 10000
+      min-inventory-ratio: 2.0
+      expiry-hours: 24
+    manual-review:
+      timeout-minutes: 60
+      notification-enabled: true
+    performance:
+      thread-pool-size: 10
+      queue-capacity: 100
+  short-sell:
+    validation:
+      timeout-ms: 150
+      cache-ttl-seconds: 300
+      batch-size: 100
+    performance:
+      thread-pool-size: 20
+      queue-capacity: 200
+  scheduling:
+    cleanup-expired-locates: 0 0 * * * *
+    process-pending-validations: 0 */5 * * * *
+    health-check: 0 */5 * * * *
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      locateWorkflow:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 5s
+      shortSellWorkflow:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 5s
+  retry:
+    instances:
+      locateWorkflow:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      shortSellWorkflow:
+        maxAttempts: 3
+        waitDuration: 100ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      locateWorkflow:
+        limitForPeriod: 500
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+      shortSellWorkflow:
+        limitForPeriod: 1000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 150ms
+  bulkhead:
+    instances:
+      locateWorkflow:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 500ms
+      shortSellWorkflow:
+        maxConcurrentCalls: 100
+        maxWaitDuration: 150ms
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /api-docs
+    enabled: true
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 2000
+        readTimeout: 2000
+        loggerLevel: basic
+      calculation-service:
+        url: ${CALCULATION_SERVICE_URL:http://localhost:8082/api/v1}
+  okhttp:
+    enabled: true
