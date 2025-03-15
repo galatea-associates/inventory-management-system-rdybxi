@@ -1,0 +1,356 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version/SHA to deploy"
+        required: true
+        type: string
+      environment:
+        description: "Target environment region (us, eu, ap)"
+        required: false
+        type: choice
+        options:
+          - us
+          - eu
+          - ap
+          - all
+        default: "all"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ims-prod
+  EKS_CLUSTER_NAME: ims-prod-cluster
+  KUBE_NAMESPACE: ims-production
+  HELM_RELEASE_NAME: ims-prod
+  HELM_CHART_PATH: infrastructure/kubernetes/helm/ims
+
+jobs:
+  approval:
+    name: Production Deployment Approval
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Determine version to deploy
+        id: version
+        run: echo "VERSION=${GITHUB_EVENT_NAME == 'workflow_dispatch' && '${{ github.event.inputs.version }}' || '${{ github.sha }}'}" >> $GITHUB_OUTPUT
+
+      - name: Determine target environment
+        id: environment
+        run: echo "ENVIRONMENT=${GITHUB_EVENT_NAME == 'workflow_dispatch' && '${{ github.event.inputs.environment }}' || 'all'}" >> $GITHUB_OUTPUT
+
+      - name: Create deployment record
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: '${{ steps.version.outputs.VERSION }}',
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: [],
+              description: 'Production deployment initiated by ${{ github.actor }}'
+            });
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+              description: 'Awaiting approval'
+            });
+            core.exportVariable('DEPLOYMENT_ID', deployment.data.id);
+
+      - name: Notify approval request
+        run: curl -X POST -H 'Content-type: application/json' --data '{"text":"⚠️ Production deployment approval requested for IMS. Version: ${{ steps.version.outputs.VERSION }}. Environment: ${{ steps.environment.outputs.ENVIRONMENT }}. Approval URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      environment: ${{ steps.environment.outputs.ENVIRONMENT }}
+
+  deploy:
+    name: Deploy to Production Environment
+    needs: [approval]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ims.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/backend
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ needs.approval.outputs.version }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/web
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ needs.approval.outputs.version }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+
+      - name: Set up Helm
+        uses: helm/kind-action@v1.5.0
+        with:
+          install_only: true
+
+      - name: Update Kubernetes deployment image tags
+        run: |
+          sed -i 's|image: .*backend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ needs.approval.outputs.version }}|g' ${{ env.HELM_CHART_PATH }}/values-prod.yaml && sed -i 's|image: .*frontend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ needs.approval.outputs.version }}|g' ${{ env.HELM_CHART_PATH }}/values-prod.yaml
+
+      - name: Deploy to Kubernetes (Blue Environment)
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE_NAME }}-blue ${{ env.HELM_CHART_PATH }} --namespace ${{ env.KUBE_NAMESPACE }} --create-namespace --values ${{ env.HELM_CHART_PATH }}/values-prod.yaml --set imageTag=${{ needs.approval.outputs.version }} --set deployment.strategy=blue-green --set deployment.blueGreen.activeColor=blue --atomic --timeout 15m
+
+      - name: Verify blue deployment
+        run: |
+          kubectl rollout status deployment/ims-api-gateway-blue -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service-blue -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service-blue -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service-blue -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service-blue -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+
+      - name: Run smoke tests against blue environment
+        run: cd src/test && npm ci && npm run test:smoke:prod:blue
+
+      - name: Switch traffic to blue environment
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} --namespace ${{ env.KUBE_NAMESPACE }} --values ${{ env.HELM_CHART_PATH }}/values-prod.yaml --set imageTag=${{ needs.approval.outputs.version }} --set deployment.strategy=blue-green --set deployment.blueGreen.activeColor=blue --atomic --timeout 5m
+
+      - name: Verify full deployment
+        run: |
+          kubectl rollout status deployment/ims-api-gateway -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+
+      - name: Update deployment status to success
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: process.env.DEPLOYMENT_ID,
+              state: 'success',
+              environment_url: 'https://ims.example.com',
+              description: 'Deployment completed successfully'
+            });
+
+      - name: Update deployment status to failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: process.env.DEPLOYMENT_ID,
+              state: 'failure',
+              description: 'Deployment failed'
+            });
+
+      - name: Send deployment notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ Successfully deployed IMS to production environment. Version: ${{ needs.approval.outputs.version }}. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send deployment failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ Failed to deploy IMS to production environment. Version: ${{ needs.approval.outputs.version }}. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  test:
+    name: Run Comprehensive Tests
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+
+      - name: Run integration tests
+        run: cd src/test && npm ci && npm run test:integration:prod
+
+      - name: Run E2E tests
+        run: cd src/test/e2e && npm ci && npm run test:e2e:prod
+
+      - name: Run security tests
+        run: cd src/test/security && npm ci && npm run test:security:prod
+
+      - name: Verify system health
+        run: curl -f https://ims.example.com/actuator/health
+
+      - name: Send test success notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ All tests passed for IMS production deployment. Version: ${{ needs.approval.outputs.version }}."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send test failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"⚠️ Tests failed for IMS production deployment. Version: ${{ needs.approval.outputs.version }}. Manual intervention required."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  performance-test:
+    name: Run Performance Tests
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run Gatling performance tests
+        run: cd src/test/performance/gatling && ./gradlew gatlingRun-LocateApprovalSimulation gatlingRun-ShortSellValidationSimulation gatlingRun-PositionCalculationSimulation gatlingRun-InventoryCalculationSimulation gatlingRun-DataIngestionSimulation gatlingRun-ApiLoadSimulation
+
+      - name: Run k6 load tests
+        run: cd src/test/performance/k6 && npm ci && npm run test:load:prod
+
+      - name: Analyze performance results
+        run: cd src/test/performance && npm ci && npm run analyze:prod
+
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: src/test/performance/results
+
+      - name: Verify performance thresholds
+        run: cd src/test/performance && npm run verify:thresholds:prod
+
+      - name: Send performance test success notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ Performance tests passed for IMS production deployment. Version: ${{ needs.approval.outputs.version }}. All metrics within acceptable thresholds."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send performance test failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"⚠️ Performance tests failed for IMS production deployment. Version: ${{ needs.approval.outputs.version }}. Some metrics exceeded thresholds. See results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  rollback:
+    name: Rollback Deployment
+    if: failure()
+    needs: [deploy, test, performance-test]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ims.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+
+      - name: Set up Helm
+        uses: helm/kind-action@v1.5.0
+        with:
+          install_only: true
+
+      - name: Get previous release version
+        id: previous-version
+        run: echo "PREVIOUS_VERSION=$(helm history ${{ env.HELM_RELEASE_NAME }} -n ${{ env.KUBE_NAMESPACE }} | grep -v FAILED | grep -v SUPERSEDED | tail -n 2 | head -n 1 | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Rollback to previous release
+        run: helm rollback ${{ env.HELM_RELEASE_NAME }} ${{ steps.previous-version.outputs.PREVIOUS_VERSION }} -n ${{ env.KUBE_NAMESPACE }}
+
+      - name: Verify rollback
+        run: |
+          kubectl rollout status deployment/ims-api-gateway -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+
+      - name: Run smoke tests after rollback
+        run: cd src/test && npm ci && npm run test:smoke:prod
+
+      - name: Update deployment status to failure with rollback
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: process.env.DEPLOYMENT_ID,
+              state: 'failure',
+              description: 'Deployment failed, rolled back to previous version'
+            });
+
+      - name: Send rollback notification
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"⚠️ Deployment of IMS to production failed. Automatically rolled back to previous version. Version: ${{ needs.approval.outputs.version }}. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
