@@ -1,0 +1,62 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: ims-gateway
+  namespace: ims
+  labels:
+    app: ims
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio Gateway for Inventory Management System"
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    # HTTP server that redirects to HTTPS
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*.ims.example.com"
+      tls:
+        httpsRedirect: true
+
+    # HTTPS server for general traffic
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "*.ims.example.com"
+      tls:
+        mode: SIMPLE
+        credentialName: ims-tls-cert
+
+    # HTTPS server for API traffic with region-specific hosts
+    - port:
+        number: 443
+        name: https-api
+        protocol: HTTPS
+      hosts:
+        - "api.ims.example.com"
+        - "api-americas.ims.example.com"
+        - "api-europe.ims.example.com"
+        - "api-apac.ims.example.com"
+      tls:
+        mode: SIMPLE
+        credentialName: ims-api-tls-cert
+
+    # HTTPS server for WebSocket traffic with region-specific hosts
+    - port:
+        number: 443
+        name: https-ws
+        protocol: HTTPS
+      hosts:
+        - "ws.ims.example.com"
+        - "ws-americas.ims.example.com"
+        - "ws-europe.ims.example.com"
+        - "ws-apac.ims.example.com"
+      tls:
+        mode: SIMPLE
+        credentialName: ims-ws-tls-cert
