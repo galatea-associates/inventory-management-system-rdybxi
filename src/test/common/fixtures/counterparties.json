@@ -1,0 +1,620 @@
+[
+  {
+    "id": 1,
+    "counterpartyId": "CP-00001",
+    "name": "ABC Capital Partners",
+    "shortName": "ABC Capital",
+    "type": "INSTITUTIONAL",
+    "category": "INVESTMENT_BANK",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "5493001KJTIIGC8Y1R12",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 101,
+        "identifierType": "LEI",
+        "identifierValue": "5493001KJTIIGC8Y1R12",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 102,
+        "identifierType": "BIC",
+        "identifierValue": "ABCPUS33",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 103,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "ABC:US",
+        "source": "BLOOMBERG",
+        "priority": 3,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "counterpartyId": "CP-00002",
+    "name": "XYZ Investment Fund",
+    "shortName": "XYZ Fund",
+    "type": "HEDGE_FUND",
+    "category": "ASSET_MANAGER",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "HIGH",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300W8JLPR59JGN225",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 201,
+        "identifierType": "LEI",
+        "identifierValue": "549300W8JLPR59JGN225",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 202,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "XYZ:US",
+        "source": "BLOOMBERG",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 203,
+        "identifierType": "REUTERS_ID",
+        "identifierValue": "XYZ.N",
+        "source": "REUTERS",
+        "priority": 3,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "counterpartyId": "CP-00003",
+    "name": "Global Asset Management",
+    "shortName": "Global AM",
+    "type": "ASSET_MANAGER",
+    "category": "ASSET_MANAGER",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "GB",
+    "region": "EMEA",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "213800QGNIWTXFIMBU07",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 301,
+        "identifierType": "LEI",
+        "identifierValue": "213800QGNIWTXFIMBU07",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 302,
+        "identifierType": "BIC",
+        "identifierValue": "GAMGGB2L",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 303,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "GAM:LN",
+        "source": "BLOOMBERG",
+        "priority": 3,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "counterpartyId": "CP-00004",
+    "name": "Tech Innovations Corp",
+    "shortName": "TechInno",
+    "type": "CORPORATE",
+    "category": "CORPORATE",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300ROYZGVRY4E2H29",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 401,
+        "identifierType": "LEI",
+        "identifierValue": "549300ROYZGVRY4E2H29",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 402,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "TIC:US",
+        "source": "BLOOMBERG",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "counterpartyId": "CP-00005",
+    "name": "European Pension Fund",
+    "shortName": "Euro Pension",
+    "type": "PENSION_FUND",
+    "category": "INSTITUTIONAL",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "DE",
+    "region": "EMEA",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "529900W8XTEHKP7QTR89",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 501,
+        "identifierType": "LEI",
+        "identifierValue": "529900W8XTEHKP7QTR89",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 502,
+        "identifierType": "BIC",
+        "identifierValue": "EPFGDE2X",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "counterpartyId": "CP-00006",
+    "name": "Asia Pacific Trading Ltd",
+    "shortName": "AP Trading",
+    "type": "BROKER_DEALER",
+    "category": "BROKER",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "HK",
+    "region": "APAC",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300BXKPMXQTRE1V05",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 601,
+        "identifierType": "LEI",
+        "identifierValue": "549300BXKPMXQTRE1V05",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 602,
+        "identifierType": "BIC",
+        "identifierValue": "APTRHKHH",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 603,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "APT:HK",
+        "source": "BLOOMBERG",
+        "priority": 3,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "counterpartyId": "CP-00007",
+    "name": "Retail Investor Services",
+    "shortName": "RetailInv",
+    "type": "RETAIL_BROKER",
+    "category": "BROKER",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "5493007ZLLKGZD1DI626",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 701,
+        "identifierType": "LEI",
+        "identifierValue": "5493007ZLLKGZD1DI626",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 702,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "RIS:US",
+        "source": "BLOOMBERG",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "counterpartyId": "CP-00008",
+    "name": "Sovereign Wealth Fund",
+    "shortName": "SWF",
+    "type": "SOVEREIGN_WEALTH_FUND",
+    "category": "INSTITUTIONAL",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "SG",
+    "region": "APAC",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300BVWDXUSR1Y9R35",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 801,
+        "identifierType": "LEI",
+        "identifierValue": "549300BVWDXUSR1Y9R35",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 802,
+        "identifierType": "BIC",
+        "identifierValue": "SWFGSG2P",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "counterpartyId": "CP-00009",
+    "name": "Global Investment Bank",
+    "shortName": "GIB",
+    "type": "INVESTMENT_BANK",
+    "category": "INVESTMENT_BANK",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300ZHEHWXNP7RJ538",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 901,
+        "identifierType": "LEI",
+        "identifierValue": "549300ZHEHWXNP7RJ538",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 902,
+        "identifierType": "BIC",
+        "identifierValue": "GIBAUS33",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 903,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "GIB:US",
+        "source": "BLOOMBERG",
+        "priority": 3,
+        "isPrimary": false
+      },
+      {
+        "id": 904,
+        "identifierType": "REUTERS_ID",
+        "identifierValue": "GIB.N",
+        "source": "REUTERS",
+        "priority": 4,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "counterpartyId": "CP-00010",
+    "name": "North American Insurance Co",
+    "shortName": "NAIC",
+    "type": "INSURANCE",
+    "category": "INSTITUTIONAL",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "CA",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300KZ46BHLZ24SK07",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 1001,
+        "identifierType": "LEI",
+        "identifierValue": "549300KZ46BHLZ24SK07",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 1002,
+        "identifierType": "BIC",
+        "identifierValue": "NAICCA22",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "counterpartyId": "CP-00011",
+    "name": "Internal Trading Desk",
+    "shortName": "ITD",
+    "type": "INTERNAL",
+    "category": "INTERNAL",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "INTERNAL_ID",
+    "primaryIdentifierValue": "ITD-001",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 1101,
+        "identifierType": "INTERNAL_ID",
+        "identifierValue": "ITD-001",
+        "source": "INTERNAL",
+        "priority": 1,
+        "isPrimary": true
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "counterpartyId": "CP-00012",
+    "name": "Japanese Financial Group",
+    "shortName": "JFG",
+    "type": "BANK",
+    "category": "INVESTMENT_BANK",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "MEDIUM",
+    "country": "JP",
+    "region": "APAC",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "353800WSGYZWMJ3WBR22",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 1201,
+        "identifierType": "LEI",
+        "identifierValue": "353800WSGYZWMJ3WBR22",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 1202,
+        "identifierType": "BIC",
+        "identifierValue": "JFGPJPJT",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      },
+      {
+        "id": 1203,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "JFG:JP",
+        "source": "BLOOMBERG",
+        "priority": 3,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "counterpartyId": "CP-00013",
+    "name": "European Central Counterparty",
+    "shortName": "EuroCCP",
+    "type": "CCP",
+    "category": "MARKET_INFRASTRUCTURE",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "NL",
+    "region": "EMEA",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "724500937F740MHCX307",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 1301,
+        "identifierType": "LEI",
+        "identifierValue": "724500937F740MHCX307",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 1302,
+        "identifierType": "BIC",
+        "identifierValue": "ECCPNL2A",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "counterpartyId": "CP-00014",
+    "name": "Global Securities Lending Agent",
+    "shortName": "GSLA",
+    "type": "AGENT_LENDER",
+    "category": "MARKET_INFRASTRUCTURE",
+    "status": "ACTIVE",
+    "kycStatus": "APPROVED",
+    "riskRating": "LOW",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300HTGDOVX59YQR90",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "system",
+    "lastModifiedAt": "2023-01-01T00:00:00Z",
+    "version": 1,
+    "identifiers": [
+      {
+        "id": 1401,
+        "identifierType": "LEI",
+        "identifierValue": "549300HTGDOVX59YQR90",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 1402,
+        "identifierType": "BIC",
+        "identifierValue": "GSLAUS33",
+        "source": "SWIFT",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "counterpartyId": "CP-00015",
+    "name": "Inactive Client Corp",
+    "shortName": "InactiveClient",
+    "type": "CORPORATE",
+    "category": "CORPORATE",
+    "status": "INACTIVE",
+    "kycStatus": "EXPIRED",
+    "riskRating": "HIGH",
+    "country": "US",
+    "region": "AMERICAS",
+    "primaryIdentifierType": "LEI",
+    "primaryIdentifierValue": "549300QWXCHXY46E4L28",
+    "createdBy": "system",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "lastModifiedBy": "compliance.officer",
+    "lastModifiedAt": "2023-03-15T00:00:00Z",
+    "version": 2,
+    "identifiers": [
+      {
+        "id": 1501,
+        "identifierType": "LEI",
+        "identifierValue": "549300QWXCHXY46E4L28",
+        "source": "GLEIF",
+        "priority": 1,
+        "isPrimary": true
+      },
+      {
+        "id": 1502,
+        "identifierType": "BLOOMBERG_ID",
+        "identifierValue": "ICC:US",
+        "source": "BLOOMBERG",
+        "priority": 2,
+        "isPrimary": false
+      }
+    ]
+  }
+]
