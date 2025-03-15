@@ -1,0 +1,270 @@
+spring:
+  application:
+    name: ims-monitoring-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc.time_zone: UTC
+  kafka:
+    consumer:
+      group-id: ims-monitoring-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.ims.*
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topics:
+      system-events: ims.system.events
+      alerts: ims.monitoring.alerts
+      metrics: ims.monitoring.metrics
+      health-events: ims.monitoring.health
+  redis:
+    timeout: 2000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1
+      shutdown-timeout: 100
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          audience: ims-api
+  cors:
+    allowed-origins: http://localhost:3000,https://ims.example.com
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+server:
+  shutdown: graceful
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace,ping
+        readiness:
+          include: readinessState,db,kafka,redis
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: [50, 100, 200, 500]
+    tags:
+      application: ${spring.application.name}
+  info:
+    env:
+      enabled: true
+    git:
+      enabled: true
+      mode: full
+    build:
+      enabled: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n"
+  file:
+    max-size: 100MB
+    max-history: 30
+    total-size-cap: 3GB
+
+monitoring:
+  prometheus:
+    step-size: 30s
+    push-gateway:
+      enabled: false
+      url: localhost:9091
+      job: ims-monitoring-service
+      interval: 60000
+  metrics:
+    system:
+      collection-rate: 15000
+      retention-days: 30
+    application:
+      collection-rate: 15000
+      retention-days: 30
+    business:
+      collection-rate: 30000
+      retention-days: 90
+    database:
+      collection-rate: 30000
+      retention-days: 30
+    integration:
+      collection-rate: 30000
+      retention-days: 30
+    threshold-check-rate: 60000
+  health:
+    check-rate: 30000
+    service-timeout: 5000
+    dependency-timeout: 5000
+  alerts:
+    processing-rate: 60000
+    metric-check-rate: 60000
+    health-check-rate: 60000
+    retention:
+      active-days: 14
+      resolved-days: 30
+      archived-days: 90
+    notification:
+      channels:
+        email:
+          enabled: true
+          recipients: monitoring-team@example.com
+          critical-recipients: oncall@example.com
+        slack:
+          enabled: true
+          webhook-url: https://hooks.slack.com/services/default/webhook/url
+          channel: "#monitoring-alerts"
+        pagerduty:
+          enabled: false
+          service-key: default-service-key
+  services:
+    - id: data-ingestion-service
+      name: Data Ingestion Service
+      url: http://data-ingestion-service:8080/actuator/health
+      critical: true
+    - id: calculation-service
+      name: Calculation Service
+      url: http://calculation-service:8080/actuator/health
+      critical: true
+    - id: workflow-service
+      name: Workflow Service
+      url: http://workflow-service:8080/actuator/health
+      critical: true
+    - id: api-gateway
+      name: API Gateway
+      url: http://api-gateway:8080/actuator/health
+      critical: true
+    - id: websocket-service
+      name: WebSocket Service
+      url: http://websocket-service:8080/actuator/health
+      critical: false
+    - id: auth-service
+      name: Authentication Service
+      url: http://auth-service:8080/actuator/health
+      critical: true
+  dependencies:
+    databases:
+      - name: PostgreSQL
+        driver-class-name: org.postgresql.Driver
+        query: SELECT 1
+    message-brokers:
+      - name: Kafka
+    caches:
+      - name: Redis
+    external-services:
+      - name: Auth Server
+        url: ${AUTH_SERVER_URL:http://auth-service:8080}/auth/realms/ims/.well-known/openid-configuration
+        timeout: 5000
+  thresholds:
+    system:
+      cpu.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      memory.usage:
+        warning: 75
+        critical: 90
+        duration: 300
+      disk.usage:
+        warning: 80
+        critical: 90
+        duration: 300
+    application:
+      response.time:
+        warning: 500
+        critical: 1000
+        duration: 300
+      error.rate:
+        warning: 1
+        critical: 5
+        duration: 300
+      request.rate:
+        warning: 5000
+        critical: 10000
+        duration: 300
+    business:
+      event.processing.latency:
+        warning: 150
+        critical: 200
+        duration: 300
+      calculation.time:
+        warning: 150
+        critical: 200
+        duration: 300
+      locate.approval.time:
+        warning: 2000
+        critical: 5000
+        duration: 300
+      short.sell.validation.time:
+        warning: 100
+        critical: 150
+        duration: 300
+    database:
+      connection.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      query.time:
+        warning: 100
+        critical: 500
+        duration: 300
+    integration:
+      api.response.time:
+        warning: 500
+        critical: 1000
+        duration: 300
+      api.error.rate:
+        warning: 1
+        critical: 5
+        duration: 300
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
