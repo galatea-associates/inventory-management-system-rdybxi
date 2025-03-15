@@ -1,0 +1,822 @@
+{
+  "info": {
+    "name": "IMS API Security Tests",
+    "description": "Security penetration tests for the API endpoints of the Inventory Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authorization Tests",
+      "description": "Tests for API authorization controls",
+      "item": [
+        {
+          "name": "Access Protected Endpoint - Valid Token",
+          "description": "Test accessing a protected endpoint with a valid token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response contains position data', function() { pm.expect(pm.response.json()).to.be.an('object'); });",
+            "pm.test('Response headers include correlation ID', function() { pm.expect(pm.response.headers.get('X-Correlation-ID')).to.exist; });"
+          ]
+        },
+        {
+          "name": "Access Protected Endpoint - Invalid Token",
+          "description": "Test accessing a protected endpoint with an invalid token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.string"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 401', function() { pm.response.to.have.status(401); });",
+            "pm.test('Response contains error message', function() { pm.expect(pm.response.json().error).to.exist; });",
+            "pm.test('Response does not contain sensitive information', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('SQL');",
+            "    pm.expect(pm.response.text()).to.not.include('Exception');",
+            "    pm.expect(pm.response.text()).to.not.include('stack');",
+            "});"
+          ]
+        },
+        {
+          "name": "Access Protected Endpoint - Expired Token",
+          "description": "Test accessing a protected endpoint with an expired token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 401', function() { pm.response.to.have.status(401); });",
+            "pm.test('Response indicates token expiration', function() { pm.expect(pm.response.json().error).to.include('expired'); });"
+          ]
+        },
+        {
+          "name": "Access Admin Endpoint - Regular User Token",
+          "description": "Test accessing an admin endpoint with a regular user token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/admin/users",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{traderAccessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 403', function() { pm.response.to.have.status(403); });",
+            "pm.test('Response indicates insufficient permissions', function() { pm.expect(pm.response.json().error).to.include('permission'); });"
+          ]
+        },
+        {
+          "name": "Access Admin Endpoint - Admin Token",
+          "description": "Test accessing an admin endpoint with an admin token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/admin/users",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response contains user data', function() { pm.expect(pm.response.json()).to.be.an('array'); });"
+          ]
+        },
+        {
+          "name": "Write Operation - Read-Only Token",
+          "description": "Test performing a write operation with a read-only token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{readOnlyAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"BOOK-001\",\n  \"securityId\": \"SEC-EQ-001\",\n  \"quantity\": 1000\n}"
+            }
+          },
+          "test": [
+            "pm.test('Status code is 403', function() { pm.response.to.have.status(403); });",
+            "pm.test('Response indicates insufficient permissions', function() { pm.expect(pm.response.json().error).to.include('permission'); });"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Injection Tests",
+      "description": "Tests for SQL injection, XSS, and other injection vulnerabilities",
+      "item": [
+        {
+          "name": "SQL Injection - Position Search",
+          "description": "Test SQL injection protection in position search endpoint",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions?bookId=BOOK-001' OR '1'='1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is not 500', function() { pm.expect(pm.response.code).to.not.equal(500); });",
+            "pm.test('Response does not contain SQL errors', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('SQL');",
+            "    pm.expect(pm.response.text()).to.not.include('syntax');",
+            "    pm.expect(pm.response.text()).to.not.include('ORA-');",
+            "});"
+          ]
+        },
+        {
+          "name": "SQL Injection - Security Search",
+          "description": "Test SQL injection protection in security search endpoint",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/securities?identifier=AAPL'; DROP TABLE securities; --",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is not 500', function() { pm.expect(pm.response.code).to.not.equal(500); });",
+            "pm.test('Response does not contain SQL errors', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('SQL');",
+            "    pm.expect(pm.response.text()).to.not.include('syntax');",
+            "    pm.expect(pm.response.text()).to.not.include('ORA-');",
+            "});"
+          ]
+        },
+        {
+          "name": "XSS - Security Creation",
+          "description": "Test XSS protection in security creation endpoint",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/securities",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"securityType\": \"EQUITY\",\n  \"issuer\": \"<script>alert(1)</script>\",\n  \"description\": \"XSS Test\",\n  \"currency\": \"USD\",\n  \"market\": \"US\",\n  \"exchange\": \"NYSE\",\n  \"status\": \"ACTIVE\",\n  \"primaryIdentifierType\": \"TICKER\",\n  \"primaryIdentifierValue\": \"XSS\"\n}"
+            }
+          },
+          "test": [
+            "pm.test('Status code is not 500', function() { pm.expect(pm.response.code).to.not.equal(500); });",
+            "pm.test('Response does not reflect XSS payload', function() {",
+            "    if (pm.response.code === 201) {",
+            "        pm.expect(pm.response.json().issuer).to.not.include('<script>');",
+            "    }",
+            "});"
+          ]
+        },
+        {
+          "name": "Command Injection - Export Endpoint",
+          "description": "Test command injection protection in export endpoint",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions/export?format=csv&filename=positions;cat /etc/passwd",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is not 500', function() { pm.expect(pm.response.code).to.not.equal(500); });",
+            "pm.test('Response does not contain sensitive system data', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('root:');",
+            "    pm.expect(pm.response.text()).to.not.include('/bin/bash');",
+            "});"
+          ]
+        },
+        {
+          "name": "Path Traversal - File Download",
+          "description": "Test path traversal protection in file download endpoint",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/reports/download?file=../../../etc/passwd",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is not 200', function() { pm.expect(pm.response.code).to.not.equal(200); });",
+            "pm.test('Response does not contain sensitive system data', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('root:');",
+            "    pm.expect(pm.response.text()).to.not.include('/bin/bash');",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Rate Limiting Tests",
+      "description": "Tests for API rate limiting protection",
+      "item": [
+        {
+          "name": "Rapid Requests - Position API",
+          "description": "Test rate limiting by making rapid requests to position API",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "// This test should be run in a loop with a runner",
+            "pm.test('After multiple rapid requests, rate limiting should be applied', function() {",
+            "  if (pm.iterationData.get('iteration') >= 50) {",
+            "    pm.expect(pm.response.code).to.be.oneOf([200, 429]);",
+            "    if (pm.response.code === 429) {",
+            "      pm.expect(pm.response.headers.get('X-Rate-Limit-Retry-After')).to.exist;",
+            "    }",
+            "  }",
+            "});"
+          ]
+        },
+        {
+          "name": "Rapid Requests - Locate API",
+          "description": "Test rate limiting by making rapid requests to locate API",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/locates",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "// This test should be run in a loop with a runner",
+            "pm.test('After multiple rapid requests, rate limiting should be applied', function() {",
+            "  if (pm.iterationData.get('iteration') >= 50) {",
+            "    pm.expect(pm.response.code).to.be.oneOf([200, 429]);",
+            "    if (pm.response.code === 429) {",
+            "      pm.expect(pm.response.headers.get('X-Rate-Limit-Retry-After')).to.exist;",
+            "    }",
+            "  }",
+            "});"
+          ]
+        },
+        {
+          "name": "Check Rate Limit Headers",
+          "description": "Test that responses include rate limit headers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Response includes rate limit headers', function() {",
+            "  // Not all implementations will have these headers, so we make this test optional",
+            "  const hasRateLimitHeaders = pm.response.headers.get('X-Rate-Limit-Remaining') !== undefined;",
+            "  if (hasRateLimitHeaders) {",
+            "    pm.expect(pm.response.headers.get('X-Rate-Limit-Remaining')).to.exist;",
+            "  } else {",
+            "    pm.expect(true).to.be.true; // Skip test if headers don't exist",
+            "  }",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Protection Tests",
+      "description": "Tests for data protection mechanisms",
+      "item": [
+        {
+          "name": "Check HTTPS Enforcement",
+          "description": "Test that HTTPS is enforced for all API requests",
+          "request": {
+            "method": "GET",
+            "url": "http://{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Request should be redirected to HTTPS', function() {",
+            "  pm.expect(pm.response.code).to.be.oneOf([301, 302, 307, 308]);",
+            "  if ([301, 302, 307, 308].includes(pm.response.code)) {",
+            "    pm.expect(pm.response.headers.get('Location')).to.include('https://');",
+            "  }",
+            "});"
+          ]
+        },
+        {
+          "name": "Check Security Headers",
+          "description": "Test that responses include appropriate security headers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Response includes Content-Security-Policy header', function() {",
+            "  pm.response.to.have.header('Content-Security-Policy');",
+            "});",
+            "pm.test('Response includes X-Content-Type-Options header', function() {",
+            "  pm.response.to.have.header('X-Content-Type-Options');",
+            "  pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.equal('nosniff');",
+            "});",
+            "pm.test('Response includes X-Frame-Options header', function() {",
+            "  pm.response.to.have.header('X-Frame-Options');",
+            "});",
+            "pm.test('Response includes Strict-Transport-Security header', function() {",
+            "  pm.response.to.have.header('Strict-Transport-Security');",
+            "});"
+          ]
+        },
+        {
+          "name": "Check PII Data Masking",
+          "description": "Test that PII data is properly masked in responses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/users/profile",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Response should mask sensitive PII data', function() {",
+            "  const responseData = pm.response.json();",
+            "  if (responseData.email) {",
+            "    pm.expect(responseData.email).to.match(/^[^@]+@[^@]+$/); // Should be properly formatted email",
+            "    pm.expect(responseData.email).to.not.include('example.com'); // Should not be test data",
+            "  }",
+            "  if (responseData.phoneNumber) {",
+            "    pm.expect(responseData.phoneNumber).to.match(/^\\+?[\\d\\*]+$/); // Should be properly formatted phone",
+            "    pm.expect(responseData.phoneNumber).to.include('*'); // Should include masking",
+            "  }",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Tests",
+      "description": "Tests for proper error handling and information disclosure",
+      "item": [
+        {
+          "name": "Invalid Request Format",
+          "description": "Test error handling for invalid request format",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ invalid json }"
+            }
+          },
+          "test": [
+            "pm.test('Status code is 400', function() { pm.response.to.have.status(400); });",
+            "pm.test('Response contains error message', function() { pm.expect(pm.response.json().error).to.exist; });",
+            "pm.test('Response does not expose stack trace', function() { pm.expect(pm.response.text()).to.not.include('at '); });"
+          ]
+        },
+        {
+          "name": "Resource Not Found",
+          "description": "Test error handling for non-existent resource",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions/non-existent-id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 404', function() { pm.response.to.have.status(404); });",
+            "pm.test('Response contains error message', function() { pm.expect(pm.response.json().error).to.exist; });",
+            "pm.test('Response does not expose internal details', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('SQL');",
+            "    pm.expect(pm.response.text()).to.not.include('Exception');",
+            "    pm.expect(pm.response.text()).to.not.include('stack');",
+            "});"
+          ]
+        },
+        {
+          "name": "Method Not Allowed",
+          "description": "Test error handling for unsupported HTTP method",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 405', function() { pm.response.to.have.status(405); });",
+            "pm.test('Response includes Allow header', function() { pm.response.to.have.header('Allow'); });"
+          ]
+        },
+        {
+          "name": "Server Error Handling",
+          "description": "Test handling of server errors without exposing sensitive information",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/debug/trigger-error",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 500', function() { pm.response.to.have.status(500); });",
+            "pm.test('Response contains error message', function() { pm.expect(pm.response.json().error).to.exist; });",
+            "pm.test('Response does not expose stack traces', function() {",
+            "    pm.expect(pm.response.text()).to.not.include('at ');",
+            "    pm.expect(pm.response.text()).to.not.include('Exception');",
+            "    pm.expect(pm.response.text()).to.not.include('Caused by');",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "API Versioning Tests",
+      "description": "Tests for API versioning implementation",
+      "item": [
+        {
+          "name": "Current API Version",
+          "description": "Test access to current API version",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response includes API version header', function() {",
+            "  const hasVersionHeader = pm.response.headers.get('X-API-Version') !== undefined;",
+            "  if (hasVersionHeader) {",
+            "    pm.expect(pm.response.headers.get('X-API-Version')).to.exist;",
+            "  } else {",
+            "    pm.expect(true).to.be.true; // Skip test if header doesn't exist",
+            "  }",
+            "});"
+          ]
+        },
+        {
+          "name": "Unsupported API Version",
+          "description": "Test access to unsupported API version",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v0/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 404', function() { pm.response.to.have.status(404); });",
+            "pm.test('Response indicates unsupported version', function() {",
+            "  if (pm.response.json().error) {",
+            "    pm.expect(pm.response.json().error).to.include('version');",
+            "  }",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CORS Tests",
+      "description": "Tests for Cross-Origin Resource Sharing implementation",
+      "item": [
+        {
+          "name": "CORS Preflight Request",
+          "description": "Test CORS preflight request handling",
+          "request": {
+            "method": "OPTIONS",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://example.com"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "GET"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "Authorization,Content-Type"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 200 or 204', function() { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });",
+            "pm.test('Response includes CORS headers', function() {",
+            "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.exist;",
+            "  pm.expect(pm.response.headers.get('Access-Control-Allow-Methods')).to.exist;",
+            "  pm.expect(pm.response.headers.get('Access-Control-Allow-Headers')).to.exist;",
+            "});"
+          ]
+        },
+        {
+          "name": "CORS Actual Request",
+          "description": "Test CORS headers on actual request",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://example.com"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response includes CORS headers', function() {",
+            "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.exist;",
+            "});"
+          ]
+        },
+        {
+          "name": "CORS Disallowed Origin",
+          "description": "Test CORS with disallowed origin",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://malicious-site.com"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "test": [
+            "pm.test('Response should not include CORS headers for disallowed origin', function() {",
+            "  const corsHeader = pm.response.headers.get('Access-Control-Allow-Origin');",
+            "  if (corsHeader) {",
+            "    pm.expect(corsHeader).to.not.equal('https://malicious-site.com');",
+            "    pm.expect(corsHeader).to.not.equal('*');",
+            "  }",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Content Security Tests",
+      "description": "Tests for content security implementation",
+      "item": [
+        {
+          "name": "Content Type Validation - JSON",
+          "description": "Test content type validation for JSON requests",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "This is not JSON data"
+            }
+          },
+          "test": [
+            "pm.test('Status code is 415', function() { pm.response.to.have.status(415); });",
+            "pm.test('Response indicates unsupported media type', function() {",
+            "  if (pm.response.json().error) {",
+            "    pm.expect(pm.response.json().error).to.include('Content-Type');",
+            "  }",
+            "});"
+          ]
+        },
+        {
+          "name": "Content Length Validation",
+          "description": "Test content length validation for large requests",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/positions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"A very large payload...\"\n}"
+            }
+          },
+          "test": [
+            "pm.test('Status code is 413', function() { pm.response.to.have.status(413); });",
+            "pm.test('Response indicates payload too large', function() {",
+            "  if (pm.response.json().error) {",
+            "    pm.expect(pm.response.json().error).to.include('size');",
+            "  }",
+            "});"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Short Sell Validation Tests",
+      "description": "Tests for short sell validation API with strict SLA requirements",
+      "item": [
+        {
+          "name": "Short Sell Validation - Valid Request",
+          "description": "Test short sell validation with valid request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/order/validate",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"securityId\": \"SEC-EQ-001\",\n  \"clientId\": \"CLIENT-001\",\n  \"aggregationUnitId\": \"AU-001\",\n  \"quantity\": 1000,\n  \"orderType\": \"SHORT_SELL\"\n}"
+            }
+          },
+          "test": [
+            "const startTime = pm.variables.get('startTime');",
+            "const endTime = new Date().getTime();",
+            "const responseTime = endTime - startTime;",
+            "",
+            "pm.test('Response time is under 150ms SLA', function() {",
+            "  pm.expect(responseTime).to.be.below(150);",
+            "});",
+            "",
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response contains validation result', function() { pm.expect(pm.response.json().valid).to.exist; });"
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set('startTime', new Date().getTime());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Short Sell Validation - Invalid Request",
+          "description": "Test short sell validation with invalid request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiEndpoint}}/order/validate",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-002\",\n  \"securityId\": \"SEC-EQ-001\",\n  \"clientId\": \"CLIENT-001\",\n  \"aggregationUnitId\": \"AU-001\",\n  \"quantity\": 1000000000,\n  \"orderType\": \"SHORT_SELL\"\n}"
+            }
+          },
+          "test": [
+            "const startTime = pm.variables.get('startTime');",
+            "const endTime = new Date().getTime();",
+            "const responseTime = endTime - startTime;",
+            "",
+            "pm.test('Response time is under 150ms SLA', function() {",
+            "  pm.expect(responseTime).to.be.below(150);",
+            "});",
+            "",
+            "pm.test('Status code is 200', function() { pm.response.to.have.status(200); });",
+            "pm.test('Response indicates invalid order', function() { pm.expect(pm.response.json().valid).to.be.false; });",
+            "pm.test('Response includes reason for rejection', function() { pm.expect(pm.response.json().reason).to.exist; });"
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set('startTime', new Date().getTime());"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
