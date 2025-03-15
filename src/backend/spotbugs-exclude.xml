@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter
+    xmlns="https://github.com/spotbugs/filter/3.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/master/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- Exclude all test classes -->
+    <Match>
+        <Class name="~.*Test$" />
+    </Match>
+
+    <!-- Exclude all integration test classes -->
+    <Match>
+        <Class name="~.*IT$" />
+    </Match>
+
+    <!-- Exclude DTOs from certain checks -->
+    <Match>
+        <Class name="~.*DTO$" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+
+    <!-- Exclude entity classes from mutable object exposure checks -->
+    <Match>
+        <Class name="~.*Entity$" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+
+    <!-- Exclude model classes from mutable object exposure checks -->
+    <Match>
+        <Package name="~com\.ims\..*\.model" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+
+    <!-- Exclude configuration classes from dead local store warnings -->
+    <Match>
+        <Package name="~com\.ims\..*\.config" />
+        <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    </Match>
+
+    <!-- Exclude warnings about locale-sensitive string conversions -->
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE" />
+    </Match>
+
+    <!-- Exclude builder classes from mutable object exposure checks -->
+    <Match>
+        <Class name="~.*Builder$" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+
+    <!-- Exclude configuration classes from unread field warnings -->
+    <Match>
+        <Class name="~.*Config$" />
+        <Bug pattern="URF_UNREAD_FIELD" />
+    </Match>
+
+    <!-- Exclude event handler methods from switch-without-default warnings -->
+    <Match>
+        <Method name="~.*handle.*Event.*" />
+        <Bug pattern="SF_SWITCH_NO_DEFAULT" />
+    </Match>
+
+    <!-- Exclude redundant null check warnings that would have caused NPE -->
+    <Match>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE" />
+    </Match>
+</FindBugsFilter>
