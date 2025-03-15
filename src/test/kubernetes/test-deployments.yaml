@@ -1,0 +1,1176 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-data-ingestion-service
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: data-ingestion-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: data-ingestion-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8081"
+    spec:
+      containers:
+      - name: data-ingestion-service
+        image: ims/data-ingestion-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-data-ingestion-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-data-ingestion-secrets
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-calculation-service
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: calculation-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: calculation-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8082"
+    spec:
+      containers:
+      - name: calculation-service
+        image: ims/calculation-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8082
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-calculation-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-calculation-secrets
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8082
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8082
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-workflow-service
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: workflow-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: workflow-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8083"
+    spec:
+      containers:
+      - name: workflow-service
+        image: ims/workflow-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8083
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-workflow-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-workflow-secrets
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-api-gateway
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: api-gateway
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: api-gateway
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: api-gateway
+        image: ims/api-gateway:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-api-gateway-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-api-gateway-secrets
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-websocket-service
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: websocket-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: websocket-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8085"
+    spec:
+      containers:
+      - name: websocket-service
+        image: ims/websocket-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8085
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-websocket-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-websocket-secrets
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8085
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8085
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-monitoring-service
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: monitoring-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: monitoring-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8086"
+    spec:
+      containers:
+      - name: monitoring-service
+        image: ims/monitoring-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8086
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-monitoring-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-monitoring-secrets
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8086
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-auth-service
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: auth-service
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: auth-service
+        environment: test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8084"
+    spec:
+      containers:
+      - name: auth-service
+        image: ims/auth-service:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8084
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-test-common-config
+        - configMapRef:
+            name: ims-test-auth-config
+        - secretRef:
+            name: ims-test-common-secrets
+        - secretRef:
+            name: ims-test-auth-secrets
+        volumeMounts:
+        - name: users-volume
+          mountPath: /config/users
+        - name: logs-volume
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8084
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+      volumes:
+      - name: users-volume
+        configMap:
+          name: ims-test-auth-users-config
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-mock-reuters
+  labels:
+    app: ims
+    component: mock-reuters
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: mock-reuters
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: mock-reuters
+        environment: test
+    spec:
+      containers:
+      - name: mock-reuters
+        image: ims/mock-reuters:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        configMap:
+          name: ims-test-reuters-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-mock-bloomberg
+  labels:
+    app: ims
+    component: mock-bloomberg
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: mock-bloomberg
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: mock-bloomberg
+        environment: test
+    spec:
+      containers:
+      - name: mock-bloomberg
+        image: ims/mock-bloomberg:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        configMap:
+          name: ims-test-bloomberg-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-mock-markit
+  labels:
+    app: ims
+    component: mock-markit
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: mock-markit
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: mock-markit
+        environment: test
+    spec:
+      containers:
+      - name: mock-markit
+        image: ims/mock-markit:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        configMap:
+          name: ims-test-markit-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-mock-ultumus
+  labels:
+    app: ims
+    component: mock-ultumus
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: mock-ultumus
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: mock-ultumus
+        environment: test
+    spec:
+      containers:
+      - name: mock-ultumus
+        image: ims/mock-ultumus:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        configMap:
+          name: ims-test-ultumus-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-mock-rimes
+  labels:
+    app: ims
+    component: mock-rimes
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: mock-rimes
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: mock-rimes
+        environment: test
+    spec:
+      containers:
+      - name: mock-rimes
+        image: ims/mock-rimes:test
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        configMap:
+          name: ims-test-rimes-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-data-ingestion-db
+  labels:
+    app: ims
+    component: data-ingestion-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: data-ingestion-db
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: data-ingestion-db
+        environment: test
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15.3-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: postgresql
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: POSTGRES_DB
+          value: ims_ingestion_test
+        - name: POSTGRES_USER
+          value: ims_test
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ims-test-data-ingestion-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: data-volume
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: init-scripts
+        configMap:
+          name: ims-test-data-ingestion-db-init
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-calculation-db
+  labels:
+    app: ims
+    component: calculation-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: calculation-db
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: calculation-db
+        environment: test
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15.3-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: postgresql
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: POSTGRES_DB
+          value: ims_calculation_test
+        - name: POSTGRES_USER
+          value: ims_test
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ims-test-calculation-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: data-volume
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: init-scripts
+        configMap:
+          name: ims-test-calculation-db-init
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-workflow-db
+  labels:
+    app: ims
+    component: workflow-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: workflow-db
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: workflow-db
+        environment: test
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15.3-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: postgresql
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: POSTGRES_DB
+          value: ims_workflow_test
+        - name: POSTGRES_USER
+          value: ims_test
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ims-test-workflow-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: data-volume
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: init-scripts
+        configMap:
+          name: ims-test-workflow-db-init
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-auth-db
+  labels:
+    app: ims
+    component: auth-db
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: auth-db
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: auth-db
+        environment: test
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15.3-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: postgresql
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: POSTGRES_DB
+          value: ims_auth_test
+        - name: POSTGRES_USER
+          value: ims_test
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ims-test-auth-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: data-volume
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ims_test
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: init-scripts
+        configMap:
+          name: ims-test-auth-db-init
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-test-kafka
+  labels:
+    app: ims
+    component: kafka
+    part-of: inventory-management-system
+    managed-by: kustomize
+    environment: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+      component: kafka
+      environment: test
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: kafka
+        environment: test
+    spec:
+      containers:
+      - name: kafka
+        image: bitnami/kafka:3.4.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9092
+          name: kafka
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        env:
+        - name: KAFKA_CFG_NODE_ID
+          value: "1"
+        - name: KAFKA_CFG_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_CFG_LISTENERS
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://ims-test-kafka:9092"
+        - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+        - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+          value: "1@ims-test-kafka:9093"
+        - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx2G -Xms2G"
+        volumeMounts:
+        - name: data-volume
+          mountPath: /bitnami/kafka
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        emptyDir: {}
