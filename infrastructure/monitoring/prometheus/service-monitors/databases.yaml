@@ -1,0 +1,161 @@
+# ServiceMonitor for PostgreSQL database
+# Used for Reference Data Store (relational data)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-postgresql
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: pg_.*|postgresql_.*|database_.*|process_.*|go_.*
+          action: keep
+---
+# ServiceMonitor for TimescaleDB
+# Used for time-series market data storage
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-timescaledb
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: timescaledb
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: pg_.*|postgresql_.*|timescaledb_.*|database_.*|process_.*|go_.*
+          action: keep
+---
+# ServiceMonitor for Cassandra cluster
+# Used for distributed position data storage
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-cassandra
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cassandra
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: jmx-exporter
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: cassandra_.*|jvm_.*|process_.*|system_.*
+          action: keep
+---
+# ServiceMonitor for Redis 
+# Used for caching and calculation results
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-redis
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: redis_.*|process_.*|go_.*
+          action: keep
+---
+# ServiceMonitor for Elasticsearch
+# Used for search and log analytics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-elasticsearch
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: elasticsearch
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: elasticsearch_.*|jvm_.*|process_.*|system_.*
+          action: keep
+---
+# ServiceMonitor for Hazelcast
+# Used for in-memory data grid and distributed computing
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-hazelcast
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: database
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hazelcast
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: hazelcast_.*|jvm_.*|process_.*|system_.*
+          action: keep
