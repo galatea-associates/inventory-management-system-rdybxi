@@ -1,0 +1,17 @@
+{
+  "security": {
+    "internalId": "${securityId}"
+  },
+  "requestor": {
+    "counterpartyId": "${requestorId}"
+  },
+  "client": {
+    "counterpartyId": "${clientId}"
+  },
+  "aggregationUnit": {
+    "aggregationUnitId": "${aggregationUnitId}"
+  },
+  "locateType": "SHORT_SELL",
+  "requestedQuantity": "${requestedQuantity}",
+  "swapCashIndicator": "${swapCashIndicator}"
+}
