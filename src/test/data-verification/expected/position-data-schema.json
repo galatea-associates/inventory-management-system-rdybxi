@@ -1,0 +1,595 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Position Data Schema",
+  "type": "object",
+  "definitions": {
+    "baseEntity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique identifier for the entity"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the entity was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the entity was last modified"
+        },
+        "version": {
+          "type": "integer",
+          "description": "Version number for optimistic locking"
+        }
+      },
+      "required": ["id"]
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "internalId": {
+          "type": "string",
+          "description": "Internal identifier for the security"
+        },
+        "securityType": {
+          "type": "string",
+          "enum": ["EQUITY", "BOND", "ETF", "INDEX", "OPTION", "FUTURE", "SWAP", "OTHER"],
+          "description": "Type of security"
+        },
+        "issuer": {
+          "type": "string",
+          "description": "Issuer of the security"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the security"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "Currency of the security in ISO 4217 format"
+        },
+        "issueDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the security was issued"
+        },
+        "maturityDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the security matures"
+        },
+        "market": {
+          "type": "string",
+          "description": "Market where the security is traded"
+        },
+        "exchange": {
+          "type": "string",
+          "description": "Exchange where the security is listed"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "INACTIVE", "SUSPENDED", "DELISTED"],
+          "description": "Current status of the security"
+        },
+        "isBasketProduct": {
+          "type": "boolean",
+          "description": "Indicates if the security is a basket product (ETF, index)"
+        },
+        "basketType": {
+          "type": "string",
+          "enum": ["ETF", "INDEX", "OTHER", null],
+          "description": "Type of basket product"
+        },
+        "primaryIdentifierType": {
+          "type": "string",
+          "description": "Type of the primary identifier"
+        },
+        "primaryIdentifierValue": {
+          "type": "string",
+          "description": "Value of the primary identifier"
+        }
+      },
+      "required": ["internalId", "securityType", "status"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    },
+    "counterparty": {
+      "type": "object",
+      "properties": {
+        "counterpartyId": {
+          "type": "string",
+          "description": "Unique identifier for the counterparty"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the counterparty"
+        },
+        "shortName": {
+          "type": "string",
+          "description": "Short name or abbreviation of the counterparty"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["CLIENT", "INTERNAL", "BROKER", "CUSTODIAN", "EXCHANGE", "OTHER"],
+          "description": "Type of counterparty"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the counterparty"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "INACTIVE", "SUSPENDED", "TERMINATED"],
+          "description": "Current status of the counterparty"
+        },
+        "kycStatus": {
+          "type": "string",
+          "enum": ["APPROVED", "PENDING", "REJECTED", "EXPIRED"],
+          "description": "Know Your Customer status"
+        },
+        "riskRating": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"],
+          "description": "Risk rating of the counterparty"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "Country of the counterparty in ISO 3166-1 alpha-2 format"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region of the counterparty"
+        },
+        "primaryIdentifierType": {
+          "type": "string",
+          "description": "Type of the primary identifier"
+        },
+        "primaryIdentifierValue": {
+          "type": "string",
+          "description": "Value of the primary identifier"
+        }
+      },
+      "required": ["counterpartyId", "name", "type", "status"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    },
+    "aggregationUnit": {
+      "type": "object",
+      "properties": {
+        "aggregationUnitId": {
+          "type": "string",
+          "description": "Unique identifier for the aggregation unit"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the aggregation unit"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["REGULATORY", "TRADING", "RISK", "OTHER"],
+          "description": "Type of aggregation unit"
+        },
+        "market": {
+          "type": "string",
+          "description": "Market associated with the aggregation unit"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region associated with the aggregation unit"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "INACTIVE"],
+          "description": "Current status of the aggregation unit"
+        },
+        "officerId": {
+          "type": "string",
+          "description": "ID of the responsible officer"
+        },
+        "regulatoryId": {
+          "type": "string",
+          "description": "Regulatory identifier for the aggregation unit"
+        },
+        "parentEntityId": {
+          "type": "string",
+          "description": "ID of the parent entity"
+        },
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of book IDs associated with this aggregation unit"
+        }
+      },
+      "required": ["aggregationUnitId", "name", "type", "status"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    },
+    "commonPosition": {
+      "type": "object",
+      "properties": {
+        "bookId": {
+          "type": "string",
+          "description": "Identifier of the book that owns this position"
+        },
+        "security": {
+          "$ref": "#/definitions/security",
+          "description": "Security that this position is for"
+        },
+        "counterparty": {
+          "$ref": "#/definitions/counterparty",
+          "description": "Counterparty that owns this position"
+        },
+        "aggregationUnit": {
+          "$ref": "#/definitions/aggregationUnit",
+          "description": "Aggregation unit that contains this position"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for this position"
+        },
+        "positionType": {
+          "type": "string",
+          "enum": ["LONG", "SHORT", "FLAT"],
+          "description": "Type of position (long, short, flat)"
+        },
+        "isHypothecatable": {
+          "type": "boolean",
+          "description": "Indicates if the position can be used for financing activities"
+        },
+        "isReserved": {
+          "type": "boolean",
+          "description": "Indicates if the position is reserved for specific purposes"
+        },
+        "contractualQty": {
+          "type": "number",
+          "description": "Contractual quantity of the position"
+        },
+        "settledQty": {
+          "type": "number",
+          "description": "Settled quantity of the position"
+        },
+        "sd0Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 0 (today)"
+        },
+        "sd0Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 0 (today)"
+        },
+        "sd1Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 1 (tomorrow)"
+        },
+        "sd1Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 1 (tomorrow)"
+        },
+        "sd2Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 2"
+        },
+        "sd2Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 2"
+        },
+        "sd3Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 3"
+        },
+        "sd3Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 3"
+        },
+        "sd4Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 4"
+        },
+        "sd4Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 4"
+        }
+      },
+      "required": ["bookId", "security", "businessDate", "contractualQty", "settledQty"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    },
+    "calculatedPosition": {
+      "type": "object",
+      "properties": {
+        "bookId": {
+          "type": "string",
+          "description": "Identifier of the book that owns this position"
+        },
+        "security": {
+          "$ref": "#/definitions/security",
+          "description": "Security that this position is for"
+        },
+        "counterparty": {
+          "$ref": "#/definitions/counterparty",
+          "description": "Counterparty that owns this position"
+        },
+        "aggregationUnit": {
+          "$ref": "#/definitions/aggregationUnit",
+          "description": "Aggregation unit that contains this position"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for this position"
+        },
+        "positionType": {
+          "type": "string",
+          "enum": ["LONG", "SHORT", "FLAT"],
+          "description": "Type of position (long, short, flat)"
+        },
+        "isHypothecatable": {
+          "type": "boolean",
+          "description": "Indicates if the position can be used for financing activities"
+        },
+        "isReserved": {
+          "type": "boolean",
+          "description": "Indicates if the position is reserved for specific purposes"
+        },
+        "contractualQty": {
+          "type": "number",
+          "description": "Contractual quantity of the position"
+        },
+        "settledQty": {
+          "type": "number",
+          "description": "Settled quantity of the position"
+        },
+        "sd0Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 0 (today)"
+        },
+        "sd0Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 0 (today)"
+        },
+        "sd1Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 1 (tomorrow)"
+        },
+        "sd1Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 1 (tomorrow)"
+        },
+        "sd2Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 2"
+        },
+        "sd2Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 2"
+        },
+        "sd3Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 3"
+        },
+        "sd3Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 3"
+        },
+        "sd4Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 4"
+        },
+        "sd4Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 4"
+        },
+        "currentNetPosition": {
+          "type": "number",
+          "description": "Current net position (settled + contractual)"
+        },
+        "projectedNetPosition": {
+          "type": "number",
+          "description": "Projected net position after all settlements"
+        },
+        "calculationStatus": {
+          "type": "string",
+          "enum": ["PENDING", "VALID", "INVALID", "STALE"],
+          "description": "Status of the position calculation"
+        },
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the position was calculated"
+        },
+        "calculationRuleId": {
+          "type": "string",
+          "description": "ID of the calculation rule used"
+        },
+        "calculationRuleVersion": {
+          "type": "string",
+          "description": "Version of the calculation rule used"
+        },
+        "isStartOfDay": {
+          "type": "boolean",
+          "description": "Indicates if this is a start-of-day position"
+        }
+      },
+      "required": ["bookId", "security", "businessDate", "contractualQty", "settledQty", "calculationStatus"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    },
+    "settlementLadder": {
+      "type": "object",
+      "properties": {
+        "bookId": {
+          "type": "string",
+          "description": "Identifier of the book that owns this settlement ladder"
+        },
+        "security": {
+          "$ref": "#/definitions/security",
+          "description": "Security that this settlement ladder is for"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for this settlement ladder"
+        },
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the settlement ladder was calculated"
+        },
+        "calculationStatus": {
+          "type": "string",
+          "enum": ["PENDING", "VALID", "INVALID", "STALE"],
+          "description": "Status of the settlement ladder calculation"
+        },
+        "sd0Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 0 (today)"
+        },
+        "sd0Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 0 (today)"
+        },
+        "sd1Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 1 (tomorrow)"
+        },
+        "sd1Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 1 (tomorrow)"
+        },
+        "sd2Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 2"
+        },
+        "sd2Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 2"
+        },
+        "sd3Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 3"
+        },
+        "sd3Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 3"
+        },
+        "sd4Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 4"
+        },
+        "sd4Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 4"
+        },
+        "netSettlement": {
+          "type": "number",
+          "description": "Net settlement across all days"
+        },
+        "deliveries": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Map of settlement dates to delivery quantities"
+        },
+        "receipts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Map of settlement dates to receipt quantities"
+        }
+      },
+      "required": ["bookId", "security", "businessDate", "calculationStatus"],
+      "allOf": [{"$ref": "#/definitions/baseEntity"}]
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["COMMON_POSITION"]
+        },
+        "data": {
+          "$ref": "#/definitions/commonPosition"
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["CALCULATED_POSITION"]
+        },
+        "data": {
+          "$ref": "#/definitions/calculatedPosition"
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["SETTLEMENT_LADDER"]
+        },
+        "data": {
+          "$ref": "#/definitions/settlementLadder"
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["COMMON_POSITION"]
+              },
+              "data": {
+                "$ref": "#/definitions/commonPosition"
+              }
+            },
+            "required": ["type", "data"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["CALCULATED_POSITION"]
+              },
+              "data": {
+                "$ref": "#/definitions/calculatedPosition"
+              }
+            },
+            "required": ["type", "data"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["SETTLEMENT_LADDER"]
+              },
+              "data": {
+                "$ref": "#/definitions/settlementLadder"
+              }
+            },
+            "required": ["type", "data"]
+          }
+        ]
+      }
+    }
+  ]
+}
