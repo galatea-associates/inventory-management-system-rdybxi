@@ -1,0 +1,132 @@
+# Base configuration for Authentication Service
+# Environment-specific configurations are provided in profile-specific files
+
+spring:
+  application.name: ims-auth-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: AuthHikariCP
+      max-lifetime: 2000000
+      connection-timeout: 30000
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+  jackson:
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSZ
+    time-zone: UTC
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/auth
+  shutdown: graceful
+  forward-headers-strategy: native
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  info:
+    app:
+      name: ${spring.application.name}
+      description: Authentication Service for Inventory Management System
+      version: 1.0.0
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:default_secret_key_for_development_only_do_not_use_in_production}
+    expiration: 3600
+    refresh-expiration: 86400
+  password:
+    history-count: 24
+    max-age-days: 90
+    min-length: 12
+    complexity-regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$
+  account:
+    max-failed-attempts: 5
+    lock-duration-minutes: 30
+  session:
+    max-concurrent: 3
+    timeout-seconds: 900
+
+oauth:
+  client-id: ${OAUTH_CLIENT_ID:ims-client}
+  client-secret: ${OAUTH_CLIENT_SECRET:default_client_secret}
+  redirect-uris: ${OAUTH_REDIRECT_URIS:http://localhost:3000/callback}
+  jwt:
+    signing-key: ${OAUTH_JWT_SIGNING_KEY:default_signing_key_for_development_only}
+  identity-provider:
+    url: ${IDP_URL:https://login.microsoftonline.com/}
+    tenant-id: ${IDP_TENANT_ID:default-tenant-id}
+
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer:
+    group-id: auth-service
+    auto-offset-reset: earliest
+  topics:
+    user-events: user-events
+    auth-events: auth-events
+
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n'
+
+resilience4j.circuitbreaker:
+  instances:
+    identityProvider:
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 3
+
+resilience4j.retry:
+  instances:
+    identityProvider:
+      maxAttempts: 3
+      waitDuration: 1000
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+
+mfa:
+  enabled: true
+  required-roles: ADMIN,COMPLIANCE_OFFICER
+  totp:
+    time-step-seconds: 30
+    code-digits: 6
+    window-size: 1
+
+audit:
+  enabled: true
+  events:
+    authentication: true
+    authorization: true
+    user-management: true
+  retention-days: 365
