@@ -1,0 +1,302 @@
+[
+  {
+    "ADMIN": {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "Admin123!",
+      "firstName": "System",
+      "lastName": "Administrator",
+      "department": "IT",
+      "jobTitle": "System Administrator",
+      "phoneNumber": "+1-555-123-4567",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-06-15T09:30:00Z",
+      "passwordChangedAt": "2023-05-01T10:00:00Z",
+      "mfaEnabled": false,
+      "mfaSecret": null,
+      "roles": [
+        {
+          "name": "ADMIN",
+          "description": "System Administrator with full access",
+          "isDefault": false,
+          "permissions": [
+            "MANAGE_USERS",
+            "MANAGE_ROLES",
+            "MANAGE_SYSTEM",
+            "VIEW_ALL_DATA",
+            "EDIT_ALL_DATA",
+            "APPROVE_LOCATES",
+            "MANAGE_RULES"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "TRADER": {
+      "id": 2,
+      "username": "trader",
+      "email": "trader@example.com",
+      "password": "Trader123!",
+      "firstName": "John",
+      "lastName": "Trader",
+      "department": "Trading",
+      "jobTitle": "Senior Trader",
+      "phoneNumber": "+1-555-234-5678",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-06-15T08:45:00Z",
+      "passwordChangedAt": "2023-05-10T14:30:00Z",
+      "mfaEnabled": true,
+      "mfaSecret": "JBSWY3DPEHPK3PXP",
+      "roles": [
+        {
+          "name": "TRADER",
+          "description": "Trader with access to trading functions",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "VIEW_INVENTORY",
+            "REQUEST_LOCATES",
+            "SUBMIT_ORDERS"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "OPERATIONS": {
+      "id": 3,
+      "username": "operations",
+      "email": "operations@example.com",
+      "password": "Operations123!",
+      "firstName": "Jane",
+      "lastName": "Operations",
+      "department": "Operations",
+      "jobTitle": "Operations Manager",
+      "phoneNumber": "+1-555-345-6789",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-06-14T16:20:00Z",
+      "passwordChangedAt": "2023-04-15T11:45:00Z",
+      "mfaEnabled": false,
+      "mfaSecret": null,
+      "roles": [
+        {
+          "name": "OPERATIONS",
+          "description": "Operations staff with inventory management access",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "EDIT_POSITIONS",
+            "VIEW_INVENTORY",
+            "EDIT_INVENTORY",
+            "APPROVE_LOCATES",
+            "MANAGE_EXCEPTIONS"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "COMPLIANCE": {
+      "id": 4,
+      "username": "compliance",
+      "email": "compliance@example.com",
+      "password": "Compliance123!",
+      "firstName": "Robert",
+      "lastName": "Compliance",
+      "department": "Compliance",
+      "jobTitle": "Compliance Officer",
+      "phoneNumber": "+1-555-456-7890",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-06-15T07:15:00Z",
+      "passwordChangedAt": "2023-05-20T09:30:00Z",
+      "mfaEnabled": true,
+      "mfaSecret": "KBSWY3DPEHPK3PXQ",
+      "roles": [
+        {
+          "name": "COMPLIANCE",
+          "description": "Compliance officer with audit and reporting access",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_ALL_DATA",
+            "VIEW_AUDIT_LOGS",
+            "GENERATE_REPORTS",
+            "MONITOR_ACTIVITIES"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "LOCKED_USER": {
+      "id": 5,
+      "username": "locked",
+      "email": "locked@example.com",
+      "password": "Locked123!",
+      "firstName": "Locked",
+      "lastName": "User",
+      "department": "Trading",
+      "jobTitle": "Junior Trader",
+      "phoneNumber": "+1-555-567-8901",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": false,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 5,
+      "lastLoginAt": "2023-06-10T10:15:00Z",
+      "passwordChangedAt": "2023-04-05T16:20:00Z",
+      "mfaEnabled": false,
+      "mfaSecret": null,
+      "roles": [
+        {
+          "name": "TRADER",
+          "description": "Trader with access to trading functions",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "VIEW_INVENTORY",
+            "REQUEST_LOCATES",
+            "SUBMIT_ORDERS"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "EXPIRED_PASSWORD": {
+      "id": 6,
+      "username": "expired",
+      "email": "expired@example.com",
+      "password": "Expired123!",
+      "firstName": "Expired",
+      "lastName": "Password",
+      "department": "Operations",
+      "jobTitle": "Operations Analyst",
+      "phoneNumber": "+1-555-678-9012",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": false,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-03-15T14:30:00Z",
+      "passwordChangedAt": "2022-12-15T11:45:00Z",
+      "mfaEnabled": false,
+      "mfaSecret": null,
+      "roles": [
+        {
+          "name": "OPERATIONS",
+          "description": "Operations staff with inventory management access",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "EDIT_POSITIONS",
+            "VIEW_INVENTORY",
+            "EDIT_INVENTORY",
+            "APPROVE_LOCATES",
+            "MANAGE_EXCEPTIONS"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "DISABLED_USER": {
+      "id": 7,
+      "username": "disabled",
+      "email": "disabled@example.com",
+      "password": "Disabled123!",
+      "firstName": "Disabled",
+      "lastName": "User",
+      "department": "Trading",
+      "jobTitle": "Former Trader",
+      "phoneNumber": "+1-555-789-0123",
+      "enabled": false,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-01-10T09:15:00Z",
+      "passwordChangedAt": "2023-01-05T10:30:00Z",
+      "mfaEnabled": false,
+      "mfaSecret": null,
+      "roles": [
+        {
+          "name": "TRADER",
+          "description": "Trader with access to trading functions",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "VIEW_INVENTORY",
+            "REQUEST_LOCATES",
+            "SUBMIT_ORDERS"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "MULTI_ROLE": {
+      "id": 8,
+      "username": "multirole",
+      "email": "multirole@example.com",
+      "password": "MultiRole123!",
+      "firstName": "Multi",
+      "lastName": "Role",
+      "department": "Management",
+      "jobTitle": "Department Head",
+      "phoneNumber": "+1-555-890-1234",
+      "enabled": true,
+      "accountNonExpired": true,
+      "accountNonLocked": true,
+      "credentialsNonExpired": true,
+      "failedLoginAttempts": 0,
+      "lastLoginAt": "2023-06-14T11:45:00Z",
+      "passwordChangedAt": "2023-05-15T13:20:00Z",
+      "mfaEnabled": true,
+      "mfaSecret": "LBSWY3DPEHPK3PXR",
+      "roles": [
+        {
+          "name": "TRADER",
+          "description": "Trader with access to trading functions",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "VIEW_INVENTORY",
+            "REQUEST_LOCATES",
+            "SUBMIT_ORDERS"
+          ]
+        },
+        {
+          "name": "OPERATIONS",
+          "description": "Operations staff with inventory management access",
+          "isDefault": false,
+          "permissions": [
+            "VIEW_POSITIONS",
+            "EDIT_POSITIONS",
+            "VIEW_INVENTORY",
+            "EDIT_INVENTORY",
+            "APPROVE_LOCATES",
+            "MANAGE_EXCEPTIONS"
+          ]
+        }
+      ]
+    }
+  }
+]
