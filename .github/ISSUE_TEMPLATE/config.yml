@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: IMS Support
+    url: mailto:ims-support@example.com
+    about: Please contact support directly for urgent production issues or account-related questions
+  - name: IMS Documentation
+    url: https://docs.example.com/ims
+    about: Check the documentation for answers to common questions and usage guides
+  - name: Security Vulnerabilities
+    url: mailto:security@example.com
+    about: Please report security vulnerabilities directly to the security team instead of opening a public issue
+template_order:
+  - bug_report.md
+  - feature_request.md
