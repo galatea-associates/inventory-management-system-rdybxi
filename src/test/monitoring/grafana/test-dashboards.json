@@ -1,0 +1,659 @@
+{
+  "version": "1.0",
+  "grafanaVersion": "9.5.2",
+  "prometheusVersion": "2.44.0",
+  "dashboards": [
+    {
+      "uid": "test-system-overview",
+      "title": "Test System Overview",
+      "description": "Test dashboard providing a comprehensive system overview for the Inventory Management System",
+      "tags": ["ims", "test", "system", "overview"],
+      "panels": [
+        {
+          "title": "System Status",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_system_health_status",
+              "legendFormat": "System Status"
+            }
+          ]
+        },
+        {
+          "title": "System Uptime",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_system_uptime_seconds / 86400",
+              "legendFormat": "Uptime"
+            }
+          ]
+        },
+        {
+          "title": "System Availability",
+          "type": "gauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_system_availability_percent",
+              "legendFormat": "Availability"
+            }
+          ]
+        },
+        {
+          "title": "Active Alerts",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_alerts_active_count{severity=\"critical\"}",
+              "legendFormat": "Critical"
+            },
+            {
+              "expr": "test_ims_alerts_active_count{severity=\"high\"}",
+              "legendFormat": "High"
+            },
+            {
+              "expr": "test_ims_alerts_active_count{severity=\"medium\"}",
+              "legendFormat": "Medium"
+            },
+            {
+              "expr": "test_ims_alerts_active_count{severity=\"low\"}",
+              "legendFormat": "Low"
+            }
+          ]
+        },
+        {
+          "title": "Service Health",
+          "type": "table",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_service_health_status",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "title": "Resource Utilization",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_system_cpu_utilization_percent",
+              "legendFormat": "CPU"
+            },
+            {
+              "expr": "test_ims_system_memory_utilization_percent",
+              "legendFormat": "Memory"
+            },
+            {
+              "expr": "test_ims_system_disk_utilization_percent",
+              "legendFormat": "Disk"
+            },
+            {
+              "expr": "test_ims_system_network_utilization_percent",
+              "legendFormat": "Network"
+            }
+          ]
+        },
+        {
+          "title": "Event Processing",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_business_events_per_second",
+              "legendFormat": "Events Per Second"
+            },
+            {
+              "expr": "test_ims_business_event_processing_latency_ms",
+              "legendFormat": "Processing Latency"
+            }
+          ]
+        },
+        {
+          "title": "SLA Compliance",
+          "type": "bargauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"system_availability\"}",
+              "legendFormat": "System Availability"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"event_processing_latency\"}",
+              "legendFormat": "Event Processing Latency"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"short_sell_approval_time\"}",
+              "legendFormat": "Short Sell Approval Time"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"ui_dashboard_load_time\"}",
+              "legendFormat": "UI Dashboard Load Time"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "test-calculation-performance",
+      "title": "Test Calculation Performance",
+      "description": "Test dashboard for monitoring calculation performance in the Inventory Management System",
+      "tags": ["ims", "test", "calculation", "performance"],
+      "panels": [
+        {
+          "title": "Calculation Status",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_calculation_engine_health_status",
+              "legendFormat": "Calculation Status"
+            }
+          ]
+        },
+        {
+          "title": "Calculation Rate",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_calculation_events_per_second",
+              "legendFormat": "Events/Sec"
+            }
+          ]
+        },
+        {
+          "title": "Calculation Latency",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_calculation_latency_ms",
+              "legendFormat": "Latency"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate",
+          "type": "gauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_calculation_error_rate_percent",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "title": "Calculation Services Status",
+          "type": "table",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_calculation_service_status",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "title": "Position Calculation Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_position_calculation_events_per_second",
+              "legendFormat": "Calculation Rate"
+            },
+            {
+              "expr": "test_ims_position_calculation_latency_ms",
+              "legendFormat": "Calculation Latency"
+            }
+          ]
+        },
+        {
+          "title": "Inventory Calculation Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_calculation_events_per_second",
+              "legendFormat": "Calculation Rate"
+            },
+            {
+              "expr": "test_ims_inventory_calculation_latency_ms",
+              "legendFormat": "Calculation Latency"
+            }
+          ]
+        },
+        {
+          "title": "Limit Calculation Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_limit_calculation_events_per_second",
+              "legendFormat": "Calculation Rate"
+            },
+            {
+              "expr": "test_ims_limit_calculation_latency_ms",
+              "legendFormat": "Calculation Latency"
+            }
+          ]
+        },
+        {
+          "title": "SLA Compliance",
+          "type": "bargauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"position_calculation_latency\"}",
+              "legendFormat": "Position Calculation Latency"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"inventory_calculation_latency\"}",
+              "legendFormat": "Inventory Calculation Latency"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"short_sell_approval_time\"}",
+              "legendFormat": "Short Sell Approval Time"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"calculation_throughput\"}",
+              "legendFormat": "Calculation Throughput"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "test-data-ingestion",
+      "title": "Test Data Ingestion",
+      "description": "Test dashboard for monitoring data ingestion processes in the Inventory Management System",
+      "tags": ["ims", "test", "data", "ingestion"],
+      "panels": [
+        {
+          "title": "Ingestion Status",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_data_ingestion_health_status",
+              "legendFormat": "Ingestion Status"
+            }
+          ]
+        },
+        {
+          "title": "Ingestion Rate",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_data_ingestion_events_per_second",
+              "legendFormat": "Events/Sec"
+            }
+          ]
+        },
+        {
+          "title": "Ingestion Services Status",
+          "type": "table",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_data_ingestion_service_status",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "title": "Reference Data Ingestion",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_reference_data_ingestion_rate",
+              "legendFormat": "Ingestion Rate"
+            },
+            {
+              "expr": "test_ims_reference_data_ingestion_latency_ms",
+              "legendFormat": "Ingestion Latency"
+            }
+          ]
+        },
+        {
+          "title": "Market Data Ingestion",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_market_data_ingestion_rate",
+              "legendFormat": "Ingestion Rate"
+            },
+            {
+              "expr": "test_ims_market_data_ingestion_latency_ms",
+              "legendFormat": "Ingestion Latency"
+            }
+          ]
+        },
+        {
+          "title": "Trade Data Ingestion",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_trade_data_ingestion_rate",
+              "legendFormat": "Ingestion Rate"
+            },
+            {
+              "expr": "test_ims_trade_data_ingestion_latency_ms",
+              "legendFormat": "Ingestion Latency"
+            }
+          ]
+        },
+        {
+          "title": "Contract Data Ingestion",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_contract_data_ingestion_rate",
+              "legendFormat": "Ingestion Rate"
+            },
+            {
+              "expr": "test_ims_contract_data_ingestion_latency_ms",
+              "legendFormat": "Ingestion Latency"
+            }
+          ]
+        },
+        {
+          "title": "Data Mapping Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_data_mapping_rate",
+              "legendFormat": "Mapping Rate"
+            },
+            {
+              "expr": "test_ims_data_mapping_latency_ms",
+              "legendFormat": "Mapping Latency"
+            }
+          ]
+        },
+        {
+          "title": "Ingestion Errors",
+          "type": "table",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_data_ingestion_errors",
+              "format": "table"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "test-api-metrics",
+      "title": "Test API Metrics",
+      "description": "Test dashboard for monitoring API performance in the Inventory Management System",
+      "tags": ["ims", "test", "api", "performance"],
+      "panels": [
+        {
+          "title": "API Status",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_api_health_status",
+              "legendFormat": "API Status"
+            }
+          ]
+        },
+        {
+          "title": "Request Rate",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_api_request_rate",
+              "legendFormat": "Requests/Sec"
+            }
+          ]
+        },
+        {
+          "title": "Response Time",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_api_response_time_ms",
+              "legendFormat": "Response Time"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate",
+          "type": "gauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_api_error_rate_percent",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "title": "API Performance by Endpoint",
+          "type": "table",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_api_endpoint_metrics",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "title": "REST API Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_rest_api_request_rate",
+              "legendFormat": "Request Rate"
+            },
+            {
+              "expr": "test_ims_rest_api_response_time_ms",
+              "legendFormat": "Response Time"
+            },
+            {
+              "expr": "test_ims_rest_api_error_rate_percent",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "title": "GraphQL API Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_graphql_api_request_rate",
+              "legendFormat": "Request Rate"
+            },
+            {
+              "expr": "test_ims_graphql_api_response_time_ms",
+              "legendFormat": "Response Time"
+            },
+            {
+              "expr": "test_ims_graphql_api_error_rate_percent",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "title": "WebSocket Performance",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_websocket_connection_count",
+              "legendFormat": "Active Connections"
+            },
+            {
+              "expr": "test_ims_websocket_message_rate",
+              "legendFormat": "Message Rate"
+            },
+            {
+              "expr": "test_ims_websocket_error_rate_percent",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "title": "API SLA Compliance",
+          "type": "bargauge",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"api_response_time\"}",
+              "legendFormat": "API Response Time"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"api_availability\"}",
+              "legendFormat": "API Availability"
+            },
+            {
+              "expr": "test_ims_sla_compliance_percent{sla=\"api_error_rate\"}",
+              "legendFormat": "API Error Rate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "test-inventory-metrics",
+      "title": "Test Inventory Metrics",
+      "description": "Test dashboard for monitoring inventory metrics in the Inventory Management System",
+      "tags": ["ims", "test", "inventory", "business"],
+      "panels": [
+        {
+          "title": "Inventory Status",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_service_health_status",
+              "legendFormat": "Inventory Status"
+            }
+          ]
+        },
+        {
+          "title": "Inventory Categories",
+          "type": "piechart",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_by_category",
+              "legendFormat": "{{category}}"
+            }
+          ]
+        },
+        {
+          "title": "For Loan Availability",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_for_loan_availability",
+              "legendFormat": "For Loan"
+            }
+          ]
+        },
+        {
+          "title": "For Pledge Availability",
+          "type": "stat",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_for_pledge_availability",
+              "legendFormat": "For Pledge"
+            }
+          ]
+        },
+        {
+          "title": "Inventory Utilization",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_utilization_percent",
+              "legendFormat": "Utilization"
+            }
+          ]
+        },
+        {
+          "title": "Locate Requests",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "rate(test_ims_locate_requests_total[5m])",
+              "legendFormat": "Request Rate"
+            },
+            {
+              "expr": "test_ims_locate_approval_rate_percent",
+              "legendFormat": "Approval Rate"
+            }
+          ]
+        },
+        {
+          "title": "Locate Processing Time",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_locate_processing_time_ms",
+              "legendFormat": "Processing Time"
+            }
+          ]
+        },
+        {
+          "title": "Short Sell Validation",
+          "type": "timeseries",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "rate(test_ims_short_sell_validations_total[5m])",
+              "legendFormat": "Validation Rate"
+            },
+            {
+              "expr": "test_ims_short_sell_approval_rate_percent",
+              "legendFormat": "Approval Rate"
+            },
+            {
+              "expr": "test_ims_short_sell_validation_time_ms",
+              "legendFormat": "Validation Time"
+            }
+          ]
+        },
+        {
+          "title": "Inventory by Market",
+          "type": "barchart",
+          "datasource": "prometheus",
+          "targets": [
+            {
+              "expr": "test_ims_inventory_by_market",
+              "legendFormat": "{{market}}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
