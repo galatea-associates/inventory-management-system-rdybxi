@@ -1,0 +1,292 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:ims-postgres-prod}:${DB_PORT:5432}/${DB_NAME:ims_monitoring_prod}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 600000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc.batch_size: 100
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: ims-monitoring-service-prod
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: com.ims.*
+    producer:
+      acks: all
+      retries: 5
+      batch-size: 32768
+      buffer-memory: 67108864
+    topics:
+      system-events: ims.system.events.prod
+      alerts: ims.monitoring.alerts.prod
+      metrics: ims.monitoring.metrics.prod
+      health-events: ims.monitoring.health.prod
+  redis:
+    host: ${REDIS_HOST:ims-redis-prod}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD}
+    timeout: 1000
+    database: 0
+    ssl: true
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 16
+        min-idle: 8
+        max-wait: -1
+      shutdown-timeout: 100
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_SERVER_URL}/auth/realms/ims
+          jwk-set-uri: ${AUTH_SERVER_URL}/auth/realms/ims/protocol/openid-connect/certs
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://ims.example.com}
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+server:
+  port: 8085
+  servlet:
+    context-path: /monitoring
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  tomcat:
+    max-threads: 400
+    min-spare-threads: 40
+    max-connections: 20000
+    connection-timeout: 5000
+    accept-count: 200
+  http2:
+    enabled: true
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: true
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace,ping
+        readiness:
+          include: readinessState,db,kafka,redis
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: [50, 100, 200, 500]
+    tags:
+      application: ${spring.application.name}
+      environment: production
+
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.apache.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n"
+  file:
+    name: /var/log/ims/monitoring-service-prod.log
+    max-size: 500MB
+    max-history: 60
+    total-size-cap: 10GB
+
+monitoring:
+  metrics:
+    system:
+      collection-rate: 10000
+      retention-days: 90
+    application:
+      collection-rate: 10000
+      retention-days: 90
+    business:
+      collection-rate: 15000
+      retention-days: 365
+    database:
+      collection-rate: 15000
+      retention-days: 90
+    integration:
+      collection-rate: 15000
+      retention-days: 90
+    threshold-check-rate: 30000
+  health:
+    check-rate: 15000
+    service-timeout: 3000
+    dependency-timeout: 3000
+  alerts:
+    processing-rate: 30000
+    metric-check-rate: 30000
+    health-check-rate: 30000
+    retention:
+      active-days: 60
+      resolved-days: 180
+      archived-days: 730
+    notification:
+      channels:
+        email:
+          enabled: true
+          recipients: ${ALERT_EMAIL_RECIPIENTS}
+          critical-recipients: ${ALERT_CRITICAL_EMAIL_RECIPIENTS}
+        slack:
+          enabled: true
+          webhook-url: ${SLACK_WEBHOOK_URL}
+          channel: ${SLACK_CHANNEL:#monitoring-alerts-prod}
+        pagerduty:
+          enabled: true
+          service-key: ${PAGERDUTY_SERVICE_KEY}
+  services:
+    - id: data-ingestion-service
+      name: Data Ingestion Service
+      url: http://data-ingestion-service:8080/actuator/health
+      critical: true
+    - id: calculation-service
+      name: Calculation Service
+      url: http://calculation-service:8080/actuator/health
+      critical: true
+    - id: workflow-service
+      name: Workflow Service
+      url: http://workflow-service:8080/actuator/health
+      critical: true
+    - id: api-gateway
+      name: API Gateway
+      url: http://api-gateway:8080/actuator/health
+      critical: true
+    - id: websocket-service
+      name: WebSocket Service
+      url: http://websocket-service:8080/actuator/health
+      critical: true
+    - id: auth-service
+      name: Authentication Service
+      url: http://auth-service:8080/actuator/health
+      critical: true
+  dependencies:
+    databases:
+      - name: PostgreSQL
+        url: jdbc:postgresql://${DB_HOST:ims-postgres-prod}:${DB_PORT:5432}/${DB_NAME:ims_monitoring_prod}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+        query: SELECT 1
+    message-brokers:
+      - name: Kafka
+        bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    caches:
+      - name: Redis
+        host: ${REDIS_HOST:ims-redis-prod}
+        port: ${REDIS_PORT:6379}
+    external-services:
+      - name: Auth Server
+        url: ${AUTH_SERVER_URL}/auth/realms/ims/.well-known/openid-configuration
+        timeout: 3000
+  thresholds:
+    system:
+      cpu.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      memory.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      disk.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+    application:
+      response.time:
+        warning: 200
+        critical: 500
+        duration: 300
+      error.rate:
+        warning: 0.1
+        critical: 1
+        duration: 300
+      request.rate:
+        warning: 10000
+        critical: 20000
+        duration: 300
+    business:
+      event.processing.latency:
+        warning: 150
+        critical: 200
+        duration: 300
+      calculation.time:
+        warning: 150
+        critical: 200
+        duration: 300
+      locate.approval.time:
+        warning: 1000
+        critical: 2000
+        duration: 300
+      short.sell.validation.time:
+        warning: 100
+        critical: 150
+        duration: 300
+    database:
+      connection.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      query.time:
+        warning: 100
+        critical: 200
+        duration: 300
+    integration:
+      api.response.time:
+        warning: 200
+        critical: 500
+        duration: 300
+      api.error.rate:
+        warning: 0.1
+        critical: 1
+        duration: 300
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
