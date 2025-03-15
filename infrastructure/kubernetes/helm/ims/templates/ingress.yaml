@@ -1,0 +1,41 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "ims.fullname" . }}-ingress
+  labels:
+    app: {{ template "ims.name" . }}
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.annotations.nginx\.ingress\.kubernetes\.io/ssl-redirect }}
+    nginx.ingress.kubernetes.io/use-regex: {{ .Values.ingress.annotations.nginx\.ingress\.kubernetes\.io/use-regex }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.ingress.annotations.nginx\.ingress\.kubernetes\.io/proxy-body-size }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.annotations.cert-manager\.io/cluster-issuer }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+  - hosts:
+    - {{ .Values.global.domain }}
+    secretName: {{ .Values.ingress.tls.0.secretName }}
+  rules:
+  - host: {{ .Values.global.domain }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.services.apiGateway.name }}
+            port:
+              number: {{ .Values.services.apiGateway.port }}
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.services.websocket.name }}
+            port:
+              number: {{ .Values.services.websocket.port }}
+{{- end }}
