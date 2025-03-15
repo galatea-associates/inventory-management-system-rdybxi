@@ -1,0 +1,130 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ims_workflow_dev
+    username: ims_dev
+    password: ims_dev_password
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: workflow-service-dev
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 3
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/ims-dev
+          audience: ims-api-dev
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+      allow-credentials: true
+      max-age: 3600
+
+server:
+  port: 8083
+  tomcat:
+    max-threads: 50
+    min-spare-threads: 10
+    max-connections: 1000
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.camunda: INFO
+  file:
+    name: logs/workflow-service-dev.log
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    job-execution:
+      core-pool-size: 3
+      max-pool-size: 5
+    metrics:
+      enabled: true
+      db-reporter-activate: false
+
+feign:
+  client:
+    config:
+      calculation-service:
+        url: http://localhost:8082
+
+workflow:
+  locate:
+    auto-approval:
+      enabled: true
+      max-quantity: 5000
+      min-inventory-ratio: 1.5
+      expiry-hours: 24
+    manual-review:
+      timeout-minutes: 60
+      notification-enabled: true
+    performance:
+      thread-pool-size: 5
+      queue-capacity: 50
+  short-sell:
+    validation:
+      timeout-ms: 150
+      cache-ttl-seconds: 300
+      batch-size: 50
+    performance:
+      thread-pool-size: 10
+      queue-capacity: 100
+  scheduling:
+    cleanup-expired-locates: 0 0 * * * *
+    process-pending-validations: 0 */5 * * * *
+    health-check: 0 */5 * * * *
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      locateWorkflow:
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+      shortSellWorkflow:
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+  retry:
+    instances:
+      locateWorkflow:
+        maxAttempts: 3
+        waitDuration: 1s
+      shortSellWorkflow:
+        maxAttempts: 3
+        waitDuration: 1s
+  ratelimiter:
+    instances:
+      locateWorkflow:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+      shortSellWorkflow:
+        limitForPeriod: 200
+        limitRefreshPeriod: 1s
+        timeoutDuration: 150ms
+
+springdoc:
+  swagger-ui:
+    enabled: true
