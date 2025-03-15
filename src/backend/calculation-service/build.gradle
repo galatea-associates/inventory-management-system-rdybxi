@@ -1,0 +1,96 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'com.palantir.docker' version '0.35.0'
+    id 'jacoco'
+}
+
+group = 'com.ims.calculation'
+version = '0.1.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+mainClassName = 'com.ims.calculation.CalculationServiceApplication'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://plugins.gradle.org/m2/' }
+}
+
+dependencies {
+    implementation project(':common-lib')
+    
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.kafka:spring-kafka:3.0.7'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    
+    implementation 'com.hazelcast:hazelcast:5.3.0'
+    implementation 'com.hazelcast:hazelcast-spring:5.3.0'
+    implementation 'org.eclipse.collections:eclipse-collections:11.1.0'
+    implementation 'com.lmax:disruptor:3.4.4'
+    
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'com.h2database:h2'
+}
+
+bootJar {
+    mainClassName = 'com.ims.calculation.CalculationServiceApplication'
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Built-By': System.properties['user.name'],
+            'Built-Date': new Date(),
+            'Built-JDK': System.properties['java.version']
+        )
+    }
+}
+
+docker {
+    name "ims/calculation-service"
+    tag project.version
+    files bootJar.archiveFile
+    dockerfile file('src/main/docker/Dockerfile')
+    buildArgs([
+        'JAR_FILE': "${bootJar.archiveFileName.get()}"
+    ])
+    labels([
+        'maintainer': 'IMS Team',
+        'app.name': project.name,
+        'app.version': project.version
+    ])
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    systemProperty 'spring.profiles.active', 'test'
+    environment([
+        'SPRING_DATASOURCE_URL': 'jdbc:h2:mem:testdb',
+        'SPRING_DATASOURCE_DRIVER_CLASS_NAME': 'org.h2.Driver'
+    ])
+}
+
+applicationDefaultJvmArgs = [
+    '-Dspring.profiles.active=default',
+    '-Dserver.port=8082',
+    '-Dmanagement.server.port=8083'
+]
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:unchecked', '-Xlint:deprecation']
+}
+
+tasks.withType(Test) {
+    jvmArgs = ['-Xms1g', '-Xmx2g', '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=100', '-XX:+UseStringDeduplication']
+}
