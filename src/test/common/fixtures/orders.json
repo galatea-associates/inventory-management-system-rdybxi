@@ -1,0 +1,612 @@
+package com.ims.order.model;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * Represents an order in the Inventory Management System (IMS).
+ * Contains all information required for order processing and validation,
+ * including references to security, client, and aggregation unit.
+ * 
+ * This class is central to many core functions including:
+ * - Short sell approval workflow (must complete within 150ms SLA)
+ * - Position calculation
+ * - Inventory availability checks
+ * - Regulatory reporting
+ * - Trading activity monitoring
+ *
+ * @version 1.0
+ * @since 1.0
+ */
+public class Order {
+
+    private Long id;
+    private String orderId;
+    private OrderType orderType;
+    private String securityId;
+    private Security security;
+    private String clientId;
+    private Client client;
+    private String aggregationUnitId;
+    private AggregationUnit aggregationUnit;
+    private String buyerCounterpartyId;
+    private String sellerCounterpartyId;
+    private OrderSide side;
+    private BigDecimal price;
+    private Integer quantity;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate orderDate;
+    
+    private String orderTime;
+    private OrderStatus status;
+    private String bookId;
+    private String parentOrderId;
+    private String createdBy;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private LocalDateTime createdAt;
+    
+    private String lastModifiedBy;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private LocalDateTime lastModifiedAt;
+    
+    private Integer version;
+
+    /**
+     * Determines if this order requires short sell validation.
+     * 
+     * @return true if this is a short sell order requiring validation
+     */
+    public boolean requiresShortSellValidation() {
+        return OrderType.SHORT_SELL.equals(this.orderType);
+    }
+
+    /**
+     * Determines if this order requires long sell validation.
+     * 
+     * @return true if this is a long sell order requiring validation
+     */
+    public boolean requiresLongSellValidation() {
+        return OrderType.LONG_SELL.equals(this.orderType);
+    }
+
+    /**
+     * Returns the market where the security is traded.
+     * Used for market-specific regulatory rules.
+     * 
+     * @return the market identifier
+     */
+    public String getSecurityMarket() {
+        return security != null ? security.getMarket() : null;
+    }
+
+    // Getters and Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public OrderType getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(OrderType orderType) {
+        this.orderType = orderType;
+    }
+
+    public String getSecurityId() {
+        return securityId;
+    }
+
+    public void setSecurityId(String securityId) {
+        this.securityId = securityId;
+    }
+
+    public Security getSecurity() {
+        return security;
+    }
+
+    public void setSecurity(Security security) {
+        this.security = security;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public String getAggregationUnitId() {
+        return aggregationUnitId;
+    }
+
+    public void setAggregationUnitId(String aggregationUnitId) {
+        this.aggregationUnitId = aggregationUnitId;
+    }
+
+    public AggregationUnit getAggregationUnit() {
+        return aggregationUnit;
+    }
+
+    public void setAggregationUnit(AggregationUnit aggregationUnit) {
+        this.aggregationUnit = aggregationUnit;
+    }
+
+    public String getBuyerCounterpartyId() {
+        return buyerCounterpartyId;
+    }
+
+    public void setBuyerCounterpartyId(String buyerCounterpartyId) {
+        this.buyerCounterpartyId = buyerCounterpartyId;
+    }
+
+    public String getSellerCounterpartyId() {
+        return sellerCounterpartyId;
+    }
+
+    public void setSellerCounterpartyId(String sellerCounterpartyId) {
+        this.sellerCounterpartyId = sellerCounterpartyId;
+    }
+
+    public OrderSide getSide() {
+        return side;
+    }
+
+    public void setSide(OrderSide side) {
+        this.side = side;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public LocalDate getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(LocalDate orderDate) {
+        this.orderDate = orderDate;
+    }
+
+    public String getOrderTime() {
+        return orderTime;
+    }
+
+    public void setOrderTime(String orderTime) {
+        this.orderTime = orderTime;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    public String getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
+    }
+
+    public String getParentOrderId() {
+        return parentOrderId;
+    }
+
+    public void setParentOrderId(String parentOrderId) {
+        this.parentOrderId = parentOrderId;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    public LocalDateTime getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    /**
+     * Order type enumeration.
+     * Used to distinguish between different types of orders,
+     * particularly important for validation workflows.
+     */
+    public enum OrderType {
+        BUY,
+        LONG_SELL,
+        SHORT_SELL
+    }
+    
+    /**
+     * Order side enumeration.
+     * Indicates whether the order is a buy or sell.
+     */
+    public enum OrderSide {
+        BUY,
+        SELL
+    }
+    
+    /**
+     * Order status enumeration.
+     * Tracks the lifecycle of an order through the system.
+     */
+    public enum OrderStatus {
+        NEW,
+        ACCEPTED,
+        REJECTED,
+        FILLED,
+        PARTIALLY_FILLED,
+        CANCELLED
+    }
+    
+    /**
+     * Security information referenced by the order.
+     * Contains details about the financial instrument being traded.
+     */
+    public static class Security {
+        private String internalId;
+        private SecurityType securityType;
+        private String issuer;
+        private String description;
+        private String currency;
+        private String market;
+        private String exchange;
+        private String status;
+        private String primaryIdentifierType;
+        private String primaryIdentifierValue;
+        
+        /**
+         * Determines if this security is an ETF (Exchange Traded Fund).
+         * Important for basket-specific calculations.
+         * 
+         * @return true if this security is an ETF
+         */
+        public boolean isEtf() {
+            return SecurityType.ETF.equals(this.securityType);
+        }
+        
+        /**
+         * Gets the primary market identifier for this security.
+         * Used for market-specific regulatory rules.
+         * 
+         * @return the market identifier string
+         */
+        public String getMarketIdentifier() {
+            return this.primaryIdentifierType + ":" + this.primaryIdentifierValue;
+        }
+
+        // Getters and Setters
+
+        public String getInternalId() {
+            return internalId;
+        }
+
+        public void setInternalId(String internalId) {
+            this.internalId = internalId;
+        }
+
+        public SecurityType getSecurityType() {
+            return securityType;
+        }
+
+        public void setSecurityType(SecurityType securityType) {
+            this.securityType = securityType;
+        }
+
+        public String getIssuer() {
+            return issuer;
+        }
+
+        public void setIssuer(String issuer) {
+            this.issuer = issuer;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getCurrency() {
+            return currency;
+        }
+
+        public void setCurrency(String currency) {
+            this.currency = currency;
+        }
+
+        public String getMarket() {
+            return market;
+        }
+
+        public void setMarket(String market) {
+            this.market = market;
+        }
+
+        public String getExchange() {
+            return exchange;
+        }
+
+        public void setExchange(String exchange) {
+            this.exchange = exchange;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getPrimaryIdentifierType() {
+            return primaryIdentifierType;
+        }
+
+        public void setPrimaryIdentifierType(String primaryIdentifierType) {
+            this.primaryIdentifierType = primaryIdentifierType;
+        }
+
+        public String getPrimaryIdentifierValue() {
+            return primaryIdentifierValue;
+        }
+
+        public void setPrimaryIdentifierValue(String primaryIdentifierValue) {
+            this.primaryIdentifierValue = primaryIdentifierValue;
+        }
+    }
+    
+    /**
+     * Security type enumeration.
+     * Classifies the type of financial instrument.
+     */
+    public enum SecurityType {
+        EQUITY,
+        BOND,
+        ETF,
+        FUTURE,
+        OPTION
+    }
+    
+    /**
+     * Client information referenced by the order.
+     * Contains details about the client initiating the order.
+     */
+    public static class Client {
+        private String counterpartyId;
+        private String name;
+        private String shortName;
+        private CounterpartyType type;
+        private String status;
+        
+        /**
+         * Determines if this client is institutionally classified.
+         * Important for certain regulatory requirements.
+         * 
+         * @return true if this is an institutional client
+         */
+        public boolean isInstitutional() {
+            return CounterpartyType.INSTITUTIONAL.equals(this.type) ||
+                   CounterpartyType.ASSET_MANAGER.equals(this.type) ||
+                   CounterpartyType.PENSION_FUND.equals(this.type);
+        }
+
+        // Getters and Setters
+
+        public String getCounterpartyId() {
+            return counterpartyId;
+        }
+
+        public void setCounterpartyId(String counterpartyId) {
+            this.counterpartyId = counterpartyId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getShortName() {
+            return shortName;
+        }
+
+        public void setShortName(String shortName) {
+            this.shortName = shortName;
+        }
+
+        public CounterpartyType getType() {
+            return type;
+        }
+
+        public void setType(CounterpartyType type) {
+            this.type = type;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    }
+    
+    /**
+     * Counterparty type enumeration.
+     * Classifies the type of trading entity.
+     */
+    public enum CounterpartyType {
+        INSTITUTIONAL,
+        HEDGE_FUND,
+        ASSET_MANAGER,
+        CORPORATE,
+        PENSION_FUND,
+        BROKER_DEALER,
+        RETAIL_BROKER,
+        SOVEREIGN_WEALTH_FUND,
+        INVESTMENT_BANK,
+        INSURANCE
+    }
+    
+    /**
+     * Aggregation unit information referenced by the order.
+     * Aggregation units are arbitrary subdivisions of a legal entity for 
+     * trade reporting purposes and activity segregation, particularly 
+     * important in Asian-Pacific markets.
+     */
+    public static class AggregationUnit {
+        private String aggregationUnitId;
+        private String name;
+        private String type;
+        private String market;
+        private String region;
+        private String status;
+        
+        /**
+         * Determines if this aggregation unit is for a specific market.
+         * Used for market-specific regulatory rules.
+         * 
+         * @param marketCode Market code to check
+         * @return true if this aggregation unit is for the specified market
+         */
+        public boolean isForMarket(String marketCode) {
+            return marketCode != null && marketCode.equals(this.market);
+        }
+        
+        /**
+         * Gets the full display name of the aggregation unit.
+         * 
+         * @return formatted display name with region and market
+         */
+        public String getDisplayName() {
+            return this.name + " (" + this.region + "/" + this.market + ")";
+        }
+
+        // Getters and Setters
+
+        public String getAggregationUnitId() {
+            return aggregationUnitId;
+        }
+
+        public void setAggregationUnitId(String aggregationUnitId) {
+            this.aggregationUnitId = aggregationUnitId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getMarket() {
+            return market;
+        }
+
+        public void setMarket(String market) {
+            this.market = market;
+        }
+
+        public String getRegion() {
+            return region;
+        }
+
+        public void setRegion(String region) {
+            this.region = region;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    }
+}
