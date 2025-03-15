@@ -1,0 +1,630 @@
+# Development environment specific values for the IMS Helm chart
+# This overrides the default values in values.yaml for the development environment
+
+global:
+  environment: dev
+  logLevel: DEBUG
+  domain: dev.ims.example.com
+  region: us-east-1
+  clusterName: ims-dev-cluster
+
+# Service configurations
+services:
+  dataIngestion:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8081"
+  calculation:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8082"
+  workflow:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8083"
+  apiGateway:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8080"
+  websocket:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8085"
+    sessionAffinity: ClientIP
+  monitoring:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8086"
+  auth:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8084"
+
+# Deployment configurations
+deployments:
+  dataIngestion:
+    enabled: true
+    image:
+      repository: ims-registry/data-ingestion-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+  calculation:
+    enabled: true
+    image:
+      repository: ims-registry/calculation-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: medium-priority
+  workflow:
+    enabled: true
+    image:
+      repository: ims-registry/workflow-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+  apiGateway:
+    enabled: true
+    image:
+      repository: ims-registry/api-gateway
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+  websocket:
+    enabled: true
+    image:
+      repository: ims-registry/websocket-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+  monitoring:
+    enabled: true
+    image:
+      repository: ims-registry/monitoring-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.2"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+  auth:
+    enabled: true
+    image:
+      repository: ims-registry/auth-service
+      tag: dev-latest
+      pullPolicy: Always
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: dev
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: JAVA_OPTS
+        value: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    priorityClassName: low-priority
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: dev.ims.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+        - path: /ws
+          pathType: Prefix
+          service: websocket-service
+          port: 8085
+  tls:
+    - secretName: ims-dev-tls-cert
+      hosts:
+        - dev.ims.example.com
+
+# ConfigMap configurations
+configMaps:
+  common:
+    enabled: true
+    data:
+      ENVIRONMENT: dev
+      LOG_LEVEL: DEBUG
+      KAFKA_BOOTSTRAP_SERVERS: kafka-headless.kafka.svc.cluster.local:9092
+      EUREKA_SERVICE_URL: http://ims-service-registry:8761/eureka/
+      SERVICE_DOMAIN: ims.svc.cluster.local
+      CORS_ALLOWED_ORIGINS: https://dev.ims.example.com,http://localhost:3000
+      JWT_ISSUER_URI: https://auth.dev.ims.example.com/
+      JWT_AUDIENCE: ims-api-dev
+  dataIngestion:
+    enabled: true
+    data:
+      INGESTION_BATCH_MAX_BATCH_SIZE: "1000"
+      INGESTION_BATCH_PROCESSING_THREADS: "2"
+      INGESTION_VALIDATION_STRICT_MODE: "false"
+      INGESTION_BATCH_RETRY_ATTEMPTS: "3"
+      INGESTION_BATCH_RETRY_DELAY_MS: "1000"
+      REUTERS_API_URL: https://api-dev.reuters.com/data/v1
+      BLOOMBERG_API_URL: https://api-dev.bloomberg.com/data/v1
+      MARKIT_API_URL: https://api-dev.markit.com/data/v1
+      ULTUMUS_API_URL: https://api-dev.ultumus.com/data/v1
+      RIMES_API_URL: https://api-dev.rimes.com/data/v1
+  calculation:
+    enabled: true
+    data:
+      CALCULATION_POSITION_CACHE_TTL_SECONDS: "300"
+      CALCULATION_INVENTORY_CACHE_TTL_SECONDS: "300"
+      CALCULATION_LIMIT_CACHE_TTL_SECONDS: "300"
+      CALCULATION_RULE_CACHE_TTL_SECONDS: "300"
+      CALCULATION_PERFORMANCE_THREAD_POOL_SIZE: "5"
+      CALCULATION_PERFORMANCE_QUEUE_CAPACITY: "100"
+  workflow:
+    enabled: true
+    data:
+      WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED: "true"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY: "100000"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MIN_INVENTORY_RATIO: "1.0"
+      WORKFLOW_LOCATE_MANUAL_REVIEW_TIMEOUT_MINUTES: "30"
+      WORKFLOW_LOCATE_PERFORMANCE_THREAD_POOL_SIZE: "5"
+      WORKFLOW_LOCATE_PERFORMANCE_QUEUE_CAPACITY: "50"
+      WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS: "500"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_THREAD_POOL_SIZE: "5"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_QUEUE_CAPACITY: "50"
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_DEFAULT_REPLENISH_RATE: "1000"
+      RATE_LIMIT_DEFAULT_BURST_CAPACITY: "2000"
+      RATE_LIMIT_CRITICAL_REPLENISH_RATE: "10000"
+      RATE_LIMIT_CRITICAL_BURST_CAPACITY: "20000"
+  websocket:
+    enabled: true
+    data:
+      WEBSOCKET_MAX_TEXT_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_BINARY_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_FRAME_SIZE: "65536"
+      WEBSOCKET_IDLE_TIMEOUT: "300000"
+      WEBSOCKET_MAX_SESSIONS_PER_USER: "10"
+  monitoring:
+    enabled: true
+    data:
+      MONITORING_HEALTH_CHECK_INTERVAL_SECONDS: "30"
+      MONITORING_METRICS_RETENTION_DAYS: "3"
+      MONITORING_ALERT_ENABLED: "true"
+      MONITORING_ALERT_RECIPIENTS: dev-ops@example.com
+  auth:
+    enabled: true
+    data:
+      AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS: "86400"
+      AUTH_TOKEN_REFRESH_TOKEN_VALIDITY_SECONDS: "604800"
+      AUTH_PASSWORD_POLICY_MIN_LENGTH: "8"
+      AUTH_PASSWORD_POLICY_REQUIRE_SPECIAL_CHAR: "false"
+      AUTH_PASSWORD_POLICY_REQUIRE_DIGIT: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_UPPERCASE: "false"
+      AUTH_PASSWORD_POLICY_REQUIRE_LOWERCASE: "true"
+      AUTH_PASSWORD_POLICY_MAX_AGE_DAYS: "365"
+      AUTH_PASSWORD_POLICY_HISTORY_COUNT: "5"
+      AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS: "10"
+      AUTH_ACCOUNT_LOCKOUT_DURATION_MINUTES: "30"
+      AUTH_MFA_ENABLED: "false"
+      AUTH_MFA_METHODS: "totp"
+
+# Secret configurations
+secrets:
+  common:
+    enabled: true
+    data:
+      JWT_SECRET: ZGV2LWp3dC1zZWNyZXQta2V5LWZvci1kZXZlbG9wbWVudC1lbnZpcm9ubWVudA==
+      ENCRYPTION_KEY: ZGV2LWVuY3J5cHRpb24ta2V5LWZvci1kZXZlbG9wbWVudC1lbnZpcm9ubWVudA==
+  dataIngestion:
+    enabled: true
+    data:
+      DB_PASSWORD: ZGV2LXBhc3N3b3Jk
+      REUTERS_API_KEY: ZGV2LXJldXRlcnMta2V5
+      REUTERS_API_SECRET: ZGV2LXJldXRlcnMtc2VjcmV0
+      BLOOMBERG_API_KEY: ZGV2LWJsb29tYmVyZy1rZXk=
+      BLOOMBERG_API_SECRET: ZGV2LWJsb29tYmVyZy1zZWNyZXQ=
+      MARKIT_API_KEY: ZGV2LW1hcmtpdC1rZXk=
+      MARKIT_API_SECRET: ZGV2LW1hcmtpdC1zZWNyZXQ=
+      ULTUMUS_API_KEY: ZGV2LXVsdHVtdXMta2V5
+      ULTUMUS_API_SECRET: ZGV2LXVsdHVtdXMtc2VjcmV0
+      RIMES_API_KEY: ZGV2LXJpbWVzLWtleQ==
+      RIMES_API_SECRET: ZGV2LXJpbWVzLXNlY3JldA==
+  calculation:
+    enabled: true
+    data:
+      DB_PASSWORD: ZGV2LXBhc3N3b3Jk
+      HAZELCAST_CLUSTER_PASSWORD: ZGV2LWhhemVsY2FzdC1wYXNzd29yZA==
+      REDIS_PASSWORD: ZGV2LXJlZGlzLXBhc3N3b3Jk
+  workflow:
+    enabled: true
+    data:
+      DB_PASSWORD: ZGV2LXBhc3N3b3Jk
+      CAMUNDA_ADMIN_PASSWORD: ZGV2LWNhbXVuZGEtcGFzc3dvcmQ=
+      NOTIFICATION_SERVICE_API_KEY: ZGV2LW5vdGlmaWNhdGlvbi1hcGkta2V5
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_REDIS_PASSWORD: ZGV2LXJlZGlzLXBhc3N3b3Jk
+  websocket:
+    enabled: true
+    data:
+      REDIS_PASSWORD: ZGV2LXJlZGlzLXBhc3N3b3Jk
+  monitoring:
+    enabled: true
+    data:
+      ALERT_SMTP_PASSWORD: ZGV2LXNtdHAtcGFzc3dvcmQ=
+      PAGERDUTY_API_KEY: ZGV2LXBhZ2VyZHV0eS1hcGkta2V5
+      SLACK_WEBHOOK_URL: aHR0cHM6Ly9ob29rcy5zbGFjay5jb20vc2VydmljZXMvVFhYWFhYWFhYL0JYWFHYWFHYWFHYWFHYWFHYWFHYWFHYWFHYWFHYWFHY=
+  auth:
+    enabled: true
+    data:
+      DB_PASSWORD: ZGV2LXBhc3N3b3Jk
+      AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET: ZGV2LW9rdGEtY2xpZW50LXNlY3JldA==
+      AUTH_SMS_PROVIDER_API_KEY: ZGV2LXNtcy1hcGkta2V5
+      AUTH_EMAIL_PROVIDER_API_KEY: ZGV2LWVtYWlsLWFwaS1rZXk=
+
+# Horizontal Pod Autoscaler configurations
+horizontalPodAutoscaler:
+  dataIngestion:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  calculation:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  workflow:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  apiGateway:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  websocket:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  auth:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget configurations
+podDisruptionBudget:
+  dataIngestion:
+    enabled: false
+  calculation:
+    enabled: false
+  workflow:
+    enabled: false
+  apiGateway:
+    enabled: false
+  websocket:
+    enabled: false
+  auth:
+    enabled: false
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: standard
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    username: ims_app
+    password: dev-password
+    database: ims_db
+    postgresPassword: dev-postgres-password
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+  readReplicas:
+    replicaCount: 0
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    password: dev-redis-password
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+  replica:
+    replicaCount: 0
+
+# Kafka configuration
+kafka:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  persistence:
+    enabled: true
+    size: 10Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+  externalAccess:
+    enabled: false
+  metrics:
+    jmx:
+      enabled: true
+    kafka:
+      enabled: true
+
+# TimescaleDB configuration
+timescaledb:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  persistence:
+    enabled: true
+    size: 10Gi
+  credentials:
+    username: ims_app
+    password: dev-password
+
+# Elasticsearch configuration
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+    persistence:
+      enabled: true
+      size: 5Gi
+  data:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.5"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    persistence:
+      enabled: true
+      size: 10Gi
+  coordinating:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+  security:
+    enabled: true
+    elasticPassword: dev-elastic-password
+
+# Prometheus configuration
+prometheus:
+  enabled: true
+  server:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "0.3"
+        memory: "512Mi"
+      limits:
+        cpu: "0.5"
+        memory: "1Gi"
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+    retention: 7d
+  alertmanager:
+    enabled: true
+    resources:
+      requests:
+        cpu: "0.1"
+        memory: "128Mi"
+      limits:
+        cpu: "0.2"
+        memory: "256Mi"
+    persistentVolume:
+      enabled: true
+      size: 2Gi
+  nodeExporter:
+    enabled: true
+  pushgateway:
+    enabled: true
+  serviceMonitors:
+    enabled: true
+
+# Grafana configuration
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+    limits:
+      cpu: "0.2"
+      memory: "256Mi"
+  persistence:
+    enabled: true
+    size: 2Gi
+  adminPassword: dev-grafana-admin
