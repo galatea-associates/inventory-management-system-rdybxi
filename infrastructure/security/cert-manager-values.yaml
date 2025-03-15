@@ -1,0 +1,368 @@
+# Cert-manager Helm values for the Inventory Management System (IMS)
+# This configuration manages TLS certificates for secure communication
+
+# Install CRDs as part of the release
+installCRDs: true
+
+# Global settings
+global:
+  # Namespace for leader election to avoid conflicts when running multiple instances
+  leaderElection:
+    namespace: cert-manager
+  # Set log level to info (2)
+  logLevel: 2
+
+# Number of controller replicas for high availability
+replicaCount: 3
+
+# Image configuration
+image:
+  repository: quay.io/jetstack/cert-manager-controller
+  tag: v1.11.0
+  pullPolicy: IfNotPresent
+
+# Namespace for cluster-wide resources
+clusterResourceNamespace: cert-manager
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: cert-manager
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ims-${ENVIRONMENT}-cert-manager-role
+
+# Security context for enhanced security
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# Resource allocation for controller
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+# Prometheus monitoring configuration
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    prometheusInstance: default
+    targetPort: 9402
+    path: /metrics
+    interval: 60s
+    scrapeTimeout: 30s
+    labels:
+      release: prometheus
+
+# Webhook configuration
+webhook:
+  replicaCount: 3
+  timeoutSeconds: 10
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 256Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+  hostNetwork: false
+  serviceType: ClusterIP
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - webhook
+          topologyKey: kubernetes.io/hostname
+
+# CA injector configuration
+cainjector:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 256Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - cainjector
+          topologyKey: kubernetes.io/hostname
+
+# Startup API check configuration
+startupapicheck:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
+# Node selectors for pod scheduling
+nodeSelector: {}
+
+# Tolerations for pod scheduling
+tolerations: []
+
+# Ingress shim configuration for automatic certificate creation
+ingressShim:
+  defaultIssuerName: letsencrypt-prod
+  defaultIssuerKind: ClusterIssuer
+  defaultIssuerGroup: cert-manager.io
+
+# Pod annotations for metrics collection
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: /metrics
+  prometheus.io/port: "9402"
+
+# Pod labels for identification
+podLabels:
+  app.kubernetes.io/part-of: ims
+  app.kubernetes.io/component: cert-manager
+
+# Additional arguments for cert-manager
+extraArgs:
+  - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
+  - --dns01-recursive-nameservers-only
+
+# ClusterIssuer configurations
+clusterIssuers:
+  # Let's Encrypt staging for testing
+  letsencrypt-staging:
+    enabled: true
+    kind: ClusterIssuer
+    name: letsencrypt-staging
+    spec:
+      acme:
+        server: https://acme-staging-v02.api.letsencrypt.org/directory
+        email: cert-admin@ims.example.com
+        privateKeySecretRef:
+          name: letsencrypt-staging-key
+        solvers:
+        - http01:
+            ingress:
+              class: nginx
+        - dns01:
+            route53:
+              region: ${AWS_REGION}
+              hostedZoneID: ${HOSTED_ZONE_ID}
+            selector:
+              dnsZones:
+              - ims.example.com
+              - "*.ims.example.com"
+
+  # Let's Encrypt production for real certificates
+  letsencrypt-prod:
+    enabled: true
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        email: cert-admin@ims.example.com
+        privateKeySecretRef:
+          name: letsencrypt-prod-key
+        solvers:
+        - http01:
+            ingress:
+              class: nginx
+        - dns01:
+            route53:
+              region: ${AWS_REGION}
+              hostedZoneID: ${HOSTED_ZONE_ID}
+            selector:
+              dnsZones:
+              - ims.example.com
+              - "*.ims.example.com"
+
+  # Self-signed issuer for internal or development use
+  selfsigned:
+    enabled: true
+    kind: ClusterIssuer
+    name: selfsigned
+    spec:
+      selfSigned: {}
+
+# Certificate definitions
+certificates:
+  # Wildcard certificate for general traffic
+  ims-wildcard:
+    enabled: true
+    name: ims-wildcard-cert
+    namespace: istio-system
+    secretName: ims-tls-cert
+    issuerRef:
+      name: letsencrypt-prod
+      kind: ClusterIssuer
+    commonName: "*.ims.example.com"
+    dnsNames:
+    - "*.ims.example.com"
+    - "ims.example.com"
+    duration: 2160h # 90 days
+    renewBefore: 720h # 30 days
+
+  # API-specific certificate
+  ims-api:
+    enabled: true
+    name: ims-api-cert
+    namespace: istio-system
+    secretName: ims-api-tls-cert
+    issuerRef:
+      name: letsencrypt-prod
+      kind: ClusterIssuer
+    commonName: api.ims.example.com
+    dnsNames:
+    - api.ims.example.com
+    - api-americas.ims.example.com
+    - api-europe.ims.example.com
+    - api-apac.ims.example.com
+    duration: 2160h # 90 days
+    renewBefore: 720h # 30 days
+
+  # WebSocket-specific certificate
+  ims-websocket:
+    enabled: true
+    name: ims-websocket-cert
+    namespace: istio-system
+    secretName: ims-ws-tls-cert
+    issuerRef:
+      name: letsencrypt-prod
+      kind: ClusterIssuer
+    commonName: ws.ims.example.com
+    dnsNames:
+    - ws.ims.example.com
+    - ws-americas.ims.example.com
+    - ws-europe.ims.example.com
+    - ws-apac.ims.example.com
+    duration: 2160h # 90 days
+    renewBefore: 720h # 30 days
+
+  # Vault certificate for secrets management
+  vault:
+    enabled: true
+    name: vault-cert
+    namespace: vault
+    secretName: vault-tls
+    issuerRef:
+      name: letsencrypt-prod
+      kind: ClusterIssuer
+    commonName: vault.ims.example.com
+    dnsNames:
+    - vault.ims.example.com
+    - vault-americas.ims.example.com
+    - vault-europe.ims.example.com
+    - vault-apac.ims.example.com
+    duration: 2160h # 90 days
+    renewBefore: 720h # 30 days
+
+# Region-specific configurations
+regional_configuration:
+  description: Region-specific configurations for cert-manager
+  regions:
+    - name: Americas
+      hostedZoneId: ${HOSTED_ZONE_ID_AMERICAS}
+      region: us-east-1
+      domains:
+        - americas.ims.example.com
+        - api-americas.ims.example.com
+        - ws-americas.ims.example.com
+        - vault-americas.ims.example.com
+    - name: Europe
+      hostedZoneId: ${HOSTED_ZONE_ID_EUROPE}
+      region: eu-west-1
+      domains:
+        - europe.ims.example.com
+        - api-europe.ims.example.com
+        - ws-europe.ims.example.com
+        - vault-europe.ims.example.com
+    - name: Asia-Pacific
+      hostedZoneId: ${HOSTED_ZONE_ID_APAC}
+      region: ap-northeast-1
+      domains:
+        - apac.ims.example.com
+        - api-apac.ims.example.com
+        - ws-apac.ims.example.com
+        - vault-apac.ims.example.com
+
+# Security considerations
+security_considerations:
+  description: Security considerations for cert-manager deployment
+  certificate_renewal: Automatic renewal 30 days before expiration to prevent outages
+  private_key_security: Private keys stored as Kubernetes secrets with restricted access
+  acme_challenge_security: DNS-01 challenge used for wildcard certificates with secure AWS IAM roles
+  monitoring: Certificate expiration monitoring with alerting
+
+# Monitoring configuration
+monitoring_configuration:
+  description: Monitoring configuration for cert-manager
+  prometheus_metrics:
+    enabled: true
+    path: /metrics
+    port: 9402
+  alerts:
+    certificate_expiry:
+      severity: warning
+      description: Certificate will expire in less than 30 days
+      threshold: 30d
+    certificate_renewal_failure:
+      severity: critical
+      description: Certificate renewal has failed
+      threshold: 1
+    cert_manager_controller_down:
+      severity: critical
+      description: cert-manager controller is not running
+      threshold: 1
