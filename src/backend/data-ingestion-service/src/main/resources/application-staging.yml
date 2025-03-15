@@ -1,0 +1,207 @@
+# =============================================================================
+# Data Ingestion Service Staging Configuration
+# =============================================================================
+# This file contains staging environment-specific configuration settings
+# that override the base application.yml settings
+
+# Spring Application Configuration
+spring:
+  profiles:
+    active: staging
+    
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://ims-staging-db.internal:5432/ims_ingestion_staging
+    username: ims_staging
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 8
+      
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        
+  # Kafka Configuration for high-throughput message processing
+  kafka:
+    bootstrap-servers: kafka-staging-1.internal:9092,kafka-staging-2.internal:9092,kafka-staging-3.internal:9092
+    producer:
+      acks: all
+      retries: 5
+      batch-size: 16384
+      properties:
+        linger.ms: 5
+    consumer:
+      group-id: data-ingestion-service-staging
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 8
+      
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth-staging.ims.com
+          audience: ims-api-staging
+          
+  # CORS Configuration
+  cors:
+    allowed-origins: https://staging.ims.com,https://admin-staging.ims.com
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/ingestion
+  tomcat:
+    max-threads: 150
+    min-spare-threads: 30
+
+# Actuator Management Configuration
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+  file:
+    name: logs/data-ingestion-service-staging.log
+
+# External System Integration Configuration
+external:
+  # Reuters Integration
+  reuters:
+    api-url: https://api-staging.reuters.com/data/v1
+    api-key: ${REUTERS_API_KEY}
+    username: ${REUTERS_USERNAME}
+    password: ${REUTERS_PASSWORD}
+    reference-data-batch-path: /data/staging/reuters/batch
+    
+  # Bloomberg Integration
+  bloomberg:
+    api-url: https://api-staging.bloomberg.com/data/v1
+    api-key: ${BLOOMBERG_API_KEY}
+    username: ${BLOOMBERG_USERNAME}
+    password: ${BLOOMBERG_PASSWORD}
+    reference-data-batch-path: /data/staging/bloomberg/batch
+    
+  # MarkIT Integration
+  markit:
+    api-url: https://api-staging.markit.com/data/v1
+    api-key: ${MARKIT_API_KEY}
+    username: ${MARKIT_USERNAME}
+    password: ${MARKIT_PASSWORD}
+    reference-data-batch-path: /data/staging/markit/batch
+    
+  # Ultumus Integration
+  ultumus:
+    api-url: https://api-staging.ultumus.com/data/v1
+    api-key: ${ULTUMUS_API_KEY}
+    username: ${ULTUMUS_USERNAME}
+    password: ${ULTUMUS_PASSWORD}
+    reference-data-batch-path: /data/staging/ultumus/batch
+    
+  # RIMES Integration
+  rimes:
+    api-url: https://api-staging.rimes.com/data/v1
+    api-key: ${RIMES_API_KEY}
+    username: ${RIMES_USERNAME}
+    password: ${RIMES_PASSWORD}
+    reference-data-batch-path: /data/staging/rimes/batch
+
+# Application-specific Configuration
+app:
+  kafka:
+    topics:
+      market-data: market-data-staging
+      market-data-input: market-data-input-staging
+    group-id: data-ingestion-service-staging
+    
+  # Market Data Configuration
+  market-data:
+    real-time:
+      enabled: true
+    batch-size: 5000
+    processing:
+      interval: 60000
+      
+  # Reference Data Configuration
+  reference-data:
+    batch-directory: /data/staging/reference-data/batch
+    conflict-resolution:
+      enabled: true
+      priority-sources: REUTERS,BLOOMBERG,MARKIT
+      
+  # Trade Data Configuration
+  trade-data:
+    batch-directory: /data/staging/trade-data/batch
+    processing:
+      interval: 60000
+      
+  # Contract Data Configuration
+  contract-data:
+    batch-directory: /data/staging/contract-data/batch
+    processing:
+      interval: 60000
+
+# Data Ingestion Configuration
+ingestion:
+  batch:
+    max-batch-size: 5000
+    processing-threads: 8
+    retry-attempts: 3
+    retry-delay-ms: 1000
+  validation:
+    enabled: true
+    strict-mode: true
+  scheduling:
+    reference-data-update: "0 0 1 * * SUN"  # Weekly on Sunday at 01:00 AM
+    market-data-cleanup: "0 0 0 * * *"      # Daily at midnight
+    health-check: "0 */5 * * * *"           # Every 5 minutes
+
+# Resilience4j Configuration for circuit breaking, retries, and rate limiting
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCalls:
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "20s"
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      externalServiceCalls:
+        maxAttempts: 3
+        waitDuration: "1s"
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalServiceCalls:
+        limitForPeriod: 500
+        limitRefreshPeriod: "1s"
+        timeoutDuration: "500ms"
+
+# API Documentation Configuration
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
