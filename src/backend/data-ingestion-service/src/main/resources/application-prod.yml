@@ -1,0 +1,258 @@
+# =============================================================================
+# Data Ingestion Service - Production Configuration
+# =============================================================================
+# Production profile configuration with optimized settings for high throughput,
+# reliability, and security in a production environment
+
+spring:
+  profiles:
+    active: prod
+    
+  # Database Configuration - Production settings with increased connection pools
+  datasource:
+    url: jdbc:postgresql://ims-prod-db.internal:5432/ims_ingestion_prod
+    username: ims_prod
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 15
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      
+  # JPA Configuration - Optimized for production
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc.batch_size: 100
+        order_inserts: true
+        order_updates: true
+        
+  # Kafka Configuration - Optimized for high throughput
+  kafka:
+    bootstrap-servers: kafka-prod-1.internal:9092,kafka-prod-2.internal:9092,kafka-prod-3.internal:9092,kafka-prod-4.internal:9092,kafka-prod-5.internal:9092
+    producer:
+      acks: all
+      retries: 10
+      batch-size: 32768
+      buffer-memory: 67108864
+      compression-type: snappy
+      properties:
+        linger.ms: 5
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+    consumer:
+      group-id: data-ingestion-service-prod
+      auto-offset-reset: earliest
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.ims.common.event,com.ims.ingestion.model
+        max.poll.records: 1000
+        fetch.min.bytes: 2048
+        fetch.max.wait.ms: 500
+        enable.auto.commit: false
+    listener:
+      concurrency: 15
+      ack-mode: MANUAL_IMMEDIATE
+      missing-topics-fatal: false
+      
+  # Security Configuration - Production settings
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.ims.com
+          audience: ims-api
+          
+  # CORS Configuration - Production domains
+  cors:
+    allowed-origins: https://ims.com,https://admin.ims.com
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+# Server Configuration - Production settings with increased thread counts
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/ingestion
+  tomcat:
+    max-threads: 300
+    min-spare-threads: 50
+    max-connections: 20000
+    connection-timeout: 5000
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 2048
+
+# Actuator Management Configuration - Production settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration - Production settings
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/data-ingestion-service-prod.log
+    max-size: 500MB
+    max-history: 60
+
+# External System Integration - Production settings
+external:
+  # Reuters Integration - Version 2023.1
+  reuters:
+    api-url: https://api.reuters.com/data/v1
+    api-key: ${REUTERS_API_KEY}
+    username: ${REUTERS_USERNAME}
+    password: ${REUTERS_PASSWORD}
+    reference-data-batch-path: /data/prod/reuters/batch
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 50
+    
+  # Bloomberg Integration - Version 3.14.5
+  bloomberg:
+    api-url: https://api.bloomberg.com/data/v1
+    api-key: ${BLOOMBERG_API_KEY}
+    username: ${BLOOMBERG_USERNAME}
+    password: ${BLOOMBERG_PASSWORD}
+    reference-data-batch-path: /data/prod/bloomberg/batch
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 50
+    
+  # MarkIT Integration - Version 2.8.1
+  markit:
+    api-url: https://api.markit.com/data/v1
+    api-key: ${MARKIT_API_KEY}
+    username: ${MARKIT_USERNAME}
+    password: ${MARKIT_PASSWORD}
+    reference-data-batch-path: /data/prod/markit/batch
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 30
+    
+  # Ultumus Integration - Version 1.5.2
+  ultumus:
+    api-url: https://api.ultumus.com/data/v1
+    api-key: ${ULTUMUS_API_KEY}
+    username: ${ULTUMUS_USERNAME}
+    password: ${ULTUMUS_PASSWORD}
+    reference-data-batch-path: /data/prod/ultumus/batch
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 30
+    
+  # RIMES Integration - Version 2.3.0
+  rimes:
+    api-url: https://api.rimes.com/data/v1
+    api-key: ${RIMES_API_KEY}
+    username: ${RIMES_USERNAME}
+    password: ${RIMES_PASSWORD}
+    reference-data-batch-path: /data/prod/rimes/batch
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 30
+
+# Application-specific Configuration - Production settings
+app:
+  kafka:
+    topics:
+      market-data: market-data
+      market-data-input: market-data-input
+    group-id: data-ingestion-service-prod
+    
+  # Market Data Configuration
+  market-data:
+    real-time:
+      enabled: true
+    batch-size: 10000
+    processing:
+      interval: 60000
+      
+  # Reference Data Configuration
+  reference-data:
+    batch-directory: /data/prod/reference-data/batch
+    conflict-resolution:
+      enabled: true
+      priority-sources: REUTERS,BLOOMBERG,MARKIT
+      
+  # Trade Data Configuration
+  trade-data:
+    batch-directory: /data/prod/trade-data/batch
+    processing:
+      interval: 60000
+      
+  # Contract Data Configuration
+  contract-data:
+    batch-directory: /data/prod/contract-data/batch
+    processing:
+      interval: 60000
+
+# Data Ingestion Configuration - Production settings
+ingestion:
+  batch:
+    max-batch-size: 10000
+    processing-threads: 15
+    retry-attempts: 5
+    retry-delay-ms: 1000
+  validation:
+    enabled: true
+    strict-mode: true
+  scheduling:
+    reference-data-update: "0 0 1 * * SUN"  # Weekly on Sunday at 01:00 AM
+    market-data-cleanup: "0 0 0 * * *"      # Daily at midnight
+    health-check: "0 */5 * * * *"           # Every 5 minutes
+
+# Resilience4j Configuration - Production settings with enhanced circuit breaking
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCalls:
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 20
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      externalServiceCalls:
+        maxAttempts: 5
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalServiceCalls:
+        limitForPeriod: 1000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+
+# API Documentation Configuration - Disabled in production
+springdoc:
+  swagger-ui:
+    enabled: false
