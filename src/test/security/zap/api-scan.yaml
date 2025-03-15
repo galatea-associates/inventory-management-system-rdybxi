@@ -1,0 +1,197 @@
+# OWASP ZAP API Security Scan Configuration
+# For Inventory Management System (IMS)
+# Version: 1.0
+
+# Target configuration - defines the API target and context for scanning
+target:
+  url: https://api.ims.com/v1
+  context_name: "IMS API Context"
+  include_paths:
+    - "^https://api\\.ims\\.com/v1/.*$"
+  exclude_paths:
+    - "^https://api\\.ims\\.com/v1/auth/token$"
+    - "^https://api\\.ims\\.com/v1/auth/refresh$"
+    - "^https://api\\.ims\\.com/v1/health$"
+    - "^https://api\\.ims\\.com/v1/actuator/.*$"
+
+# Authentication configuration - OAuth2 method for API access
+authentication:
+  method: oauth2
+  login_url: https://api.ims.com/v1/auth/login
+  username_field: username
+  password_field: password
+  username: ${TEST_USERNAME}
+  password: ${TEST_PASSWORD}
+  token_endpoint: https://api.ims.com/v1/auth/token
+  token_request_data:
+    grant_type: password
+    client_id: ${CLIENT_ID}
+    client_secret: ${CLIENT_SECRET}
+  token_response_field: access_token
+  token_header_name: Authorization
+  token_header_value_prefix: "Bearer "
+
+# API definition - uses OpenAPI specification to understand API structure
+api_definition:
+  type: openapi
+  path: src/test/resources/api-docs/openapi.json
+  target_url: https://api.ims.com/v1
+
+# Scan policy - defines security rules and their sensitivity levels
+scan_policy:
+  default_strength: medium
+  default_threshold: medium
+  rules:
+    # Standard OWASP security rules
+    - id: "40012"
+      name: "SQL Injection"
+      strength: high
+      threshold: medium
+    - id: "40014"
+      name: "Cross Site Scripting (XSS)"
+      strength: high
+      threshold: medium
+    - id: "40018"
+      name: "NoSQL Injection"
+      strength: high
+      threshold: medium
+    - id: "10105"
+      name: "Weak Authentication Method"
+      strength: high
+      threshold: medium
+    - id: "10202"
+      name: "Weak Password Policy"
+      strength: medium
+      threshold: medium
+    - id: "10038"
+      name: "Content Security Policy Header Not Set"
+      strength: medium
+      threshold: medium
+    - id: "10098"
+      name: "Cross-Domain Misconfiguration"
+      strength: high
+      threshold: medium
+    # Custom financial-specific security rules
+    - id: "110001"
+      name: "JWT Token Exposure"
+      strength: high
+      threshold: medium
+    - id: "110002"
+      name: "Financial Data Exposure"
+      strength: high
+      threshold: medium
+    - id: "110003"
+      name: "Locate Request Validation"
+      strength: high
+      threshold: medium
+
+# Target endpoints - specific API endpoints to scan with supported methods
+target_endpoints:
+  - url: https://api.ims.com/v1/positions
+    name: "Positions API"
+    methods: [GET, POST]
+  - url: https://api.ims.com/v1/inventory/for-loan
+    name: "For Loan Availability API"
+    methods: [GET]
+  - url: https://api.ims.com/v1/inventory/for-pledge
+    name: "For Pledge Availability API"
+    methods: [GET]
+  - url: https://api.ims.com/v1/locates
+    name: "Locate Management API"
+    methods: [GET, POST, PUT]
+  - url: https://api.ims.com/v1/orders/validate
+    name: "Order Validation API"
+    methods: [POST]
+  - url: https://api.ims.com/v1/securities
+    name: "Securities API"
+    methods: [GET]
+  - url: https://api.ims.com/v1/counterparties
+    name: "Counterparties API"
+    methods: [GET]
+  - url: https://api.ims.com/v1/rules
+    name: "Calculation Rules API"
+    methods: [GET, POST, PUT]
+
+# Execution configuration - controls scan duration and threading
+execution:
+  max_scan_duration: 120  # minutes
+  thread_count: 5
+  delay_in_ms: 200
+  max_rule_duration: 60  # seconds
+  max_results: 1000
+
+# Reporting configuration - defines output formats and report location
+reporting:
+  output_format: [HTML, JSON, XML]
+  report_directory: target/zap-reports
+  report_filename: api-scan-report
+  include_passing_rules: false
+  fail_on_severity: HIGH
+
+# CI/CD integration - references to GitHub Actions and Jenkins pipeline files
+ci_cd_integration:
+  github_actions: .github/workflows/security-scan.yml
+  jenkins: infrastructure/ci/jenkins/Jenkinsfile
+
+# Test parameters - specific test data for different types of security tests
+test_parameters:
+  # Injection testing payloads
+  injection_tests:
+    sql_injection_payloads:
+      - "' OR 1=1 --"
+      - "'; DROP TABLE users; --"
+      - "' UNION SELECT username, password FROM users --"
+    nosql_injection_payloads:
+      - '{"$gt": ""}'
+      - '{"$where": "this.password == this.username"}'
+      - '{"$regex": ".*"}'
+    xss_payloads:
+      - "<script>alert(1)</script>"
+      - '<img src="x" onerror="alert(1)">'
+      - '"><script>alert(1)</script>'
+  
+  # Authentication testing configuration
+  authentication_tests:
+    weak_credentials:
+      - username: admin
+        password: admin
+      - username: test
+        password: test
+      - username: user
+        password: password
+    brute_force_detection:
+      attempts: 10
+      timeframe_seconds: 60
+      expected_lockout: true
+  
+  # Financial-specific security tests
+  financial_specific_tests:
+    locate_request_validation:
+      invalid_requests:
+        - requestorId: INVALID_USER
+          clientId: CLIENT001
+          securityId: SEC123
+          quantity: 1000
+        - requestorId: USER001
+          clientId: CLIENT001
+          securityId: SEC123
+          quantity: -1000
+        - requestorId: USER001
+          clientId: INVALID_CLIENT
+          securityId: SEC123
+          quantity: 1000
+      expected_status: 400
+    
+    short_sell_validation:
+      invalid_requests:
+        - orderId: ORD123
+          securityId: SEC123
+          quantity: -1000
+          clientId: CLIENT001
+          aggregationUnitId: AU001
+        - orderId: ORD124
+          securityId: SEC123
+          quantity: -1000
+          clientId: CLIENT001
+          aggregationUnitId: INVALID_AU
+      expected_status: 400
