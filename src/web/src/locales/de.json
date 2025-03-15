@@ -1,0 +1,678 @@
+{
+  "app": {
+    "name": "Bestandsverwaltungssystem",
+    "shortName": "BVS",
+    "version": "1.0.0",
+    "copyright": "© 2023 Alle Rechte vorbehalten"
+  },
+  "actions": {
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "apply": "Anwenden",
+    "reset": "Zurücksetzen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "refresh": "Aktualisieren",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "submit": "Absenden",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "close": "Schließen",
+    "view": "Ansehen",
+    "details": "Details",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "clear": "Löschen",
+    "clearAll": "Alle löschen",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "requestInfo": "Weitere Informationen anfordern"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "minLength": "Muss mindestens {{count}} Zeichen lang sein",
+    "maxLength": "Darf höchstens {{count}} Zeichen lang sein",
+    "email": "Ungültige E-Mail-Adresse",
+    "number": "Muss eine Zahl sein",
+    "integer": "Muss eine ganze Zahl sein",
+    "positive": "Muss eine positive Zahl sein",
+    "negative": "Muss eine negative Zahl sein",
+    "min": "Muss mindestens {{min}} sein",
+    "max": "Darf höchstens {{max}} sein",
+    "pattern": "Ungültiges Format",
+    "passwordMatch": "Passwörter stimmen nicht überein",
+    "invalidCredentials": "Ungültiger Benutzername oder Passwort"
+  },
+  "notifications": {
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Information",
+    "successMessage": "Vorgang erfolgreich abgeschlossen",
+    "errorMessage": "Ein Fehler ist aufgetreten",
+    "warningMessage": "Warnung: {{message}}",
+    "infoMessage": "{{message}}"
+  },
+  "time": {
+    "now": "Jetzt",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "tomorrow": "Morgen",
+    "days": "{{count}} Tage",
+    "hours": "{{count}} Stunden",
+    "minutes": "{{count}} Minuten",
+    "seconds": "{{count}} Sekunden",
+    "ago": "vor {{time}}",
+    "in": "in {{time}}"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen",
+    "processing": "In Bearbeitung",
+    "draft": "Entwurf",
+    "published": "Veröffentlicht",
+    "archived": "Archiviert",
+    "deleted": "Gelöscht"
+  },
+  "errors": {
+    "pageNotFound": "Seite nicht gefunden",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert",
+    "serverError": "Serverfehler",
+    "connectionError": "Verbindungsfehler",
+    "timeoutError": "Zeitüberschreitungsfehler",
+    "validationError": "Validierungsfehler",
+    "dataError": "Datenfehler",
+    "unknownError": "Unbekannter Fehler",
+    "pageNotFoundMessage": "Die gesuchte Seite existiert nicht.",
+    "unauthorizedMessage": "Sie sind nicht berechtigt, auf diese Seite zuzugreifen.",
+    "forbiddenMessage": "Sie haben keine Berechtigung, auf diese Ressource zuzugreifen.",
+    "serverErrorMessage": "Auf dem Server ist ein Fehler aufgetreten.",
+    "connectionErrorMessage": "Verbindung zum Server konnte nicht hergestellt werden.",
+    "timeoutErrorMessage": "Die Anfrage hat das Zeitlimit überschritten.",
+    "validationErrorMessage": "Bitte korrigieren Sie die Validierungsfehler.",
+    "dataErrorMessage": "Bei der Verarbeitung der Daten ist ein Fehler aufgetreten.",
+    "unknownErrorMessage": "Ein unbekannter Fehler ist aufgetreten."
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Melden Sie sich bei Ihrem Konto an",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "loginButton": "Anmelden",
+      "loginWithMfa": "Mit MFA anmelden",
+      "noAccount": "Haben Sie kein Konto?",
+      "contactAdmin": "Kontaktieren Sie Ihren Administrator",
+      "welcomeBack": "Willkommen zurück",
+      "welcomeMorning": "Guten Morgen",
+      "welcomeAfternoon": "Guten Tag",
+      "welcomeEvening": "Guten Abend"
+    },
+    "forgotPassword": {
+      "title": "Passwort vergessen",
+      "subtitle": "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Passwort zurückzusetzen",
+      "email": "E-Mail",
+      "submitButton": "Passwort zurücksetzen",
+      "backToLogin": "Zurück zur Anmeldung",
+      "successMessage": "Anweisungen zum Zurücksetzen des Passworts wurden an Ihre E-Mail gesendet",
+      "errorMessage": "Fehler beim Senden der E-Mail zum Zurücksetzen des Passworts"
+    },
+    "resetPassword": {
+      "title": "Passwort zurücksetzen",
+      "subtitle": "Geben Sie Ihr neues Passwort ein",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "submitButton": "Neues Passwort festlegen",
+      "successMessage": "Passwort wurde erfolgreich zurückgesetzt",
+      "errorMessage": "Fehler beim Zurücksetzen des Passworts"
+    },
+    "mfa": {
+      "title": "Zwei-Faktor-Authentifizierung",
+      "subtitle": "Geben Sie den Bestätigungscode aus Ihrer Authentifizierungs-App ein",
+      "code": "Bestätigungscode",
+      "verifyButton": "Überprüfen",
+      "backToLogin": "Zurück zur Anmeldung",
+      "setupTitle": "Zwei-Faktor-Authentifizierung einrichten",
+      "setupSubtitle": "Scannen Sie den QR-Code mit Ihrer Authentifizierungs-App",
+      "setupInstructions": "1. Laden Sie eine Authentifizierungs-App herunter\n2. Scannen Sie den QR-Code\n3. Geben Sie den Bestätigungscode ein",
+      "setupCode": "Oder geben Sie diesen Code manuell ein:",
+      "setupVerifyButton": "Überprüfen und aktivieren",
+      "setupSuccessMessage": "Zwei-Faktor-Authentifizierung wurde aktiviert",
+      "setupErrorMessage": "Fehler bei der Einrichtung der Zwei-Faktor-Authentifizierung"
+    },
+    "changePassword": {
+      "title": "Passwort ändern",
+      "subtitle": "Aktualisieren Sie Ihr Passwort",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "submitButton": "Passwort ändern",
+      "successMessage": "Passwort erfolgreich geändert",
+      "errorMessage": "Fehler beim Ändern des Passworts"
+    },
+    "logout": {
+      "confirmMessage": "Sind Sie sicher, dass Sie sich abmelden möchten?",
+      "confirmButton": "Ja, abmelden",
+      "cancelButton": "Nein, angemeldet bleiben",
+      "successMessage": "Sie wurden erfolgreich abgemeldet"
+    },
+    "session": {
+      "expiring": "Ihre Sitzung läuft bald ab",
+      "expiringMessage": "Ihre Sitzung läuft in {{time}} ab. Möchten Sie angemeldet bleiben?",
+      "expired": "Ihre Sitzung ist abgelaufen",
+      "expiredMessage": "Bitte melden Sie sich erneut an, um fortzufahren",
+      "stayLoggedIn": "Angemeldet bleiben",
+      "logout": "Abmelden"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "systemStatus": {
+      "title": "Systemstatus",
+      "uptime": "Betriebszeit",
+      "performance": "Leistung",
+      "errors": "Fehler",
+      "warnings": "Warnungen",
+      "healthy": "Gesund",
+      "degraded": "Beeinträchtigt",
+      "critical": "Kritisch",
+      "unknown": "Unbekannt"
+    },
+    "inventorySummary": {
+      "title": "Bestandsübersicht",
+      "forLoan": "Für Darlehen",
+      "forPledge": "Für Verpfändung",
+      "htb": "Schwer zu leihen",
+      "totalValue": "Gesamtwert",
+      "utilizationRate": "Nutzungsrate",
+      "categories": "Kategorien",
+      "topSecurities": "Top-Wertpapiere"
+    },
+    "locateRequests": {
+      "title": "Locate-Anfragen",
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "today": "Heute",
+      "viewAll": "Alle anzeigen",
+      "noRequests": "Keine ausstehenden Anfragen"
+    },
+    "recentActivity": {
+      "title": "Neueste Aktivitäten",
+      "viewAll": "Alle anzeigen",
+      "noActivity": "Keine neueren Aktivitäten",
+      "locateApproved": "Locate genehmigt: {{security}}",
+      "locateRejected": "Locate abgelehnt: {{security}}",
+      "positionUpdate": "Position aktualisiert: {{security}}",
+      "shortSellApproved": "Leerverkauf genehmigt: {{security}}",
+      "shortSellRejected": "Leerverkauf abgelehnt: {{security}}",
+      "referenceDataUpdate": "Referenzdaten aktualisiert",
+      "marketDataUpdate": "Marktdaten aktualisiert"
+    },
+    "alerts": {
+      "title": "Warnungen",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig",
+      "viewAll": "Alle anzeigen",
+      "noAlerts": "Keine Warnungen",
+      "dataFeedInterruption": "Datenverbindung unterbrochen: {{source}}",
+      "calculationError": "Berechnungsfehler: {{type}}",
+      "systemAlert": "Systemwarnung: {{message}}",
+      "marketEvent": "Marktereignis: {{event}}"
+    }
+  },
+  "positions": {
+    "title": "Positionen",
+    "filters": {
+      "title": "Filter",
+      "security": "Wertpapier",
+      "book": "Buch",
+      "date": "Datum",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen",
+      "save": "Filter speichern",
+      "load": "Gespeicherte Filter laden"
+    },
+    "summary": {
+      "title": "Zusammenfassung",
+      "totalLong": "Gesamt Long",
+      "totalShort": "Gesamt Short",
+      "netPosition": "Nettoposition",
+      "securities": "Wertpapiere"
+    },
+    "table": {
+      "security": "Wertpapier",
+      "book": "Buch",
+      "sodQty": "SOD Menge",
+      "intraday": "Intraday",
+      "current": "Aktuell",
+      "details": "Details"
+    },
+    "settlementLadder": {
+      "title": "Abwicklungsleiter",
+      "today": "Heute",
+      "tomorrow": "Morgen",
+      "day2": "Tag 2",
+      "day3": "Tag 3",
+      "day4": "Tag 4",
+      "delivery": "Lieferung",
+      "receipt": "Erhalt",
+      "net": "Netto"
+    },
+    "detail": {
+      "title": "Positionsdetails",
+      "security": "Wertpapier",
+      "book": "Buch",
+      "quantity": "Menge",
+      "value": "Wert",
+      "trades": "Trades",
+      "contracts": "Verträge",
+      "history": "Verlauf"
+    }
+  },
+  "inventory": {
+    "title": "Bestand",
+    "filters": {
+      "title": "Filter",
+      "date": "Datum",
+      "market": "Markt",
+      "category": "Kategorie",
+      "security": "Wertpapier",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen"
+    },
+    "summary": {
+      "title": "Bestand nach Kategorie",
+      "category": "Kategorie",
+      "value": "Wert",
+      "percentage": "% vom Gesamtwert",
+      "change": "Änderung"
+    },
+    "categories": {
+      "longPositions": "Long-Positionen",
+      "hypothecatable": "Beleihbar",
+      "pledged": "Verpfändet",
+      "external": "Extern"
+    },
+    "topSecurities": {
+      "title": "Top-Wertpapiere nach Verfügbarkeit",
+      "security": "Wertpapier",
+      "availability": "Verfügbarkeit",
+      "temperature": "Temperatur",
+      "gc": "General Collateral",
+      "htb": "Hard To Borrow",
+      "viewAll": "Alle anzeigen"
+    },
+    "detail": {
+      "title": "Bestandsdetails",
+      "security": "Wertpapier",
+      "market": "Markt",
+      "availability": "Verfügbarkeit",
+      "utilization": "Nutzung",
+      "sources": "Quellen",
+      "history": "Verlauf"
+    }
+  },
+  "locates": {
+    "title": "Locates",
+    "filters": {
+      "title": "Filter",
+      "client": "Kunde",
+      "security": "Wertpapier",
+      "status": "Status",
+      "date": "Datum",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen"
+    },
+    "queue": {
+      "title": "Ausstehende Locates",
+      "time": "Zeit",
+      "client": "Kunde",
+      "security": "Wertpapier",
+      "quantity": "Menge",
+      "type": "Typ",
+      "actions": "Aktionen",
+      "review": "Prüfen",
+      "noLocates": "Keine ausstehenden Locates"
+    },
+    "detail": {
+      "title": "Locate-Details",
+      "client": "Kunde",
+      "security": "Wertpapier",
+      "quantity": "Menge",
+      "available": "Verfügbarer Bestand",
+      "clientYtdLocates": "Kunde YTD Locates",
+      "clientYtdUtilization": "Kunde YTD Nutzung",
+      "securityBorrowRate": "Wertpapier-Leihrate",
+      "securityTemperature": "Wertpapier-Temperatur",
+      "requestTime": "Anfragezeitpunkt",
+      "requestor": "Anforderer",
+      "swapCashIndicator": "Swap/Cash-Indikator"
+    },
+    "approval": {
+      "title": "Locate-Genehmigung",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "requestInfo": "Weitere Informationen anfordern",
+      "approveConfirm": "Sind Sie sicher, dass Sie diese Locate-Anfrage genehmigen möchten?",
+      "rejectConfirm": "Sind Sie sicher, dass Sie diese Locate-Anfrage ablehnen möchten?",
+      "rejectReason": "Ablehnungsgrund",
+      "approveSuccess": "Locate-Anfrage erfolgreich genehmigt",
+      "rejectSuccess": "Locate-Anfrage erfolgreich abgelehnt",
+      "approveError": "Fehler bei der Genehmigung der Locate-Anfrage",
+      "rejectError": "Fehler bei der Ablehnung der Locate-Anfrage"
+    },
+    "history": {
+      "title": "Locate-Verlauf",
+      "date": "Datum",
+      "client": "Kunde",
+      "security": "Wertpapier",
+      "quantity": "Menge",
+      "status": "Status",
+      "approver": "Genehmiger",
+      "requestor": "Anforderer",
+      "noHistory": "Kein Locate-Verlauf gefunden"
+    }
+  },
+  "exceptions": {
+    "title": "Ausnahmen",
+    "filters": {
+      "title": "Filter",
+      "type": "Typ",
+      "severity": "Schweregrad",
+      "status": "Status",
+      "date": "Datum",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen"
+    },
+    "queue": {
+      "title": "Ausnahmewarteschlange",
+      "time": "Zeit",
+      "type": "Typ",
+      "severity": "Schweregrad",
+      "description": "Beschreibung",
+      "status": "Status",
+      "actions": "Aktionen",
+      "view": "Ansehen",
+      "noExceptions": "Keine Ausnahmen gefunden"
+    },
+    "detail": {
+      "title": "Ausnahmedetails",
+      "type": "Typ",
+      "severity": "Schweregrad",
+      "description": "Beschreibung",
+      "status": "Status",
+      "createdAt": "Erstellt am",
+      "updatedAt": "Aktualisiert am",
+      "assignedTo": "Zugewiesen an",
+      "resolution": "Lösung",
+      "resolve": "Lösen",
+      "assign": "Zuweisen",
+      "escalate": "Eskalieren",
+      "resolveConfirm": "Sind Sie sicher, dass Sie diese Ausnahme lösen möchten?",
+      "resolveSuccess": "Ausnahme erfolgreich gelöst",
+      "resolveError": "Fehler beim Lösen der Ausnahme"
+    },
+    "types": {
+      "data": "Datenausnahme",
+      "calculation": "Berechnungsausnahme",
+      "system": "Systemausnahme",
+      "integration": "Integrationsausnahme",
+      "validation": "Validierungsausnahme",
+      "business": "Geschäftsausnahme"
+    },
+    "severities": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    }
+  },
+  "rules": {
+    "title": "Berechnungsregeln",
+    "filters": {
+      "title": "Filter",
+      "calculationType": "Berechnungstyp",
+      "market": "Markt",
+      "status": "Status",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen"
+    },
+    "list": {
+      "title": "Regelliste",
+      "ruleName": "Regelname",
+      "market": "Markt",
+      "status": "Status",
+      "version": "Version",
+      "actions": "Aktionen",
+      "view": "Ansehen",
+      "edit": "Bearbeiten",
+      "noRules": "Keine Regeln gefunden"
+    },
+    "detail": {
+      "title": "Regeldefinition",
+      "name": "Name",
+      "version": "Version",
+      "status": "Status",
+      "market": "Markt",
+      "description": "Beschreibung",
+      "include": "Einschließen",
+      "exclude": "Ausschließen",
+      "save": "Speichern",
+      "test": "Testen",
+      "publish": "Veröffentlichen",
+      "revert": "Zurücksetzen",
+      "saveConfirm": "Sind Sie sicher, dass Sie die Änderungen an dieser Regel speichern möchten?",
+      "publishConfirm": "Sind Sie sicher, dass Sie diese Regel veröffentlichen möchten?",
+      "revertConfirm": "Sind Sie sicher, dass Sie die Änderungen verwerfen möchten?",
+      "saveSuccess": "Regel erfolgreich gespeichert",
+      "publishSuccess": "Regel erfolgreich veröffentlicht",
+      "saveError": "Fehler beim Speichern der Regel",
+      "publishError": "Fehler beim Veröffentlichen der Regel"
+    },
+    "editor": {
+      "title": "Regeleditor",
+      "addCondition": "Bedingung hinzufügen",
+      "removeCondition": "Entfernen",
+      "addGroup": "Gruppe hinzufügen",
+      "removeGroup": "Gruppe entfernen",
+      "operator": "Operator",
+      "value": "Wert",
+      "attribute": "Attribut",
+      "and": "UND",
+      "or": "ODER",
+      "equals": "Gleich",
+      "notEquals": "Ungleich",
+      "greaterThan": "Größer als",
+      "lessThan": "Kleiner als",
+      "contains": "Enthält",
+      "notContains": "Enthält nicht",
+      "startsWith": "Beginnt mit",
+      "endsWith": "Endet mit"
+    },
+    "calculationTypes": {
+      "forLoanAvailability": "Verfügbarkeit für Darlehen",
+      "forPledgeAvailability": "Verfügbarkeit für Verpfändung",
+      "longSellAvailability": "Verfügbarkeit für Long-Verkauf",
+      "shortSellAvailability": "Verfügbarkeit für Leerverkauf",
+      "locateAvailability": "Locate-Verfügbarkeit",
+      "overborrow": "Überleihungsidentifikation"
+    }
+  },
+  "analytics": {
+    "title": "Analytik",
+    "filters": {
+      "title": "Filter",
+      "dateRange": "Datumsbereich",
+      "market": "Markt",
+      "security": "Wertpapier",
+      "client": "Kunde",
+      "apply": "Filter anwenden",
+      "clear": "Filter löschen"
+    },
+    "inventory": {
+      "title": "Bestandsanalytik",
+      "availabilityTrend": "Verfügbarkeitstrend",
+      "utilizationRate": "Nutzungsrate",
+      "categoryBreakdown": "Kategorieaufschlüsselung",
+      "marketComparison": "Marktvergleich"
+    },
+    "positions": {
+      "title": "Positionsanalytik",
+      "positionTrend": "Positionstrend",
+      "bookBreakdown": "Buchaufschlüsselung",
+      "securityTypeDistribution": "Wertpapiertypverteilung",
+      "turnoverRate": "Umschlagsrate"
+    },
+    "locates": {
+      "title": "Locate-Analytik",
+      "requestVolume": "Anfragevolumen",
+      "approvalRate": "Genehmigungsrate",
+      "clientBreakdown": "Kundenaufschlüsselung",
+      "securityBreakdown": "Wertpapieraufschlüsselung",
+      "processingTime": "Bearbeitungszeit"
+    },
+    "exceptions": {
+      "title": "Ausnahmeanalytik",
+      "exceptionTrend": "Ausnahmetrend",
+      "typeBreakdown": "Typaufschlüsselung",
+      "severityDistribution": "Schweregradverteilung",
+      "resolutionTime": "Lösungszeit"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "user": {
+      "title": "Benutzereinstellungen",
+      "profile": "Profil",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "department": "Abteilung",
+      "role": "Rolle",
+      "save": "Änderungen speichern",
+      "saveSuccess": "Benutzereinstellungen erfolgreich gespeichert",
+      "saveError": "Fehler beim Speichern der Benutzereinstellungen"
+    },
+    "app": {
+      "title": "Anwendungseinstellungen",
+      "defaultPage": "Standardseite",
+      "itemsPerPage": "Elemente pro Seite",
+      "dateFormat": "Datumsformat",
+      "timeFormat": "Zeitformat",
+      "numberFormat": "Zahlenformat",
+      "save": "Änderungen speichern",
+      "saveSuccess": "Anwendungseinstellungen erfolgreich gespeichert",
+      "saveError": "Fehler beim Speichern der Anwendungseinstellungen"
+    },
+    "notifications": {
+      "title": "Benachrichtigungseinstellungen",
+      "email": "E-Mail-Benachrichtigungen",
+      "push": "Push-Benachrichtigungen",
+      "inApp": "In-App-Benachrichtigungen",
+      "locateRequests": "Locate-Anfragen",
+      "exceptions": "Ausnahmen",
+      "systemAlerts": "Systemwarnungen",
+      "marketEvents": "Marktereignisse",
+      "save": "Änderungen speichern",
+      "saveSuccess": "Benachrichtigungseinstellungen erfolgreich gespeichert",
+      "saveError": "Fehler beim Speichern der Benachrichtigungseinstellungen"
+    },
+    "display": {
+      "title": "Anzeigeeinstellungen",
+      "theme": "Thema",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "Systemstandard",
+      "primaryColor": "Primärfarbe",
+      "secondaryColor": "Sekundärfarbe",
+      "fontFamily": "Schriftfamilie",
+      "fontSize": "Schriftgröße",
+      "borderRadius": "Rahmenradius",
+      "highContrast": "Hochkontrastmodus",
+      "animations": "Animationen aktivieren",
+      "save": "Änderungen speichern",
+      "saveSuccess": "Anzeigeeinstellungen erfolgreich gespeichert",
+      "saveError": "Fehler beim Speichern der Anzeigeeinstellungen"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "positions": "Positionen",
+    "inventory": "Bestand",
+    "locates": "Locates",
+    "exceptions": "Ausnahmen",
+    "rules": "Berechnungsregeln",
+    "analytics": "Analytik",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "help": "Hilfe",
+    "profile": "Profil"
+  },
+  "security": {
+    "securityType": "Wertpapiertyp",
+    "issuer": "Emittent",
+    "issueDate": "Ausgabedatum",
+    "maturityDate": "Fälligkeitsdatum",
+    "currency": "Währung",
+    "market": "Markt",
+    "isin": "ISIN",
+    "cusip": "CUSIP",
+    "sedol": "SEDOL",
+    "ticker": "Ticker",
+    "securityTypes": {
+      "equity": "Aktie",
+      "bond": "Anleihe",
+      "etf": "ETF",
+      "future": "Future",
+      "option": "Option",
+      "swap": "Swap",
+      "index": "Index",
+      "basket": "Basket"
+    }
+  },
+  "counterparty": {
+    "name": "Name",
+    "type": "Typ",
+    "kycStatus": "KYC-Status",
+    "status": "Status",
+    "lei": "LEI",
+    "bic": "BIC",
+    "counterpartyTypes": {
+      "client": "Kunde",
+      "broker": "Broker",
+      "custodian": "Verwahrer",
+      "exchange": "Börse",
+      "clearingHouse": "Clearinghaus",
+      "bank": "Bank"
+    }
+  },
+  "help": {
+    "title": "Hilfe",
+    "gettingStarted": "Erste Schritte",
+    "userGuide": "Benutzerhandbuch",
+    "faq": "FAQ",
+    "contactSupport": "Support kontaktieren",
+    "reportIssue": "Problem melden",
+    "keyboardShortcuts": "Tastaturkürzel",
+    "about": "Über"
+  }
+}
