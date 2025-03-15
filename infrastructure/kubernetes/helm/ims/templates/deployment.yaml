@@ -1,0 +1,444 @@
+{{- if .Values.deployments.dataIngestion.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.dataIngestion.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: data-ingestion-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for Data Ingestion Service handling reference data, market data, trade data, and contract data"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.dataIngestion.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: data-ingestion-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.dataIngestion.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: data-ingestion-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.dataIngestion.name }}
+          image: "{{ .Values.deployments.dataIngestion.image.repository }}:{{ .Values.deployments.dataIngestion.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.dataIngestion.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.dataIngestion.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: data-ingestion-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: data-ingestion-secrets
+          resources: {{ toYaml .Values.deployments.dataIngestion.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.dataIngestion.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.dataIngestion.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.dataIngestion.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.dataIngestion.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.dataIngestion.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.dataIngestion.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.dataIngestion.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.dataIngestion.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.dataIngestion.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.dataIngestion.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.calculation.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.calculation.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: calculation-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for Calculation Service handling position, inventory, and limit calculations"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.calculation.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: calculation-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.calculation.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: calculation-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.calculation.name }}
+          image: "{{ .Values.deployments.calculation.image.repository }}:{{ .Values.deployments.calculation.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.calculation.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8082
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.calculation.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: calculation-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: calculation-secrets
+          resources: {{ toYaml .Values.deployments.calculation.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.calculation.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.calculation.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.calculation.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.calculation.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.calculation.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.calculation.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.calculation.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.calculation.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.calculation.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.calculation.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.workflow.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.workflow.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: workflow-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for Workflow Service handling locate approval and short sell approval workflows"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.workflow.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: workflow-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.workflow.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: workflow-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.workflow.name }}
+          image: "{{ .Values.deployments.workflow.image.repository }}:{{ .Values.deployments.workflow.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.workflow.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8083
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.workflow.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: workflow-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: workflow-secrets
+          resources: {{ toYaml .Values.deployments.workflow.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.workflow.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.workflow.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.workflow.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.workflow.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.workflow.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.workflow.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.workflow.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.workflow.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.workflow.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.workflow.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.apiGateway.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.apiGateway.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: api-gateway
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for API Gateway handling routing, authentication, and rate limiting"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.apiGateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: api-gateway
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.apiGateway.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: api-gateway
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.apiGateway.name }}
+          image: "{{ .Values.deployments.apiGateway.image.repository }}:{{ .Values.deployments.apiGateway.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.apiGateway.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.apiGateway.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: api-gateway-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: api-gateway-secrets
+          resources: {{ toYaml .Values.deployments.apiGateway.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.apiGateway.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.apiGateway.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.apiGateway.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.apiGateway.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.apiGateway.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.apiGateway.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.apiGateway.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.apiGateway.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.apiGateway.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.apiGateway.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.websocket.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.websocket.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: websocket-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for WebSocket Service handling real-time data streaming"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.websocket.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: websocket-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.websocket.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: websocket-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.websocket.name }}
+          image: "{{ .Values.deployments.websocket.image.repository }}:{{ .Values.deployments.websocket.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.websocket.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8085
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.websocket.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: websocket-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: websocket-secrets
+          resources: {{ toYaml .Values.deployments.websocket.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.websocket.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.websocket.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.websocket.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.websocket.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.websocket.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.websocket.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.websocket.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.websocket.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.websocket.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.websocket.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.monitoring.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.monitoring.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: monitoring-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for Monitoring Service handling health checks and metrics"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.monitoring.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: monitoring-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.monitoring.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: monitoring-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.monitoring.name }}
+          image: "{{ .Values.deployments.monitoring.image.repository }}:{{ .Values.deployments.monitoring.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.monitoring.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8086
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.monitoring.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: monitoring-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: monitoring-secrets
+          resources: {{ toYaml .Values.deployments.monitoring.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.monitoring.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.monitoring.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.monitoring.readinessProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.monitoring.volumes | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.monitoring.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.monitoring.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.monitoring.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.monitoring.priorityClassName }}
+{{- end }}
+
+{{- if .Values.deployments.auth.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployments.auth.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: auth-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Deployment for Authentication Service handling user management and token issuance"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  replicas: {{ .Values.deployments.auth.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: auth-service
+      release: {{ .Release.Name }}
+  strategy: {{ toYaml .Values.deployments.auth.strategy | nindent 10 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "ims.name" . }}
+        component: auth-service
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "ims.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 12 }}
+      containers:
+        - name: {{ .Values.deployments.auth.name }}
+          image: "{{ .Values.deployments.auth.image.repository }}:{{ .Values.deployments.auth.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployments.auth.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+          ports:
+            - name: http
+              containerPort: 8084
+              protocol: TCP
+          env: {{ toYaml .Values.deployments.auth.env | nindent 16 }}
+          envFrom:
+            - configMapRef:
+                name: common-configmap
+            - configMapRef:
+                name: auth-configmap
+            - secretRef:
+                name: common-secrets
+            - secretRef:
+                name: auth-secrets
+          resources: {{ toYaml .Values.deployments.auth.resources | nindent 16 }}
+          volumeMounts: {{ toYaml .Values.deployments.auth.volumeMounts | nindent 16 }}
+          livenessProbe: {{ toYaml .Values.deployments.auth.livenessProbe | nindent 16 }}
+          readinessProbe: {{ toYaml .Values.deployments.auth.readinessProbe | nindent 16 }}
+          startupProbe: {{ toYaml .Values.deployments.auth.startupProbe | nindent 16 }}
+      volumes: {{ toYaml .Values.deployments.auth.volumes | nindent 12 }}
+      affinity: {{ toYaml .Values.deployments.auth.affinity | nindent 12 }}
+      nodeSelector: {{ toYaml .Values.deployments.auth.nodeSelector | nindent 12 }}
+      tolerations: {{ toYaml .Values.deployments.auth.tolerations | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deployments.auth.terminationGracePeriodSeconds }}
+      priorityClassName: {{ .Values.deployments.auth.priorityClassName }}
+{{- end }}
