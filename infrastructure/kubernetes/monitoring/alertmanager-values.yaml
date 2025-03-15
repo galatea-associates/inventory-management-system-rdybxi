@@ -1,0 +1,447 @@
+# Configuration values for Alertmanager in the Inventory Management System
+# Version: 1.0.0
+
+# Enable Alertmanager
+alertmanager:
+  enabled: true
+  
+  # Alertmanager spec configuration
+  alertmanagerSpec:
+    # HA configuration with 3 replicas
+    replicas: 3
+    
+    # Pod metadata for Alertmanager
+    podMetadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/part-of: ims
+    
+    # Image configuration
+    image:
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.25.0
+    
+    # Data retention period
+    retention: 120h
+    
+    # Resource allocation
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+    
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard-rwo
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+    
+    # External URL for Alertmanager
+    externalUrl: https://alertmanager.ims.example.com
+    
+    # Security context
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
+    
+    # Node selector for placement
+    nodeSelector:
+      role: monitoring
+    
+    # Tolerations for node placement
+    tolerations:
+      - key: monitoring
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+    
+    # Affinity for pod placement
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - alertmanager
+              topologyKey: kubernetes.io/hostname
+    
+    # Readiness probe
+    readinessProbe:
+      httpGet:
+        path: /-/ready
+        port: 9093
+      initialDelaySeconds: 30
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    
+    # Liveness probe
+    livenessProbe:
+      httpGet:
+        path: /-/healthy
+        port: 9093
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      periodSeconds: 15
+      successThreshold: 1
+      failureThreshold: 3
+
+  # Main alertmanager configuration
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_from: alertmanager@ims.example.com
+      smtp_smarthost: ${SMTP_HOST}:${SMTP_PORT}
+      smtp_auth_username: ${SMTP_USER}
+      smtp_auth_password: ${SMTP_PASSWORD}
+      smtp_require_tls: true
+      pagerduty_url: https://events.pagerduty.com/v2/enqueue
+      slack_api_url: ${SLACK_WEBHOOK_URL}
+    
+    # Custom templates
+    templates:
+      - /etc/alertmanager/config/template/*.tmpl
+    
+    # Routing configuration
+    route:
+      # Group alerts by these labels
+      group_by: ['alertname', 'job', 'severity', 'category']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: default
+      
+      routes:
+        # Critical severity alerts -> PagerDuty
+        - match:
+            severity: critical
+          receiver: pagerduty
+          group_wait: 0s
+          repeat_interval: 15m
+          continue: true
+        
+        # High severity alerts -> Slack high
+        - match:
+            severity: high
+          receiver: slack-high
+          group_wait: 30s
+          repeat_interval: 1h
+          continue: true
+        
+        # Medium severity alerts -> Slack medium
+        - match:
+            severity: medium
+          receiver: slack-medium
+          group_wait: 1m
+          repeat_interval: 4h
+          continue: true
+        
+        # Low severity alerts -> Email
+        - match:
+            severity: low
+          receiver: email
+          group_wait: 5m
+          repeat_interval: 12h
+        
+        # System/infrastructure alerts -> Ops team
+        - match_re:
+            category: system|infrastructure
+          receiver: ops-team
+          continue: true
+        
+        # Database alerts -> DB team
+        - match_re:
+            category: database
+          receiver: db-team
+          continue: true
+        
+        # Business/application alerts -> Application team
+        - match_re:
+            category: business|application
+          receiver: app-team
+          continue: true
+        
+        # Integration alerts -> Integration team
+        - match_re:
+            category: integration
+          receiver: integration-team
+          continue: true
+    
+    # Inhibition rules to prevent alert storms
+    inhibit_rules:
+      # Inhibit lower severity alerts if a critical alert exists
+      - source_match:
+          severity: critical
+        target_match_re:
+          severity: high|medium|low
+        equal: ['alertname', 'job', 'instance']
+      
+      # Inhibit medium/low severity alerts if a high alert exists
+      - source_match:
+          severity: high
+        target_match_re:
+          severity: medium|low
+        equal: ['alertname', 'job', 'instance']
+      
+      # Inhibit low severity alerts if a medium alert exists
+      - source_match:
+          severity: medium
+        target_match_re:
+          severity: low
+        equal: ['alertname', 'job', 'instance']
+      
+      # Inhibit other alerts if a system is down
+      - source_match:
+          alertname: SystemServiceDown
+        target_match_re:
+          alertname: .*High.*|.*Critical.*
+        equal: ['job', 'instance']
+    
+    # Receiver configurations
+    receivers:
+      # Default receiver (email)
+      - name: default
+        email_configs:
+          - to: alerts@ims.example.com
+            send_resolved: true
+      
+      # PagerDuty receiver for critical alerts
+      - name: pagerduty
+        pagerduty_configs:
+          - service_key: ${PAGERDUTY_SERVICE_KEY}
+            send_resolved: true
+            details:
+              firing: '{{ .Alerts.Firing | len }}'
+              resolved: '{{ .Alerts.Resolved | len }}'
+              num_firing: '{{ .Alerts.Firing | len }}'
+              num_resolved: '{{ .Alerts.Resolved | len }}'
+              instance: '{{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}N/A{{ end }}'
+              service: '{{ if .CommonLabels.service }}{{ .CommonLabels.service }}{{ else }}N/A{{ end }}'
+      
+      # Slack receiver for high severity alerts
+      - name: slack-high
+        slack_configs:
+          - channel: '#alerts-high'
+            send_resolved: true
+            icon_url: https://avatars3.githubusercontent.com/u/3380462
+            title: '{{ .CommonAnnotations.summary }}'
+            text: '{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Service:* {{ .Labels.service }}\n*Instance:* {{ .Labels.instance }}\n*Runbook:* {{ .Annotations.runbook_url }}\n{{ end }}'
+      
+      # Slack receiver for medium severity alerts
+      - name: slack-medium
+        slack_configs:
+          - channel: '#alerts-medium'
+            send_resolved: true
+            icon_url: https://avatars3.githubusercontent.com/u/3380462
+            title: '{{ .CommonAnnotations.summary }}'
+            text: '{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Service:* {{ .Labels.service }}\n*Instance:* {{ .Labels.instance }}\n*Runbook:* {{ .Annotations.runbook_url }}\n{{ end }}'
+      
+      # Email receiver for low severity alerts
+      - name: email
+        email_configs:
+          - to: alerts@ims.example.com
+            send_resolved: true
+            html: '{{ template "email.default.html" . }}'
+      
+      # Operations team receiver
+      - name: ops-team
+        email_configs:
+          - to: ops-team@ims.example.com
+            send_resolved: true
+            html: '{{ template "email.default.html" . }}'
+      
+      # Database team receiver
+      - name: db-team
+        email_configs:
+          - to: db-team@ims.example.com
+            send_resolved: true
+            html: '{{ template "email.default.html" . }}'
+      
+      # Application team receiver
+      - name: app-team
+        email_configs:
+          - to: app-team@ims.example.com
+            send_resolved: true
+            html: '{{ template "email.default.html" . }}'
+      
+      # Integration team receiver
+      - name: integration-team
+        email_configs:
+          - to: integration-team@ims.example.com
+            send_resolved: true
+            html: '{{ template "email.default.html" . }}'
+
+  # Email template
+  templateFiles:
+    email.default.html: |-
+      {{ define "email.default.html" }}
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>{{ template "__subject" . }}</title>
+        <style>
+          body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+          }
+          .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 20px;
+          }
+          .alert {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+          }
+          .alert-critical {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+          }
+          .alert-high {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+          }
+          .alert-medium {
+            color: #31708f;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+          }
+          .alert-low {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+          }
+          .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #777;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>{{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} {{ if .Alerts.Firing }}({{ .Alerts.Firing | len }} firing, {{ .Alerts.Resolved | len }} resolved){{ end }}</h2>
+          </div>
+          
+          {{ if .Alerts.Firing }}
+          <h3>Firing Alerts</h3>
+          {{ range .Alerts.Firing }}
+          <div class="alert alert-{{ .Labels.severity }}">
+            <h4>{{ .Labels.alertname }}</h4>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <p><strong>Severity:</strong> {{ .Labels.severity }}</p>
+            <p><strong>Service:</strong> {{ .Labels.service }}</p>
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Started:</strong> {{ .StartsAt }}</p>
+            {{ if .Annotations.runbook_url }}
+            <p><strong>Runbook:</strong> <a href="{{ .Annotations.runbook_url }}">{{ .Annotations.runbook_url }}</a></p>
+            {{ end }}
+          </div>
+          {{ end }}
+          {{ end }}
+          
+          {{ if .Alerts.Resolved }}
+          <h3>Resolved Alerts</h3>
+          {{ range .Alerts.Resolved }}
+          <div class="alert">
+            <h4>{{ .Labels.alertname }}</h4>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <p><strong>Severity:</strong> {{ .Labels.severity }}</p>
+            <p><strong>Service:</strong> {{ .Labels.service }}</p>
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Started:</strong> {{ .StartsAt }}</p>
+            <p><strong>Resolved:</strong> {{ .EndsAt }}</p>
+          </div>
+          {{ end }}
+          {{ end }}
+          
+          <div class="footer">
+            <p>This is an automated alert from the IMS Monitoring System. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+      {{ end }}
+
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    hosts:
+      - alertmanager.ims.example.com
+    tls:
+      - secretName: alertmanager-tls
+        hosts:
+          - alertmanager.ims.example.com
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 9093
+    targetPort: 9093
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9093"
+
+  # Service account configuration
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: alertmanager-ims
+
+  # ServiceMonitor for Alertmanager itself
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+    labels:
+      app: ims
+      prometheus: ims
+
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  # Secret annotations
+  secret:
+    annotations: {}
