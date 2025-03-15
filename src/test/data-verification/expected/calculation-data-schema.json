@@ -1,0 +1,769 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Inventory Management System Calculation Data Schema",
+  "description": "JSON schema for validating calculation data in the Inventory Management System, including position calculations, inventory availability, client limits, aggregation unit limits, and calculation rules.",
+  "type": "object",
+  "required": ["positions", "settlementLadders", "inventoryAvailability", "clientLimits", "aggregationUnitLimits", "calculationRules"],
+  "properties": {
+    "positions": {
+      "type": "array",
+      "description": "Collection of calculated positions",
+      "items": {
+        "$ref": "#/definitions/Position"
+      }
+    },
+    "settlementLadders": {
+      "type": "array",
+      "description": "Collection of settlement ladders",
+      "items": {
+        "$ref": "#/definitions/SettlementLadder"
+      }
+    },
+    "inventoryAvailability": {
+      "type": "array",
+      "description": "Collection of inventory availability calculations",
+      "items": {
+        "$ref": "#/definitions/InventoryAvailability"
+      }
+    },
+    "clientLimits": {
+      "type": "array",
+      "description": "Collection of client trading limits",
+      "items": {
+        "$ref": "#/definitions/ClientLimit"
+      }
+    },
+    "aggregationUnitLimits": {
+      "type": "array",
+      "description": "Collection of aggregation unit trading limits",
+      "items": {
+        "$ref": "#/definitions/AggregationUnitLimit"
+      }
+    },
+    "calculationRules": {
+      "type": "array",
+      "description": "Collection of calculation rules",
+      "items": {
+        "$ref": "#/definitions/CalculationRule"
+      }
+    },
+    "overborrowCalculations": {
+      "type": "array",
+      "description": "Collection of overborrow calculations",
+      "items": {
+        "$ref": "#/definitions/OverborrowCalculation"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the calculation data",
+      "properties": {
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the calculations were performed"
+        },
+        "calculationTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the calculations were performed"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the calculation engine"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Environment where the calculations were performed",
+          "enum": ["development", "staging", "production"]
+        }
+      },
+      "required": ["calculationDate", "calculationTime"]
+    }
+  },
+  "definitions": {
+    "Position": {
+      "type": "object",
+      "description": "Enhanced position model for calculation service",
+      "required": ["id", "bookId", "securityId", "businessDate", "contractualQty", "settledQty", "calculationStatus"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the position"
+        },
+        "bookId": {
+          "type": "string",
+          "description": "Identifier of the book containing the position"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "counterpartyId": {
+          "type": "string",
+          "description": "Identifier of the counterparty"
+        },
+        "aggregationUnitId": {
+          "type": "string",
+          "description": "Identifier of the aggregation unit"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the position"
+        },
+        "positionType": {
+          "type": "string",
+          "description": "Type of position",
+          "enum": ["LONG", "SHORT", "FLAT"]
+        },
+        "isHypothecatable": {
+          "type": "boolean",
+          "description": "Whether the position can be used for financing activities"
+        },
+        "isReserved": {
+          "type": "boolean",
+          "description": "Whether the position is reserved for specific purposes"
+        },
+        "contractualQty": {
+          "type": "number",
+          "description": "Contractual quantity of the position"
+        },
+        "settledQty": {
+          "type": "number",
+          "description": "Settled quantity of the position"
+        },
+        "sd0Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 0 (today)"
+        },
+        "sd0Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 0 (today)"
+        },
+        "sd1Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 1 (tomorrow)"
+        },
+        "sd1Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 1 (tomorrow)"
+        },
+        "sd2Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 2"
+        },
+        "sd2Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 2"
+        },
+        "sd3Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 3"
+        },
+        "sd3Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 3"
+        },
+        "sd4Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 4"
+        },
+        "sd4Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 4"
+        },
+        "currentNetPosition": {
+          "type": "number",
+          "description": "Current net position (settled + contractual)"
+        },
+        "projectedNetPosition": {
+          "type": "number",
+          "description": "Projected net position after settlement"
+        },
+        "calculationStatus": {
+          "type": "string",
+          "description": "Status of the position calculation",
+          "enum": ["PENDING", "VALID", "INVALID", "ERROR"]
+        },
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the position was calculated"
+        },
+        "calculationRuleId": {
+          "type": "string",
+          "description": "Identifier of the calculation rule used"
+        },
+        "calculationRuleVersion": {
+          "type": "string",
+          "description": "Version of the calculation rule used"
+        },
+        "isStartOfDay": {
+          "type": "boolean",
+          "description": "Whether this is a start-of-day position"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the position was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the position was last modified"
+        }
+      }
+    },
+    "SettlementLadder": {
+      "type": "object",
+      "description": "Settlement ladder projecting receipts and deliveries for the next 5 days",
+      "required": ["id", "bookId", "securityId", "businessDate", "calculationStatus"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the settlement ladder"
+        },
+        "bookId": {
+          "type": "string",
+          "description": "Identifier of the book"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the settlement ladder"
+        },
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the settlement ladder was calculated"
+        },
+        "calculationStatus": {
+          "type": "string",
+          "description": "Status of the settlement ladder calculation",
+          "enum": ["PENDING", "VALID", "INVALID", "ERROR"]
+        },
+        "sd0Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 0 (today)"
+        },
+        "sd0Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 0 (today)"
+        },
+        "sd1Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 1 (tomorrow)"
+        },
+        "sd1Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 1 (tomorrow)"
+        },
+        "sd2Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 2"
+        },
+        "sd2Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 2"
+        },
+        "sd3Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 3"
+        },
+        "sd3Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 3"
+        },
+        "sd4Deliver": {
+          "type": "number",
+          "description": "Delivery quantity for settlement day 4"
+        },
+        "sd4Receipt": {
+          "type": "number",
+          "description": "Receipt quantity for settlement day 4"
+        },
+        "netSettlement": {
+          "type": "number",
+          "description": "Net settlement across all days"
+        },
+        "deliveries": {
+          "type": "object",
+          "description": "Map of settlement dates to delivery quantities",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "receipts": {
+          "type": "object",
+          "description": "Map of settlement dates to receipt quantities",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the settlement ladder was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the settlement ladder was last modified"
+        }
+      }
+    },
+    "InventoryAvailability": {
+      "type": "object",
+      "description": "Calculated inventory availability for a security",
+      "required": ["id", "securityId", "calculationType", "businessDate", "availableQuantity", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the inventory availability"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "counterpartyId": {
+          "type": "string",
+          "description": "Identifier of the counterparty"
+        },
+        "aggregationUnitId": {
+          "type": "string",
+          "description": "Identifier of the aggregation unit"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the inventory availability"
+        },
+        "calculationType": {
+          "type": "string",
+          "description": "Type of inventory calculation",
+          "enum": ["FOR_LOAN", "FOR_PLEDGE", "SHORT_SELL", "LONG_SELL", "LOCATE", "OVERBORROW"]
+        },
+        "grossQuantity": {
+          "type": "number",
+          "description": "Gross quantity before adjustments"
+        },
+        "netQuantity": {
+          "type": "number",
+          "description": "Net quantity after adjustments"
+        },
+        "availableQuantity": {
+          "type": "number",
+          "description": "Available quantity for the calculation type"
+        },
+        "reservedQuantity": {
+          "type": "number",
+          "description": "Quantity reserved for specific purposes"
+        },
+        "decrementQuantity": {
+          "type": "number",
+          "description": "Quantity decremented from availability (e.g., for locates)"
+        },
+        "market": {
+          "type": "string",
+          "description": "Market code for the security"
+        },
+        "securityTemperature": {
+          "type": "string",
+          "description": "Temperature classification of the security",
+          "enum": ["HTB", "GC", "WARM", "COLD"]
+        },
+        "borrowRate": {
+          "type": "number",
+          "description": "Borrow rate for the security"
+        },
+        "calculationRuleId": {
+          "type": "string",
+          "description": "Identifier of the calculation rule used"
+        },
+        "calculationRuleVersion": {
+          "type": "string",
+          "description": "Version of the calculation rule used"
+        },
+        "isExternalSource": {
+          "type": "boolean",
+          "description": "Whether the availability is from an external source"
+        },
+        "externalSourceName": {
+          "type": "string",
+          "description": "Name of the external source if applicable"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the inventory availability",
+          "enum": ["ACTIVE", "INACTIVE", "PENDING", "ERROR"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the inventory availability was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the inventory availability was last modified"
+        }
+      }
+    },
+    "ClientLimit": {
+      "type": "object",
+      "description": "Trading limits for a client and security combination",
+      "required": ["id", "clientId", "securityId", "businessDate", "longSellLimit", "shortSellLimit", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the client limit"
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Identifier of the client"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the client limit"
+        },
+        "longSellLimit": {
+          "type": "number",
+          "description": "Maximum quantity for long selling"
+        },
+        "shortSellLimit": {
+          "type": "number",
+          "description": "Maximum quantity for short selling"
+        },
+        "longSellUsed": {
+          "type": "number",
+          "description": "Quantity used for long selling"
+        },
+        "shortSellUsed": {
+          "type": "number",
+          "description": "Quantity used for short selling"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code for the limits"
+        },
+        "limitType": {
+          "type": "string",
+          "description": "Type of limit",
+          "enum": ["REGULATORY", "RISK", "OPERATIONAL", "CLIENT"]
+        },
+        "market": {
+          "type": "string",
+          "description": "Market code for the limit"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the client limit",
+          "enum": ["ACTIVE", "INACTIVE", "PENDING", "SUSPENDED"]
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the client limit was last updated"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the client limit was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the client limit was last modified"
+        }
+      }
+    },
+    "AggregationUnitLimit": {
+      "type": "object",
+      "description": "Trading limits for an aggregation unit and security combination",
+      "required": ["id", "aggregationUnitId", "securityId", "businessDate", "longSellLimit", "shortSellLimit", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the aggregation unit limit"
+        },
+        "aggregationUnitId": {
+          "type": "string",
+          "description": "Identifier of the aggregation unit"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the aggregation unit limit"
+        },
+        "longSellLimit": {
+          "type": "number",
+          "description": "Maximum quantity for long selling"
+        },
+        "shortSellLimit": {
+          "type": "number",
+          "description": "Maximum quantity for short selling"
+        },
+        "longSellUsed": {
+          "type": "number",
+          "description": "Quantity used for long selling"
+        },
+        "shortSellUsed": {
+          "type": "number",
+          "description": "Quantity used for short selling"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code for the limits"
+        },
+        "limitType": {
+          "type": "string",
+          "description": "Type of limit",
+          "enum": ["REGULATORY", "RISK", "OPERATIONAL"]
+        },
+        "market": {
+          "type": "string",
+          "description": "Market code for the limit"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the aggregation unit limit",
+          "enum": ["ACTIVE", "INACTIVE", "PENDING", "SUSPENDED"]
+        },
+        "marketSpecificRules": {
+          "type": "array",
+          "description": "Market-specific rules applied to this limit",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the aggregation unit limit was last updated"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the aggregation unit limit was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the aggregation unit limit was last modified"
+        }
+      }
+    },
+    "CalculationRule": {
+      "type": "object",
+      "description": "Rule defining how inventory calculations should be performed",
+      "required": ["id", "name", "ruleType", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the calculation rule"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the calculation rule"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the calculation rule"
+        },
+        "ruleType": {
+          "type": "string",
+          "description": "Type of calculation rule",
+          "enum": ["INCLUSION", "EXCLUSION", "ADJUSTMENT", "VALIDATION"]
+        },
+        "market": {
+          "type": "string",
+          "description": "Market code for the rule, or 'GLOBAL' for all markets"
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Priority of the rule (lower numbers have higher priority)"
+        },
+        "effectiveDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the rule becomes effective"
+        },
+        "expiryDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the rule expires, or null if no expiry"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the calculation rule",
+          "enum": ["ACTIVE", "INACTIVE", "DRAFT", "DEPRECATED"]
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Conditions that determine when the rule applies",
+          "items": {
+            "$ref": "#/definitions/RuleCondition"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "description": "Actions to perform when the rule conditions are met",
+          "items": {
+            "$ref": "#/definitions/RuleAction"
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Additional parameters for the rule",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "description": "Version number of the rule"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the rule was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the rule was last modified"
+        }
+      }
+    },
+    "RuleCondition": {
+      "type": "object",
+      "description": "Condition in a calculation rule",
+      "required": ["attribute", "operator", "value"],
+      "properties": {
+        "attribute": {
+          "type": "string",
+          "description": "Attribute to evaluate in the condition"
+        },
+        "operator": {
+          "type": "string",
+          "description": "Operator to apply in the condition",
+          "enum": ["EQUALS", "NOT_EQUALS", "GREATER_THAN", "LESS_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN_OR_EQUALS", "CONTAINS", "NOT_CONTAINS", "STARTS_WITH", "ENDS_WITH", "IN", "NOT_IN", "IS_NULL", "IS_NOT_NULL"]
+        },
+        "value": {
+          "type": "string",
+          "description": "Value to compare against in the condition"
+        },
+        "logicalOperator": {
+          "type": "string",
+          "description": "Logical operator to combine with other conditions",
+          "enum": ["AND", "OR"]
+        }
+      }
+    },
+    "RuleAction": {
+      "type": "object",
+      "description": "Action in a calculation rule",
+      "required": ["actionType"],
+      "properties": {
+        "actionType": {
+          "type": "string",
+          "description": "Type of action to perform",
+          "enum": ["INCLUDE", "EXCLUDE", "ADJUST_QUANTITY", "SET_FLAG", "APPLY_FACTOR", "VALIDATE", "NOTIFY"]
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Parameters for the action",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "OverborrowCalculation": {
+      "type": "object",
+      "description": "Calculation of overborrowed positions",
+      "required": ["id", "securityId", "businessDate", "borrowedQuantity", "requiredQuantity", "overborrowQuantity"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the overborrow calculation"
+        },
+        "securityId": {
+          "type": "string",
+          "description": "Identifier of the security"
+        },
+        "counterpartyId": {
+          "type": "string",
+          "description": "Identifier of the counterparty"
+        },
+        "aggregationUnitId": {
+          "type": "string",
+          "description": "Identifier of the aggregation unit"
+        },
+        "businessDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Business date for the overborrow calculation"
+        },
+        "borrowedQuantity": {
+          "type": "number",
+          "description": "Total quantity borrowed"
+        },
+        "requiredQuantity": {
+          "type": "number",
+          "description": "Quantity required to cover short positions"
+        },
+        "overborrowQuantity": {
+          "type": "number",
+          "description": "Quantity overborrowed (borrowed - required)"
+        },
+        "isOverborrowed": {
+          "type": "boolean",
+          "description": "Whether the position is overborrowed"
+        },
+        "payToHoldQuantity": {
+          "type": "number",
+          "description": "Quantity with pay-to-hold arrangements"
+        },
+        "calculationRuleId": {
+          "type": "string",
+          "description": "Identifier of the calculation rule used"
+        },
+        "calculationStatus": {
+          "type": "string",
+          "description": "Status of the overborrow calculation",
+          "enum": ["PENDING", "VALID", "INVALID", "ERROR"]
+        },
+        "calculationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when the overborrow was calculated"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the overborrow calculation was created"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the overborrow calculation was last modified"
+        }
+      }
+    }
+  }
+}
