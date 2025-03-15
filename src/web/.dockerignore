@@ -1,0 +1,52 @@
+node_modules
+
+# Build output
+build
+
+# Test and coverage
+coverage
+cypress
+**/*.test.*
+**/*.spec.*
+**/__tests__
+**/__mocks__
+
+# Documentation
+*.md
+README.md
+
+# Version control
+.git
+.github
+.gitignore
+
+# Environment and local config
+.env*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea
+.vscode
+
+# Development tools
+.eslintrc.js
+.prettierrc
+jest.config.ts
+jest.setup.js
+.storybook
+**/*.stories.*
+docker-compose.yml
+.dockerignore
+tsconfig.json
+.browserslistrc
+.babelrc
+.npmrc
