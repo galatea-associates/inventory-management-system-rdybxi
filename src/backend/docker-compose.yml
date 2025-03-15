@@ -1,0 +1,576 @@
+# Docker Compose configuration for Inventory Management System (IMS) backend services
+# This file defines all the required services, their dependencies, network configuration,
+# volume mappings, and environment variables needed for local development and testing.
+version: '3.8'
+
+services:
+  # Database Services
+  
+  # PostgreSQL database for reference data, transaction data, and other relational data
+  postgres:
+    image: postgres:15.3
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ims}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ims_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # TimescaleDB for time-series market data storage
+  timescaledb:
+    image: timescale/timescaledb:2.10.0-pg15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ims_timeseries}
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ims_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Cassandra database for distributed position data storage
+  cassandra:
+    image: cassandra:4.1
+    environment:
+      CASSANDRA_CLUSTER_NAME: ims_cluster
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      HEAP_NEWSIZE: 200M
+      MAX_HEAP_SIZE: 2G
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Redis for caching and pub/sub messaging
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Elasticsearch for search and analytics
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      xpack.security.enabled: "false"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Kibana for log visualization
+  kibana:
+    image: kibana:8.8.0
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Messaging Services
+  
+  # ZooKeeper for Kafka cluster coordination
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Kafka for distributed messaging
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 8
+      KAFKA_LOG_RETENTION_HOURS: 168
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Schema Registry for Kafka message schemas
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.3.0
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8085:8081"
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Monitoring Services
+  
+  # Prometheus for metrics collection and monitoring
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-lifecycle
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:9.5.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Application Services
+  
+  # API Gateway service for routing and security
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
+      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC"
+      AUTH_SERVICE_URL: http://auth-service:8085
+      DATA_INGESTION_SERVICE_URL: http://data-ingestion-service:8081
+      CALCULATION_SERVICE_URL: http://calculation-service:8082
+      WORKFLOW_SERVICE_URL: http://workflow-service:8083
+      WEBSOCKET_SERVICE_URL: http://websocket-service:8084
+    ports:
+      - "8080:8080"
+    volumes:
+      - api-gateway-logs:/logs
+    depends_on:
+      - auth-service
+      - data-ingestion-service
+      - calculation-service
+      - workflow-service
+      - websocket-service
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Authentication and authorization service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8085
+      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC"
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/ims
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      JWT_SECRET: ims-jwt-secret-key-for-development-only
+      JWT_EXPIRATION: 3600000
+      OAUTH_CLIENT_ID: ims-client
+      OAUTH_CLIENT_SECRET: ims-client-secret
+      OAUTH_ISSUER_URI: http://localhost:8085/auth
+    ports:
+      - "8085:8085"
+    volumes:
+      - auth-service-data:/data
+      - auth-service-logs:/logs
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/api/v1/auth/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Service for ingesting reference data, market data, trade data, and contract data
+  data-ingestion-service:
+    build:
+      context: ./data-ingestion-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8081
+      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC"
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/ims
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: data-ingestion-service
+      KAFKA_TOPIC_REFERENCE_DATA: reference-data
+      KAFKA_TOPIC_MARKET_DATA: market-data
+      KAFKA_TOPIC_TRADE_DATA: trade-data
+      KAFKA_TOPIC_CONTRACT_DATA: contract-data
+      KAFKA_TOPIC_MARKET_DATA_INPUT: market-data-input
+      JWT_ISSUER_URI: http://auth-service:8085/auth
+      JWT_AUDIENCE: ims-api
+      REUTERS_API_KEY: reuters-api-key-placeholder
+      BLOOMBERG_API_KEY: bloomberg-api-key-placeholder
+      MARKIT_API_KEY: markit-api-key-placeholder
+      ULTUMUS_API_KEY: ultumus-api-key-placeholder
+      RIMES_API_KEY: rimes-api-key-placeholder
+    ports:
+      - "8081:8081"
+    volumes:
+      - data-ingestion-data:/data
+      - data-ingestion-logs:/logs
+    depends_on:
+      - postgres
+      - kafka
+      - schema-registry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/v1/ingestion/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Service for position calculations, inventory availability calculations, and limit calculations
+  calculation-service:
+    build:
+      context: ./calculation-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8082
+      JAVA_OPTS: "-Xms1g -Xmx4g -XX:+UseG1GC"
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/ims
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: calculation-service
+      HAZELCAST_CLUSTER_NAME: ims-cluster
+      HAZELCAST_MEMBERS: calculation-service:5701
+      JWT_ISSUER_URI: http://auth-service:8085/auth
+      JWT_AUDIENCE: ims-api
+    ports:
+      - "8082:8082"
+      - "5701:5701"
+    volumes:
+      - calculation-data:/data
+      - calculation-logs:/logs
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Service for locate approval and short sell approval workflows
+  workflow-service:
+    build:
+      context: ./workflow-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8083
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=100"
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/ims
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: workflow-service
+      CALCULATION_SERVICE_URL: http://calculation-service:8082
+      CAMUNDA_ADMIN_USER: admin
+      CAMUNDA_ADMIN_PASSWORD: admin
+      JWT_ISSUER_URI: http://auth-service:8085/auth
+      JWT_AUDIENCE: ims-api
+    ports:
+      - "8083:8083"
+    volumes:
+      - workflow-data:/data
+      - workflow-logs:/logs
+    depends_on:
+      - postgres
+      - kafka
+      - calculation-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/api/v1/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Service for real-time data streaming via WebSockets
+  websocket-service:
+    build:
+      context: ./websocket-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8084
+      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC"
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: websocket-service
+      KAFKA_TOPIC_POSITION: position-updates
+      KAFKA_TOPIC_INVENTORY: inventory-updates
+      KAFKA_TOPIC_LOCATE: locate-updates
+      KAFKA_TOPIC_ALERT: alerts
+      WEBSOCKET_ALLOWED_ORIGINS: "*"
+      JWT_ISSUER_URI: http://auth-service:8085/auth
+      JWT_AUDIENCE: ims-api
+    ports:
+      - "8084:8084"
+    volumes:
+      - websocket-logs:/logs
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/api/v1/websocket/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+  
+  # Service for system monitoring, health checks, and alerting
+  monitoring-service:
+    build:
+      context: ./monitoring-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8086
+      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC"
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/ims
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: monitoring-service
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PROMETHEUS_PUSH_GATEWAY_URL: http://prometheus:9091
+      ALERT_EMAIL_RECIPIENTS: alerts@example.com
+      ALERT_SLACK_WEBHOOK_URL: https://hooks.slack.com/services/placeholder
+    ports:
+      - "8086:8086"
+    volumes:
+      - monitoring-data:/data
+      - monitoring-logs:/logs
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+
+# Custom bridge network for all services
+networks:
+  ims-network:
+    driver: bridge
+
+# Persistent volumes for data storage
+volumes:
+  # Database volumes
+  postgres-data:
+    driver: local
+  timescaledb-data:
+    driver: local
+  cassandra-data:
+    driver: local
+  redis-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  
+  # Messaging volumes
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  kafka-data:
+    driver: local
+  
+  # Monitoring volumes
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  
+  # Application service volumes
+  api-gateway-logs:
+    driver: local
+  auth-service-data:
+    driver: local
+  auth-service-logs:
+    driver: local
+  data-ingestion-data:
+    driver: local
+  data-ingestion-logs:
+    driver: local
+  calculation-data:
+    driver: local
+  calculation-logs:
+    driver: local
+  workflow-data:
+    driver: local
+  workflow-logs:
+    driver: local
+  websocket-logs:
+    driver: local
+  monitoring-data:
+    driver: local
+  monitoring-logs:
+    driver: local
