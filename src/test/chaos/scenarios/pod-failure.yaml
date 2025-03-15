@@ -1,0 +1,158 @@
+# Pod Failure Chaos Testing Configuration for Inventory Management System
+# This file defines various pod disruption scenarios to test system resilience
+# Compatible with Litmus Chaos Framework v2.0+
+
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-pod-chaos
+  namespace: chaos-testing
+spec:
+  # Target application information
+  appinfo:
+    appns: "ims"                                  # Namespace where IMS is deployed
+    applabel: "app.kubernetes.io/part-of=ims"    # Label selector to identify IMS components
+    appkind: "deployment"                         # Kubernetes resource type
+  
+  # Chaos execution settings
+  chaosServiceAccount: chaos-service-account      # Service account with permissions to create chaos
+  monitoring: true                                # Enable monitoring of chaos results
+  jobCleanUpPolicy: delete                        # Cleanup jobs after execution
+  annotationCheck: "false"                        # Disable annotation checks
+  engineState: active                             # Enable chaos engine
+  auxiliaryAppInfo: ""                            # No auxiliary applications
+  
+  # Chaos experiments to be executed
+  experiments:
+    # Test 1: Calculation Service Pod Deletion
+    # Tests system resilience when 50% of calculation service pods are deleted at 60-second intervals
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                        # Total test duration in seconds (5 minutes)
+            - name: CHAOS_INTERVAL
+              value: "60"                         # Interval between pod deletions
+            - name: FORCE
+              value: "false"                      # Use graceful termination
+            - name: TARGET_PODS
+              value: "calculation-service"        # Target the calculation service pods
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"                         # Delete 50% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test 2: Workflow Service Pod Deletion
+    # Tests system resilience when 50% of workflow service pods are deleted at 60-second intervals
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                        # Total test duration in seconds (5 minutes)
+            - name: CHAOS_INTERVAL
+              value: "60"                         # Interval between pod deletions
+            - name: FORCE
+              value: "false"                      # Use graceful termination
+            - name: TARGET_PODS
+              value: "workflow-service"           # Target the workflow service pods
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"                         # Delete 50% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test 3: Data Ingestion Service Pod Deletion
+    # Tests system resilience when 50% of data ingestion service pods are deleted at 60-second intervals
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                        # Total test duration in seconds (5 minutes)
+            - name: CHAOS_INTERVAL
+              value: "60"                         # Interval between pod deletions
+            - name: FORCE
+              value: "false"                      # Use graceful termination
+            - name: TARGET_PODS
+              value: "data-ingestion-service"     # Target the data ingestion service pods
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"                         # Delete 50% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test 4: API Gateway and WebSocket Service Container Kill
+    # Tests system resilience when containers within API gateway and WebSocket service pods are killed
+    - name: container-kill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                        # Total test duration in seconds (4 minutes)
+            - name: CHAOS_INTERVAL
+              value: "30"                         # Interval between container kills
+            - name: TARGET_PODS
+              value: "api-gateway,websocket-service" # Target both API gateway and WebSocket service
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"                         # Affect 40% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test 5: Calculation and Workflow Services I/O Stress
+    # Tests system resilience when calculation and workflow service pods experience high I/O stress
+    - name: pod-io-stress
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                        # Total test duration in seconds (4 minutes)
+            - name: FILESYSTEM_UTILIZATION_PERCENTAGE
+              value: "80"                         # Percentage of filesystem to fill
+            - name: FILESYSTEM_UTILIZATION_BYTES
+              value: "1073741824"                 # 1GB of filesystem utilization
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service" # Target both services
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "30"                         # Affect 30% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test 6: Calculation Service Autoscaling
+    # Tests system resilience during rapid autoscaling of calculation service
+    - name: pod-autoscaler
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                        # Total test duration in seconds (5 minutes)
+            - name: REPLICA_COUNT
+              value: "10"                         # Scale up to 10 replicas
+            - name: TARGET_DEPLOYMENT
+              value: "calculation-service"        # Target the calculation service deployment
+    
+    # Test 7: Calculation and Workflow Services Network Partition
+    # Tests system resilience when network partitioning occurs between services
+    - name: pod-network-partition
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                        # Total test duration in seconds (4 minutes)
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service" # Target both services
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"                         # Affect 50% of pods
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                 # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
