@@ -1,0 +1,572 @@
+[
+  {
+    "id": "POS-00001",
+    "bookId": "EQUITY-01",
+    "security": {
+      "internalId": "SEC-EQ-001"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00001"
+    },
+    "aggregationUnit": {
+      "id": "AU-001",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 12500,
+    "settledQty": 10000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 2500,
+    "sd1Deliver": 1000,
+    "sd1Receipt": 0,
+    "sd2Deliver": 500,
+    "sd2Receipt": 1500,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 10000,
+    "projectedNetPosition": 12500,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00002",
+    "bookId": "EQUITY-01",
+    "security": {
+      "internalId": "SEC-EQ-002"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00001"
+    },
+    "aggregationUnit": {
+      "id": "AU-001",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 4000,
+    "settledQty": 5000,
+    "sd0Deliver": 1000,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 500,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 5000,
+    "projectedNetPosition": 4500,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00003",
+    "bookId": "EQUITY-02",
+    "security": {
+      "internalId": "SEC-EQ-003"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00002"
+    },
+    "aggregationUnit": {
+      "id": "AU-002",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": false,
+    "isReserved": false,
+    "contractualQty": -1500,
+    "settledQty": -2000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 500,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": -2000,
+    "projectedNetPosition": -1500,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00004",
+    "bookId": "EQUITY-02",
+    "security": {
+      "internalId": "SEC-EQ-004"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00002"
+    },
+    "aggregationUnit": {
+      "id": "AU-002",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": true,
+    "contractualQty": 3000,
+    "settledQty": 3000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 3000,
+    "projectedNetPosition": 3000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00005",
+    "bookId": "EQUITY-03",
+    "security": {
+      "internalId": "SEC-EQ-005"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00003"
+    },
+    "aggregationUnit": {
+      "id": "AU-003",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 2000,
+    "settledQty": 1500,
+    "sd0Deliver": 0,
+    "sd0Receipt": 500,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 1500,
+    "projectedNetPosition": 2000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00006",
+    "bookId": "FIXED-01",
+    "security": {
+      "internalId": "SEC-BD-001"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00004"
+    },
+    "aggregationUnit": {
+      "id": "AU-004",
+      "name": "US Fixed Income Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 5000000,
+    "settledQty": 5000000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 1000000,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 5000000,
+    "projectedNetPosition": 4000000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-002",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00007",
+    "bookId": "ETF-01",
+    "security": {
+      "internalId": "SEC-ETF-001"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00005"
+    },
+    "aggregationUnit": {
+      "id": "AU-005",
+      "name": "US ETF Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 7500,
+    "settledQty": 7500,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 7500,
+    "projectedNetPosition": 7500,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-003",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00008",
+    "bookId": "EQUITY-JP-01",
+    "security": {
+      "internalId": "SEC-EQ-006"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00003"
+    },
+    "aggregationUnit": {
+      "id": "AU-006",
+      "name": "Japan Equity Trading",
+      "market": "JP"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 5000,
+    "settledQty": 5000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 5000,
+    "projectedNetPosition": 5000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-004",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00009",
+    "bookId": "EQUITY-TW-01",
+    "security": {
+      "internalId": "SEC-EQ-007"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00006"
+    },
+    "aggregationUnit": {
+      "id": "AU-007",
+      "name": "Taiwan Equity Trading",
+      "market": "TW"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": false,
+    "isReserved": false,
+    "contractualQty": -3000,
+    "settledQty": -3000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": -3000,
+    "projectedNetPosition": -3000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-005",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00010",
+    "bookId": "CLIENT-01",
+    "security": {
+      "internalId": "SEC-EQ-001"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00007"
+    },
+    "aggregationUnit": {
+      "id": "AU-008",
+      "name": "Client Positions",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "CLIENT",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 15000,
+    "settledQty": 15000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 15000,
+    "projectedNetPosition": 15000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-006",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00011",
+    "bookId": "CLIENT-02",
+    "security": {
+      "internalId": "SEC-EQ-002"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00008"
+    },
+    "aggregationUnit": {
+      "id": "AU-008",
+      "name": "Client Positions",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "CLIENT",
+    "isHypothecatable": false,
+    "isReserved": false,
+    "contractualQty": 8000,
+    "settledQty": 8000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 8000,
+    "projectedNetPosition": 8000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-006",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00012",
+    "bookId": "EQUITY-01",
+    "security": {
+      "internalId": "SEC-EQ-003"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00009"
+    },
+    "aggregationUnit": {
+      "id": "AU-001",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 0,
+    "settledQty": 0,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 0,
+    "projectedNetPosition": 0,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": true
+  },
+  {
+    "id": "POS-00013",
+    "bookId": "FINANCING-01",
+    "security": {
+      "internalId": "SEC-EQ-004"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00010"
+    },
+    "aggregationUnit": {
+      "id": "AU-009",
+      "name": "Financing Positions",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "FINANCING",
+    "isHypothecatable": false,
+    "isReserved": true,
+    "contractualQty": 10000,
+    "settledQty": 10000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 10000,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 10000,
+    "projectedNetPosition": 0,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-007",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00014",
+    "bookId": "EQUITY-01",
+    "security": {
+      "internalId": "SEC-EQ-005"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00001"
+    },
+    "aggregationUnit": {
+      "id": "AU-001",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-14",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 1500,
+    "settledQty": 1500,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 500,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 1500,
+    "projectedNetPosition": 2000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-14",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": false
+  },
+  {
+    "id": "POS-00015",
+    "bookId": "EQUITY-01",
+    "security": {
+      "internalId": "SEC-EQ-005"
+    },
+    "counterparty": {
+      "counterpartyId": "CP-00001"
+    },
+    "aggregationUnit": {
+      "id": "AU-001",
+      "name": "US Equity Trading",
+      "market": "US"
+    },
+    "businessDate": "2023-06-15",
+    "positionType": "TRADING",
+    "isHypothecatable": true,
+    "isReserved": false,
+    "contractualQty": 2000,
+    "settledQty": 2000,
+    "sd0Deliver": 0,
+    "sd0Receipt": 0,
+    "sd1Deliver": 0,
+    "sd1Receipt": 0,
+    "sd2Deliver": 0,
+    "sd2Receipt": 0,
+    "sd3Deliver": 0,
+    "sd3Receipt": 0,
+    "sd4Deliver": 0,
+    "sd4Receipt": 0,
+    "currentNetPosition": 2000,
+    "projectedNetPosition": 2000,
+    "calculationStatus": "VALID",
+    "calculationDate": "2023-06-15",
+    "calculationRuleId": "RULE-001",
+    "calculationRuleVersion": "1.0",
+    "isStartOfDay": true
+  }
+]
