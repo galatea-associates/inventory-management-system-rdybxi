@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'com.palantir.docker' version '0.35.0'
+}
+
+group = 'com.ims.monitoring'
+version = '0.1.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':common-lib')
+    
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    implementation 'org.springframework.kafka:spring-kafka:3.0.7'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.5'
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.flywaydb:flyway-core:9.8.3'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.testcontainers:postgresql'
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = 'monitoring-service.jar'
+    archiveClassifier = ''
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Built-By': System.properties['user.name'],
+            'Built-Date': new Date(),
+            'Built-JDK': System.properties['java.version']
+        )
+    }
+}
+
+docker {
+    name 'ims/monitoring-service'
+    tag project.version
+    dockerfile file('Dockerfile')
+    files bootJar.archiveFile
+    buildArgs(['JAR_FILE': bootJar.archiveFileName])
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    systemProperty 'spring.profiles.active', 'test'
+}
