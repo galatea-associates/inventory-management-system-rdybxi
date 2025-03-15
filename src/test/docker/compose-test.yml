@@ -1,0 +1,424 @@
+# Docker Compose configuration for testing the Inventory Management System (IMS)
+# This file defines a containerized test environment that includes both backend and frontend services,
+# databases, message brokers, and monitoring tools needed to run comprehensive tests including
+# integration, performance, and end-to-end tests.
+version: '3.8'
+
+services:
+  # Database Services
+  
+  # PostgreSQL database for test data
+  postgres-test:
+    image: postgres:15.3
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims_test_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ims_test_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ims_test}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+      - ../data-verification/expected/reference-data-schema.json:/docker-entrypoint-initdb.d/01-reference-data-schema.json
+      - ../data-verification/expected/position-data-schema.json:/docker-entrypoint-initdb.d/02-position-data-schema.json
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ims_test_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # TimescaleDB for time-series test data
+  timescaledb-test:
+    image: timescale/timescaledb:2.10.0-pg15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims_test_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ims_test_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ims_test_timeseries}
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb-test-data:/var/lib/postgresql/data
+      - ../data-verification/expected/market-data-schema.json:/docker-entrypoint-initdb.d/01-market-data-schema.json
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ims_test_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Redis for caching and pub/sub messaging in tests
+  redis-test:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-test-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Messaging Services
+  
+  # ZooKeeper for Kafka cluster coordination in tests
+  zookeeper-test:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-test-data:/var/lib/zookeeper/data
+      - zookeeper-test-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Kafka for message testing
+  kafka-test:
+    image: confluentinc/cp-kafka:7.3.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-test:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-test:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 8
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    volumes:
+      - kafka-test-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper-test
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Schema Registry for Kafka message schemas in tests
+  schema-registry-test:
+    image: confluentinc/cp-schema-registry:7.3.0
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry-test
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka-test:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8085:8081"
+    depends_on:
+      - kafka-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Application Services
+  
+  # Test instance of the data ingestion service
+  data-ingestion-service-test:
+    build:
+      context: ../../backend/data-ingestion-service
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: data-ingestion-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-test}
+      SERVER_PORT: 8081
+      JAVA_OPTS: -Xms512m -Xmx1g -XX:+UseG1GC
+      DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/ims_test
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_test_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_test_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-test:9092}
+      KAFKA_GROUP_ID: data-ingestion-service-test
+    ports:
+      - "8081:8081"
+    volumes:
+      - data-ingestion-test-logs:/logs
+      - ../common/fixtures/securities.json:/data/securities.json
+      - ../common/fixtures/counterparties.json:/data/counterparties.json
+      - ../common/fixtures/marketData.json:/data/marketData.json
+      - ../common/fixtures/referenceData.json:/data/referenceData.json
+    depends_on:
+      - postgres-test
+      - kafka-test
+      - schema-registry-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Test instance of the calculation service
+  calculation-service-test:
+    build:
+      context: ../../backend/calculation-service
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: calculation-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-test}
+      SERVER_PORT: 8082
+      JAVA_OPTS: -Xms1g -Xmx2g -XX:+UseG1GC
+      DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/ims_test
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_test_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_test_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-test:9092}
+      KAFKA_GROUP_ID: calculation-service-test
+      HAZELCAST_CLUSTER_NAME: ims-test-cluster
+      HAZELCAST_MEMBERS: calculation-service-test:5701
+    ports:
+      - "8082:8082"
+      - "5701:5701"
+    volumes:
+      - calculation-test-logs:/logs
+      - ../common/fixtures/positions.json:/data/positions.json
+      - ../common/fixtures/inventories.json:/data/inventories.json
+    depends_on:
+      - postgres-test
+      - kafka-test
+      - redis-test
+      - data-ingestion-service-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Test instance of the workflow service
+  workflow-service-test:
+    build:
+      context: ../../backend/workflow-service
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: workflow-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-test}
+      SERVER_PORT: 8083
+      JAVA_OPTS: -Xms512m -Xmx1g -XX:+UseG1GC
+      DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/ims_test
+      DATASOURCE_USERNAME: ${POSTGRES_USER:-ims_test_user}
+      DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ims_test_password}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-test:9092}
+      KAFKA_GROUP_ID: workflow-service-test
+      CALCULATION_SERVICE_URL: http://calculation-service-test:8082
+    ports:
+      - "8083:8083"
+    volumes:
+      - workflow-test-logs:/logs
+      - ../common/fixtures/locates.json:/data/locates.json
+      - ../common/fixtures/orders.json:/data/orders.json
+    depends_on:
+      - postgres-test
+      - kafka-test
+      - calculation-service-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Test instance of the WebSocket service
+  websocket-service-test:
+    build:
+      context: ../../backend/websocket-service
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: websocket-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-test}
+      SERVER_PORT: 8084
+      JAVA_OPTS: -Xms512m -Xmx1g -XX:+UseG1GC
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-test:9092}
+      KAFKA_GROUP_ID: websocket-service-test
+      WEBSOCKET_ALLOWED_ORIGINS: "*"
+    ports:
+      - "8084:8084"
+    volumes:
+      - websocket-test-logs:/logs
+    depends_on:
+      - kafka-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Test instance of the API gateway
+  api-gateway-test:
+    build:
+      context: ../../backend/api-gateway
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-test}
+      SERVER_PORT: 8080
+      JAVA_OPTS: -Xms512m -Xmx1g -XX:+UseG1GC
+      DATA_INGESTION_SERVICE_URL: http://data-ingestion-service-test:8081
+      CALCULATION_SERVICE_URL: http://calculation-service-test:8082
+      WORKFLOW_SERVICE_URL: http://workflow-service-test:8083
+      WEBSOCKET_SERVICE_URL: http://websocket-service-test:8084
+    ports:
+      - "8080:8080"
+    volumes:
+      - api-gateway-test-logs:/logs
+    depends_on:
+      - data-ingestion-service-test
+      - calculation-service-test
+      - workflow-service-test
+      - websocket-service-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Test instance of the web frontend
+  web-test:
+    build:
+      context: ../../web
+      dockerfile: Dockerfile
+      args:
+        API_BASE_URL: http://api-gateway-test:8080
+        WEBSOCKET_URL: ws://websocket-service-test:8084
+    ports:
+      - "3000:80"
+    environment:
+      NODE_ENV: test
+    depends_on:
+      - api-gateway-test
+      - websocket-service-test
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ims-test-network
+
+  # Testing Tools
+  
+  # Performance testing tool for running load tests
+  k6:
+    image: grafana/k6:latest
+    volumes:
+      - ../performance/k6:/scripts
+      - k6-test-results:/results
+    environment:
+      K6_OUT: json=/results/k6-results.json
+      API_BASE_URL: http://api-gateway-test:8080
+      WEBSOCKET_URL: ws://websocket-service-test:8084
+    depends_on:
+      - api-gateway-test
+    command: run /scripts/scenarios/locateApproval.js --summary-export=/results/summary.json
+    networks:
+      - ims-test-network
+
+  # Container for running integration and end-to-end tests
+  test-runner:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ../..:/app
+      - test-results:/app/test-results
+    environment:
+      API_BASE_URL: http://api-gateway-test:8080
+      WEBSOCKET_URL: ws://websocket-service-test:8084
+      TEST_RESULTS_DIR: /app/test-results
+    depends_on:
+      - api-gateway-test
+      - data-ingestion-service-test
+      - calculation-service-test
+      - workflow-service-test
+      - websocket-service-test
+      - web-test
+    command: npm run test:integration
+    networks:
+      - ims-test-network
+
+# Persistent volumes for data storage
+volumes:
+  # Persistent volume for PostgreSQL test data
+  postgres-test-data:
+  # Persistent volume for TimescaleDB test data
+  timescaledb-test-data:
+  # Persistent volume for Redis test data
+  redis-test-data:
+  # Persistent volume for ZooKeeper test data
+  zookeeper-test-data:
+  # Persistent volume for ZooKeeper test logs
+  zookeeper-test-logs:
+  # Persistent volume for Kafka test data
+  kafka-test-data:
+  # Persistent volume for API Gateway test logs
+  api-gateway-test-logs:
+  # Persistent volume for Data Ingestion Service test logs
+  data-ingestion-test-logs:
+  # Persistent volume for Calculation Service test logs
+  calculation-test-logs:
+  # Persistent volume for Workflow Service test logs
+  workflow-test-logs:
+  # Persistent volume for WebSocket Service test logs
+  websocket-test-logs:
+  # Persistent volume for k6 performance test results
+  k6-test-results:
+  # Persistent volume for test results and reports
+  test-results:
+
+# Custom network for test services
+networks:
+  # Custom bridge network for IMS test services
+  ims-test-network:
+    driver: bridge
