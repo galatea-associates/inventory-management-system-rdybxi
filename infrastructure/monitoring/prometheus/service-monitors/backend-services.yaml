@@ -1,0 +1,150 @@
+---
+# ServiceMonitor for Data Ingestion Services
+# This configuration defines how Prometheus should discover and scrape metrics from
+# the data ingestion services responsible for processing reference data, market data,
+# trade data, and contract data feeds.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-data-ingestion-service
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: data-ingestion
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: data-ingestion-service
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /actuator/prometheus
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: jvm_.*|process_.*|system_.*|http_.*|hikaricp_.*|ims_business_events_processed_.*|ims_data_feed_.*|ims_reference_data_.*|ims_market_data_.*|ims_trade_data_.*|ims_contract_data_.*
+          action: keep
+---
+# ServiceMonitor for Calculation Services
+# This configuration defines how Prometheus should discover and scrape metrics from
+# the calculation services responsible for position, inventory, and limit calculations,
+# which are critical for the system's core functionality.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-calculation-service
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: calculation
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: calculation-service
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /actuator/prometheus
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: jvm_.*|process_.*|system_.*|http_.*|hikaricp_.*|ims_position_calculation_.*|ims_inventory_calculation_.*|ims_limit_calculation_.*|ims_rule_engine_.*|ims_calculation_.*|ims_business_event_processing_.*
+          action: keep
+---
+# ServiceMonitor for Workflow Services
+# This configuration defines how Prometheus should discover and scrape metrics from
+# the workflow services that handle locate approvals and short sell validations,
+# which must meet strict SLA requirements (e.g., <150ms for short sell validation).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-workflow-service
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: workflow
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: workflow-service
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /actuator/prometheus
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: jvm_.*|process_.*|system_.*|http_.*|hikaricp_.*|ims_business_locate_approval_.*|ims_business_short_sell_validation_.*|ims_workflow_.*|camunda_.*
+          action: keep
+---
+# ServiceMonitor for API Gateway
+# This configuration defines how Prometheus should discover and scrape metrics from
+# the API Gateway service that handles external API requests, authentication, and
+# rate limiting for the entire system.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-api-gateway
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: api-gateway
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /actuator/prometheus
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: jvm_.*|process_.*|system_.*|http_.*|spring_cloud_gateway_.*|ims_api_.*|ims_auth_.*|ims_rate_limit_.*
+          action: keep
+---
+# ServiceMonitor for WebSocket Service
+# This configuration defines how Prometheus should discover and scrape metrics from
+# the WebSocket service that provides real-time updates to clients for positions,
+# inventory levels, and other time-sensitive data.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-websocket-service
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: websocket
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: websocket-service
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /actuator/prometheus
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: jvm_.*|process_.*|system_.*|http_.*|ims_websocket_.*|ims_message_.*
+          action: keep
