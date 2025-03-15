@@ -1,0 +1,873 @@
+# Jenkins Helm chart values for Inventory Management System (IMS)
+# Jenkins version: 2.401
+# Helm chart version: v3
+
+controller:
+  image:
+    repository: jenkins/jenkins
+    tag: 2.401-jdk17
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  
+  javaOpts: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -XX:+ParallelRefProcEnabled -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/jenkins_home/heap-dump.hprof -Djenkins.install.runSetupWizard=false"
+  numExecutors: 0
+  adminUser: admin
+  adminPassword: ""
+  authorizationStrategy: loggedInUsersCanDoAnything
+  securityRealm: legacy
+  
+  # Core Jenkins plugins
+  installPlugins:
+    - kubernetes:3900.v5a_1d5f710d97
+    - workflow-aggregator:596.v8c21c963d92d
+    - git:5.0.0
+    - configuration-as-code:1625.v27444588cc3d
+    - job-dsl:1.81
+    - pipeline-stage-view:2.33
+    - blueocean:1.27.3
+    - sonar:2.15
+    - jacoco:3.3.2
+    - docker-workflow:563.vd5d2e5c4007f
+    - kubernetes-cli:1.10.3
+    - gradle:2.6.1
+    - nodejs:1.5.1
+    - slack:631.v40d14e9c4d9f
+    - email-ext:2.93
+    - prometheus:2.2.3
+    - performance:3.20
+    - warnings-ng:9.24.0
+    - dependency-check-jenkins-plugin:5.4.0
+    - owasp-dependencies:5.5.0
+    - checkstyle:4.0.0
+    - pmd:4.0.0
+    - spotbugs:4.2.2
+    - junit:1202.v79a_986785076
+    - htmlpublisher:1.31
+    - timestamper:1.21
+    - credentials-binding:523.vd859a_4b_122e6
+    - credentials:1224.vc23ca_a_9a_2cb_0
+    - matrix-auth:3.1.6
+    - role-strategy:569.v7476f8e4fe29
+    - authorize-project:1.4.0
+    - ansicolor:1.0.2
+    - build-timeout:1.28
+    - throttle-concurrents:2.13
+    - ws-cleanup:0.45
+    - github-branch-source:1703.vd5a_2b_29c6cdc
+    - github:1.37.0
+    - gitlab-plugin:1.7.14
+    - bitbucket:223.v7e3b_1a_f9c7dc
+    - ssh-agent:295.v9ca_a_1c7cc3a_a_
+    - ssh-credentials:305.v8f4381501156
+    - cloudbees-folder:6.815.v0dd5a_cb_40e0e
+    - pipeline-utility-steps:2.15.3
+    - pipeline-model-definition:2.2131.vb_9788088fdb_5
+    - pipeline-build-step:2.18
+    - pipeline-input-step:456.vd8a_957db_5b_e9
+    - pipeline-milestone-step:111.v449306f708b_7
+    - pipeline-stage-step:305.ve96d0205c1c6
+    - pipeline-graph-analysis:202.va_d268e64deb_3
+    - parameterized-trigger:2.46
+    - build-user-vars-plugin:1.9
+    - antisamy-markup-formatter:159.v25b_c67cd35fb_
+    - maven-plugin:3.22
+  
+  # Additional plugins for IMS CI/CD requirements
+  additionalPlugins:
+    - nexus-artifact-uploader:2.14
+    - artifactory:3.18.1
+    - docker-build-publish:1.4.0
+    - kubernetes-cd:2.3.1
+    - helm:1.15
+    - jira:3.7
+    - gatling:1.3.0
+    - k6-load-test:0.1.0
+    - jmeter:1.8.0
+    - zap:1.2.0
+    - aqua-security-scanner:5.9.0
+    - anchore-container-scanner:1.0.24
+    - fortify:20.2.35
+    - veracode-scanner:21.5.0.4
+    - snyk-security-scanner:2.24.0
+    - hashicorp-vault-plugin:359.v2da_3b_45f17d5
+    - aws-credentials:191.vcb_f183ce58b_9
+    - azure-credentials:177.v1.1
+    - google-oauth-plugin:1.0.5
+    - google-compute-engine:4.8.0
+    - google-kubernetes-engine:0.11.0
+    - google-storage-plugin:1.5.6
+    - openshift-client:1.0.35
+    - openshift-login:1.0.27
+    - openshift-sync:1.0.47
+    - kubernetes-credentials-provider:1.0.0
+    - kubernetes-credentials:0.9.0
+    - kubernetes-client-api:5.12.2-193.v26a_6078f65a_9
+    - metrics:4.2.13-389.v93143621b_050
+    - monitoring:1.92.0
+    - influxdb:2.5
+    - datadog:4.1.0
+    - newrelic-deployment-notifier:1.6
+    - splunk-devops:2.1.1
+    - sumologic-publisher:2.4
+    - logstash:2.1.0
+  
+  ingress:
+    enabled: true
+    apiVersion: networking.k8s.io/v1
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hostName: jenkins.ims.example.com
+    tls:
+      - secretName: jenkins-tls
+        hosts:
+          - jenkins.ims.example.com
+  
+  serviceType: ClusterIP
+  servicePort: 8080
+  targetPort: 8080
+  jmxPort: 8686
+  jenkinsUriPrefix: /
+  
+  containerEnv:
+    - name: JAVA_OPTS
+      value: -Xms1g -Xmx2g -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -XX:+ParallelRefProcEnabled -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/jenkins_home/heap-dump.hprof -Djenkins.install.runSetupWizard=false
+    - name: JENKINS_OPTS
+      value: --prefix=/jenkins
+    - name: TZ
+      value: UTC
+  
+  sidecars:
+    configAutoReload:
+      enabled: true
+      image: kiwigrid/k8s-sidecar:1.15.0
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+  
+  prometheus:
+    enabled: true
+    serviceMonitorNamespace: monitoring
+    serviceMonitorAdditionalLabels:
+      release: prometheus
+  
+  backupEnabled: true
+  backupSchedule: "0 2 * * *"
+  backupCommand: "/bin/sh -c 'tar czf /tmp/jenkins-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /var/jenkins_home . && aws s3 cp /tmp/jenkins-backup-*.tar.gz s3://ims-jenkins-backups/'"
+  backupContainerResources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+  
+  podSecurityContextOverride:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  
+  securityContextOverride:
+    runAsUser: 1000
+    allowPrivilegeEscalation: false
+  
+  initContainerEnv:
+    - name: JENKINS_UC
+      value: https://updates.jenkins.io
+    - name: JENKINS_UC_DOWNLOAD
+      value: https://updates.jenkins.io/download
+  
+  JCasC:
+    enabled: true
+    defaultConfig: true
+    configScripts:
+      jenkins-config: |
+        jenkins:
+          systemMessage: "Jenkins for Inventory Management System (IMS)"
+          numExecutors: 0
+          scmCheckoutRetryCount: 3
+          mode: NORMAL
+          securityRealm:
+            local:
+              allowsSignup: false
+              users:
+                - id: "admin"
+                  password: "${ADMIN_PASSWORD}"
+          authorizationStrategy:
+            roleBased:
+              roles:
+                global:
+                  - name: "admin"
+                    description: "Jenkins administrators"
+                    permissions:
+                      - "Overall/Administer"
+                    assignments:
+                      - "admin"
+                  - name: "developer"
+                    description: "Jenkins developers"
+                    permissions:
+                      - "Overall/Read"
+                      - "Job/Read"
+                      - "Job/Build"
+                      - "Job/Workspace"
+                    assignments:
+                      - "developer"
+                  - name: "reader"
+                    description: "Jenkins readers"
+                    permissions:
+                      - "Overall/Read"
+                      - "Job/Read"
+                    assignments:
+                      - "reader"
+          remotingSecurity:
+            enabled: true
+          slaveAgentPort: 50000
+          clouds:
+            - kubernetes:
+                name: "kubernetes"
+                serverUrl: "https://kubernetes.default.svc"
+                namespace: "${NAMESPACE}"
+                jenkinsUrl: "http://jenkins:8080"
+                jenkinsTunnel: "jenkins-agent:50000"
+                connectTimeout: 5
+                readTimeout: 15
+                containerCapStr: "10"
+                maxRequestsPerHostStr: "32"
+                retentionTimeout: 5
+                templates:
+                  - name: "jnlp-agent"
+                    namespace: "${NAMESPACE}"
+                    label: "jnlp-agent"
+                    nodeUsageMode: NORMAL
+                    containers:
+                      - name: "jnlp"
+                        image: "jenkins/inbound-agent:4.11.2-4-jdk17"
+                        alwaysPullImage: false
+                        workingDir: "/home/jenkins/agent"
+                        ttyEnabled: true
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "1"
+                        resourceLimitMemory: "2Gi"
+                  - name: "java-agent"
+                    namespace: "${NAMESPACE}"
+                    label: "java-agent"
+                    nodeUsageMode: NORMAL
+                    containers:
+                      - name: "jnlp"
+                        image: "jenkins/inbound-agent:4.11.2-4-jdk17"
+                        alwaysPullImage: false
+                        workingDir: "/home/jenkins/agent"
+                        ttyEnabled: true
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "1"
+                        resourceLimitMemory: "2Gi"
+                      - name: "java"
+                        image: "eclipse-temurin:17-jdk"
+                        alwaysPullImage: false
+                        command: "cat"
+                        args: ""
+                        ttyEnabled: true
+                        resourceRequestCpu: "1"
+                        resourceRequestMemory: "2Gi"
+                        resourceLimitCpu: "2"
+                        resourceLimitMemory: "4Gi"
+                  - name: "node-agent"
+                    namespace: "${NAMESPACE}"
+                    label: "node-agent"
+                    nodeUsageMode: NORMAL
+                    containers:
+                      - name: "jnlp"
+                        image: "jenkins/inbound-agent:4.11.2-4-jdk17"
+                        alwaysPullImage: false
+                        workingDir: "/home/jenkins/agent"
+                        ttyEnabled: true
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "1"
+                        resourceLimitMemory: "2Gi"
+                      - name: "node"
+                        image: "node:18"
+                        alwaysPullImage: false
+                        command: "cat"
+                        args: ""
+                        ttyEnabled: true
+                        resourceRequestCpu: "1"
+                        resourceRequestMemory: "2Gi"
+                        resourceLimitCpu: "2"
+                        resourceLimitMemory: "4Gi"
+                  - name: "docker-agent"
+                    namespace: "${NAMESPACE}"
+                    label: "docker-agent"
+                    nodeUsageMode: NORMAL
+                    containers:
+                      - name: "jnlp"
+                        image: "jenkins/inbound-agent:4.11.2-4-jdk17"
+                        alwaysPullImage: false
+                        workingDir: "/home/jenkins/agent"
+                        ttyEnabled: true
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "1"
+                        resourceLimitMemory: "2Gi"
+                      - name: "docker"
+                        image: "docker:latest"
+                        alwaysPullImage: false
+                        command: "cat"
+                        args: ""
+                        ttyEnabled: true
+                        privileged: true
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "1"
+                        resourceLimitMemory: "2Gi"
+                        volumeMounts:
+                          - mountPath: "/var/run/docker.sock"
+                            name: "docker-sock"
+                    volumes:
+                      - hostPathVolume:
+                          hostPath: "/var/run/docker.sock"
+                          mountPath: "/var/run/docker.sock"
+                        name: "docker-sock"
+                  - name: "full-agent"
+                    namespace: "${NAMESPACE}"
+                    label: "full-agent"
+                    nodeUsageMode: NORMAL
+                    yaml: |
+                      spec:
+                        containers:
+                        - name: jnlp
+                          image: jenkins/inbound-agent:4.11.2-4-jdk17
+                          resources:
+                            requests:
+                              memory: "1Gi"
+                              cpu: "500m"
+                            limits:
+                              memory: "2Gi"
+                              cpu: "1"
+                        - name: java
+                          image: eclipse-temurin:17-jdk
+                          command: ['cat']
+                          tty: true
+                          resources:
+                            requests:
+                              memory: "2Gi"
+                              cpu: "1"
+                            limits:
+                              memory: "4Gi"
+                              cpu: "2"
+                        - name: node
+                          image: node:18
+                          command: ['cat']
+                          tty: true
+                          resources:
+                            requests:
+                              memory: "2Gi"
+                              cpu: "1"
+                            limits:
+                              memory: "4Gi"
+                              cpu: "2"
+                        - name: docker
+                          image: docker:latest
+                          command: ['cat']
+                          tty: true
+                          privileged: true
+                          resources:
+                            requests:
+                              memory: "1Gi"
+                              cpu: "500m"
+                            limits:
+                              memory: "2Gi"
+                              cpu: "1"
+                          volumeMounts:
+                          - mountPath: /var/run/docker.sock
+                            name: docker-sock
+                        volumes:
+                        - name: docker-sock
+                          hostPath:
+                            path: /var/run/docker.sock
+        
+        unclassified:
+          location:
+            url: https://jenkins.ims.example.com/
+          gitHubPluginConfig:
+            configs:
+              - name: "GitHub"
+                apiUrl: "https://api.github.com"
+                credentialsId: "github-credentials"
+          gitLabConnectionConfig:
+            connections:
+              - name: "GitLab"
+                url: "https://gitlab.example.com"
+                apiTokenId: "gitlab-api-token"
+                clientBuilderId: "autodetect"
+          sonarGlobalConfiguration:
+            installations:
+              - name: "SonarQube"
+                serverUrl: "https://sonar.example.com"
+                credentialsId: "sonar-token"
+                webhookSecretId: "sonar-webhook-secret"
+          slackNotifier:
+            teamDomain: "example"
+            tokenCredentialId: "slack-token"
+            room: "#jenkins-notifications"
+          email-ext:
+            mailAccount:
+              smtpHost: "smtp.example.com"
+              smtpPort: "587"
+              credentialsId: "email-credentials"
+              useTls: true
+            defaultSuffix: "@example.com"
+            defaultReplyTo: "jenkins@example.com"
+            defaultContent: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:\n\nCheck console output at $BUILD_URL to view the results."
+            defaultSubject: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!"
+            defaultPresendScript: ""
+            defaultPostsendScript: ""
+            maxAttachmentSize: 10
+            recipientList: "team@example.com"
+            contentType: "text/plain"
+          timestamper:
+            allPipelines: true
+            systemTimeFormat: "HH:mm:ss"
+            elapsedTimeFormat: "'elapsed: 'HH:mm:ss.S"
+          globalLibraries:
+            libraries:
+              - name: "ims-shared-library"
+                retriever:
+                  modernSCM:
+                    scm:
+                      git:
+                        remote: "https://github.com/organization/ims-shared-library.git"
+                        credentialsId: "github-credentials"
+          artifactoryBuilder:
+            useCredentialsPlugin: true
+            artifactoryServers:
+              - name: "Artifactory"
+                url: "https://artifactory.example.com/artifactory"
+                credentialsId: "artifactory-credentials"
+                bypassProxy: false
+                connectionTimeout: 300
+                deploymentThreads: 3
+                connectionRetry: 3
+          hashicorpVault:
+            configuration:
+              vaultUrl: "https://vault.ims.example.com"
+              vaultCredentialId: "vault-token"
+              engineVersion: 2
+              timeout: 60
+              skipSslVerification: false
+        
+        tool:
+          git:
+            installations:
+              - name: "Default"
+                home: "git"
+          jdk:
+            installations:
+              - name: "JDK17"
+                home: "/opt/java/openjdk"
+          gradle:
+            installations:
+              - name: "Gradle 8.1"
+                home: "/opt/gradle/gradle-8.1"
+          maven:
+            installations:
+              - name: "Maven 3.9"
+                home: "/opt/maven/apache-maven-3.9.0"
+          nodejs:
+            installations:
+              - name: "NodeJS 18.x"
+                home: "/opt/nodejs/node-v18.16.0-linux-x64"
+        
+        jobs:
+          - script: >\n
+              folder('IMS') {
+                displayName('Inventory Management System')
+                description('Jobs for the Inventory Management System')
+              }
+              folder('IMS/Backend') {
+                displayName('Backend Services')
+                description('Jobs for IMS Backend Services')
+              }
+              folder('IMS/Frontend') {
+                displayName('Frontend Application')
+                description('Jobs for IMS Frontend Application')
+              }
+              folder('IMS/Infrastructure') {
+                displayName('Infrastructure')
+                description('Jobs for IMS Infrastructure')
+              }
+              pipelineJob('IMS/Backend/build') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/develop')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/Jenkinsfile')
+                  }
+                  triggers {
+                    scm('H/15 * * * *')
+                  }
+                }
+              }
+              pipelineJob('IMS/Frontend/build') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/develop')
+                      }
+                    }
+                    scriptPath('src/web/Jenkinsfile')
+                  }
+                  triggers {
+                    scm('H/15 * * * *')
+                  }
+                }
+              }
+              pipelineJob('IMS/Infrastructure/deploy-dev') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/develop')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/deploy-dev.Jenkinsfile')
+                  }
+                }
+              }
+              pipelineJob('IMS/Infrastructure/deploy-staging') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/deploy-staging.Jenkinsfile')
+                  }
+                }
+              }
+              pipelineJob('IMS/Infrastructure/deploy-production') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/deploy-production.Jenkinsfile')
+                  }
+                }
+              }
+              pipelineJob('IMS/performance-test') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/develop')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/performance-test.Jenkinsfile')
+                  }
+                }
+              }
+              pipelineJob('IMS/security-scan') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/organization/inventory-management-system.git')
+                          credentials('github-credentials')
+                        }
+                        branch('*/develop')
+                      }
+                    }
+                    scriptPath('infrastructure/ci/jenkins/security-scan.Jenkinsfile')
+                  }
+                }
+              }
+  
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+agent:
+  enabled: true
+  image: jenkins/inbound-agent
+  tag: 4.11.2-4-jdk17
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  podName: jenkins-agent
+  customJenkinsLabels: jnlp-agent
+  componentName: jenkins-agent
+  ttlSeconds: 300
+  connectTimeout: 100
+  podRetention: Never
+  idleMinutes: 0
+  podTemplates:
+    jnlp-agent:
+      containers:
+        - name: jnlp
+          image: jenkins/inbound-agent:4.11.2-4-jdk17
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+    java-agent:
+      containers:
+        - name: jnlp
+          image: jenkins/inbound-agent:4.11.2-4-jdk17
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+        - name: java
+          image: eclipse-temurin:17-jdk
+          command: cat
+          tty: true
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+            limits:
+              cpu: 2
+              memory: 4Gi
+    node-agent:
+      containers:
+        - name: jnlp
+          image: jenkins/inbound-agent:4.11.2-4-jdk17
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+        - name: node
+          image: node:18
+          command: cat
+          tty: true
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+            limits:
+              cpu: 2
+              memory: 4Gi
+    docker-agent:
+      containers:
+        - name: jnlp
+          image: jenkins/inbound-agent:4.11.2-4-jdk17
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+        - name: docker
+          image: docker:latest
+          command: cat
+          tty: true
+          privileged: true
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+    full-agent:
+      yaml: |
+        spec:
+          containers:
+          - name: jnlp
+            image: jenkins/inbound-agent:4.11.2-4-jdk17
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1"
+          - name: java
+            image: eclipse-temurin:17-jdk
+            command: ['cat']
+            tty: true
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1"
+              limits:
+                memory: "4Gi"
+                cpu: "2"
+          - name: node
+            image: node:18
+            command: ['cat']
+            tty: true
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1"
+              limits:
+                memory: "4Gi"
+                cpu: "2"
+          - name: docker
+            image: docker:latest
+            command: ['cat']
+            tty: true
+            privileged: true
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1"
+            volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: docker-sock
+          volumes:
+          - name: docker-sock
+            hostPath:
+              path: /var/run/docker.sock
+
+persistence:
+  enabled: true
+  storageClass: managed-premium
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  annotations: {}
+  existingClaim: ""
+
+serviceAccount:
+  create: true
+  name: jenkins
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ims-${ENVIRONMENT}-jenkins-role
+
+rbac:
+  create: true
+  readSecrets: true
+
+networkPolicy:
+  enabled: true
+  apiVersion: networking.k8s.io/v1
+  internalAgents:
+    allowed: true
+    podLabels:
+      role: jenkins-agent
+    namespaceLabels:
+      name: ci
+  externalAgents:
+    ipCIDR: 0.0.0.0/0
+    except: []
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  image:
+    repository: amazon/aws-cli
+    tag: 2.11.0
+    pullPolicy: IfNotPresent
+  command: "/bin/sh -c 'tar czf /tmp/jenkins-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /var/jenkins_home . && aws s3 cp /tmp/jenkins-backup-*.tar.gz s3://ims-jenkins-backups/'"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  env:
+    - name: AWS_REGION
+      value: us-east-1
+  volumeMounts:
+    - name: jenkins-home
+      mountPath: /var/jenkins_home
+
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+      additionalLabels:
+        release: prometheus
+      scrapeInterval: 30s
+      scrapeTimeout: 10s
+  grafana:
+    enabled: true
+    dashboards:
+      - name: jenkins-dashboard
+        file: dashboards/jenkins-dashboard.json
