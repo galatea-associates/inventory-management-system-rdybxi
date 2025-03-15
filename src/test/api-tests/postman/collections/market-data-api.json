@@ -1,0 +1,805 @@
+{
+  "info": {
+    "name": "Market Data API",
+    "description": "Collection for testing the Market Data API endpoints of the Inventory Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "market-data-api-collection",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Requests for obtaining authentication tokens",
+      "item": [
+        {
+          "name": "Get Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authUrl}}/token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\",\n    \"clientId\": \"{{clientId}}\",\n    \"clientSecret\": \"{{clientSecret}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                  "pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains access token\", function () {",
+                  "    pm.expect(jsonData.accessToken).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Data Batch Operations",
+      "description": "Requests for batch operations on market data",
+      "item": [
+        {
+          "name": "Upload Market Data Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/batch",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "./test-data/market-data-batch.csv"
+                },
+                {
+                  "key": "source",
+                  "value": "MARKIT",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"batchId\", jsonData.batchId);",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains batch ID\", function () {",
+                  "    pm.expect(jsonData.batchId).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Batch Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/batch/{{batchId}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains status\", function () {",
+                  "    pm.expect(jsonData.status).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Data Retrieval",
+      "description": "Requests for retrieving market data",
+      "item": [
+        {
+          "name": "Get Latest Market Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/latest?securityId={{testSecurityId}}&marketDataType=PRICE",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "latest"],
+              "query": [
+                {
+                  "key": "securityId",
+                  "value": "{{testSecurityId}}"
+                },
+                {
+                  "key": "marketDataType",
+                  "value": "PRICE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains market data\", function () {",
+                  "    pm.expect(jsonData.securityId).to.equal(pm.environment.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.marketDataType).to.equal(\"PRICE\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Market Data in Time Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/time-range?securityId={{testSecurityId}}&startTime=2023-06-15T09:00:00Z&endTime=2023-06-15T10:00:00Z",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "time-range"],
+              "query": [
+                {
+                  "key": "securityId",
+                  "value": "{{testSecurityId}}"
+                },
+                {
+                  "key": "startTime",
+                  "value": "2023-06-15T09:00:00Z"
+                },
+                {
+                  "key": "endTime",
+                  "value": "2023-06-15T10:00:00Z"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains market data array\", function () {",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0].securityId).to.equal(pm.environment.get(\"testSecurityId\"));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Latest Prices for Securities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/latest-prices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityIds\": [\"SEC-EQ-001\", \"SEC-EQ-002\", \"SEC-EQ-003\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains prices for all securities\", function () {",
+                  "    pm.expect(Object.keys(jsonData).length).to.be.at.least(1);",
+                  "    if (jsonData['SEC-EQ-001']) {",
+                  "        pm.expect(jsonData['SEC-EQ-001'].marketDataType).to.equal(\"PRICE\");",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Data Subscription",
+      "description": "Requests for subscribing to market data updates",
+      "item": [
+        {
+          "name": "Subscribe to Market Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/subscribe",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityIds\": [\"SEC-EQ-001\", \"SEC-EQ-002\", \"SEC-EQ-003\"],\n    \"source\": \"REUTERS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response indicates successful subscription\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Data Submission",
+      "description": "Requests for submitting individual market data items",
+      "item": [
+        {
+          "name": "Submit Price Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityId\": \"{{testSecurityId}}\",\n    \"marketDataType\": \"PRICE\",\n    \"eventTime\": \"{{$isoTimestamp}}\",\n    \"price\": 185.75,\n    \"bidPrice\": 185.70,\n    \"askPrice\": 185.80,\n    \"volume\": 5000,\n    \"currency\": \"USD\",\n    \"source\": \"REUTERS\",\n    \"additionalAttributes\": {\n        \"exchangeCode\": \"NASDAQ\",\n        \"tradeCondition\": \"REGULAR\"\n    }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response indicates successful submission\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit NAV Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityId\": \"SEC-ETF-001\",\n    \"marketDataType\": \"NAV\",\n    \"eventTime\": \"{{$isoTimestamp}}\",\n    \"navValue\": 415.65,\n    \"currency\": \"USD\",\n    \"source\": \"MARKIT\",\n    \"isComposite\": true,\n    \"additionalAttributes\": {\n        \"navType\": \"INAV\",\n        \"calculationTime\": \"{{$isoTimestamp}}\"\n    }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response indicates successful submission\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Volatility Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityId\": \"{{testSecurityId}}\",\n    \"marketDataType\": \"VOLATILITY\",\n    \"eventTime\": \"{{$isoTimestamp}}\",\n    \"volatility\": 0.26,\n    \"tenor\": 30,\n    \"currency\": \"USD\",\n    \"source\": \"BLOOMBERG\",\n    \"additionalAttributes\": {\n        \"curveType\": \"IMPLIED\",\n        \"calculationMethod\": \"BLACK_SCHOLES\"\n    }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response indicates successful submission\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Requests for testing error handling",
+      "item": [
+        {
+          "name": "Invalid Market Data Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/latest?securityId={{testSecurityId}}&marketDataType=INVALID_TYPE",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "latest"],
+              "query": [
+                {
+                  "key": "securityId",
+                  "value": "{{testSecurityId}}"
+                },
+                {
+                  "key": "marketDataType",
+                  "value": "INVALID_TYPE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Response contains error message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing Security ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/latest?marketDataType=PRICE",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "latest"],
+              "query": [
+                {
+                  "key": "marketDataType",
+                  "value": "PRICE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Response contains error message about missing security ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('securityId');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Date Format",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/time-range?securityId={{testSecurityId}}&startTime=invalid-date&endTime=2023-06-15T10:00:00Z",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "time-range"],
+              "query": [
+                {
+                  "key": "securityId",
+                  "value": "{{testSecurityId}}"
+                },
+                {
+                  "key": "startTime",
+                  "value": "invalid-date"
+                },
+                {
+                  "key": "endTime",
+                  "value": "2023-06-15T10:00:00Z"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Response contains error message about invalid date format\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('date');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Authentication",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{ingestionUrl}}/market-data/latest?securityId={{testSecurityId}}&marketDataType=PRICE",
+              "host": ["{{ingestionUrl}}"],
+              "path": ["market-data", "latest"],
+              "query": [
+                {
+                  "key": "securityId",
+                  "value": "{{testSecurityId}}"
+                },
+                {
+                  "key": "marketDataType",
+                  "value": "PRICE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Performance Tests",
+      "description": "Requests for testing performance requirements",
+      "item": [
+        {
+          "name": "Bulk Price Submission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/bulk",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"marketData\": [\n        {\n            \"securityId\": \"SEC-EQ-001\",\n            \"marketDataType\": \"PRICE\",\n            \"eventTime\": \"{{$isoTimestamp}}\",\n            \"price\": 185.75,\n            \"bidPrice\": 185.70,\n            \"askPrice\": 185.80,\n            \"volume\": 5000,\n            \"currency\": \"USD\",\n            \"source\": \"REUTERS\"\n        },\n        {\n            \"securityId\": \"SEC-EQ-002\",\n            \"marketDataType\": \"PRICE\",\n            \"eventTime\": \"{{$isoTimestamp}}\",\n            \"price\": 342.50,\n            \"bidPrice\": 342.45,\n            \"askPrice\": 342.55,\n            \"volume\": 3000,\n            \"currency\": \"USD\",\n            \"source\": \"REUTERS\"\n        },\n        {\n            \"securityId\": \"SEC-EQ-003\",\n            \"marketDataType\": \"PRICE\",\n            \"eventTime\": \"{{$isoTimestamp}}\",\n            \"price\": 248.25,\n            \"bidPrice\": 248.20,\n            \"askPrice\": 248.30,\n            \"volume\": 4000,\n            \"currency\": \"USD\",\n            \"source\": \"REUTERS\"\n        }\n    ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is less than 200ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "});",
+                  "pm.test(\"Response indicates successful submission\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.processedCount).to.equal(3);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "High Volume Price Retrieval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{ingestionUrl}}/market-data/latest-prices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"securityIds\": [\"SEC-EQ-001\", \"SEC-EQ-002\", \"SEC-EQ-003\", \"SEC-EQ-004\", \"SEC-EQ-005\", \"SEC-BD-001\", \"SEC-ETF-001\", \"SEC-IDX-001\", \"SEC-EQ-006\", \"SEC-EQ-007\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is less than 200ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "});",
+                  "pm.test(\"Response contains prices for multiple securities\", function () {",
+                  "    pm.expect(Object.keys(jsonData).length).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "if (!pm.environment.get(\"correlationId\")) {",
+          "    pm.environment.set(\"correlationId\", pm.variables.replaceIn('{{$guid}}'));",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response headers contain correlation ID\", function () {",
+          "    pm.response.to.have.header(\"X-Correlation-ID\");",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api-dev.ims.example.com"
+    },
+    {
+      "key": "apiVersion",
+      "value": "v1"
+    }
+  ]
+}
