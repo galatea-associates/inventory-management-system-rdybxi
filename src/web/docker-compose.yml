@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - API_BASE_URL=${API_BASE_URL:-http://localhost:8080}
+        - WEBSOCKET_URL=${WEBSOCKET_URL:-ws://localhost:8084}
+    ports:
+      - "3000:80"
+    volumes:
+      - ./src:/app/src:bind
+      - ./public:/app/public:bind
+      - ./package.json:/app/package.json:bind
+      - ./package-lock.json:/app/package-lock.json:bind
+      - ./tsconfig.json:/app/tsconfig.json:bind
+      - ./craco.config.ts:/app/craco.config.ts:bind
+      - ./.env:/app/.env:bind
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - REACT_APP_API_BASE_URL=${API_BASE_URL:-http://localhost:8080}
+      - REACT_APP_WEBSOCKET_URL=${WEBSOCKET_URL:-ws://localhost:8084}
+      - CHOKIDAR_USEPOLLING=true
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ims-network
+
+  dev:
+    image: node:18-alpine
+    working_dir: /app
+    command: npm start
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app:bind
+      - node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_BASE_URL=${API_BASE_URL:-http://localhost:8080}
+      - REACT_APP_WEBSOCKET_URL=${WEBSOCKET_URL:-ws://localhost:8084}
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=3001
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ims-network
+
+volumes:
+  node_modules:
+    # Volume for Node.js modules to improve performance and avoid host system conflicts
+
+networks:
+  ims-network:
+    external: true
