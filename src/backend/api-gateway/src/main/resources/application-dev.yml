@@ -1,0 +1,308 @@
+# Development environment configuration for API Gateway
+# Spring Boot version: 3.1.0
+# Spring Cloud Gateway version: 4.0.6
+# Spring Cloud Netflix version: 4.0.2
+# Spring Security version: 6.0.2
+# Spring Data Redis version: 2.7.0
+
+spring:
+  profiles: dev
+  application:
+    name: api-gateway
+  
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 60000
+        response-timeout: 60000
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=1
+        - id: data-ingestion-service
+          uri: lb://data-ingestion-service
+          predicates:
+            - Path=/api/v1/ingestion/**
+          filters:
+            - StripPrefix=1
+        - id: calculation-service
+          uri: lb://calculation-service
+          predicates:
+            - Path=/api/v1/calculation/**
+          filters:
+            - StripPrefix=1
+        - id: workflow-service
+          uri: lb://workflow-service
+          predicates:
+            - Path=/api/v1/workflow/**
+            - Path=/api/v1/locate/**
+            - Path=/api/v1/order/**
+          filters:
+            - StripPrefix=1
+        - id: monitoring-service
+          uri: lb://monitoring-service
+          predicates:
+            - Path=/api/v1/monitoring/**
+          filters:
+            - StripPrefix=1
+        - id: websocket-service
+          uri: lb://websocket-service
+          predicates:
+            - Path=/ws/**
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+    
+    netflix:
+      eureka:
+        client:
+          service-url:
+            defaultZone: http://localhost:8761/eureka/
+          register-with-eureka: true
+          fetch-registry: true
+          registry-fetch-interval-seconds: 30
+        instance:
+          prefer-ip-address: true
+          instance-id: ${spring.application.name}:${random.uuid}
+  
+  redis:
+    host: localhost
+    port: 6379
+    password: ''
+    database: 0
+    timeout: 2000
+    connect-timeout: 2000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth
+          jwk-set-uri: http://localhost:8080/auth/.well-known/jwks.json
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  http2:
+    enabled: true
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,redis,discoveryComposite
+        liveness:
+          include: livenessState,ping
+    info:
+      enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: [0.5, 0.9, 0.95, 0.99]
+    tags:
+      application: ${spring.application.name}
+      environment: development
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      authService:
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      shortSellService:
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        permittedNumberOfCallsInHalfOpenState: 2
+        registerHealthIndicator: true
+      default:
+        waitDurationInOpenState: 60s
+        failureRateThreshold: 50
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        registerHealthIndicator: true
+  retry:
+    instances:
+      authService:
+        maxAttempts: 5
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+      shortSellService:
+        maxAttempts: 2
+        waitDuration: 100ms
+        enableExponentialBackoff: false
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+      default:
+        maxAttempts: 5
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+  bulkhead:
+    instances:
+      default:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 1000ms
+      shortSellService:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 100ms
+  ratelimiter:
+    instances:
+      default:
+        limitForPeriod: 1000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+        registerHealthIndicator: true
+      critical:
+        limitForPeriod: 500
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+        registerHealthIndicator: true
+
+app:
+  security:
+    jwt:
+      secret: defaultSecretKeyForDevelopmentOnly
+      expiration: 86400
+      refresh-expiration: 604800
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+      allow-credentials: true
+      max-age: 3600
+    public-paths:
+      - /api/v1/auth/login
+      - /api/v1/auth/refresh
+      - /api/v1/auth/forgot-password
+      - /api/v1/auth/reset-password
+      - /actuator/health
+      - /actuator/info
+      - /actuator/prometheus
+  rate-limiting:
+    enabled: true
+    key-resolver: principalKeyResolver
+    fallback-resolver: ipAddressKeyResolver
+    tiers:
+      standard:
+        limit: 1000
+        refresh-period: 60s
+        burst-capacity: 200
+      premium:
+        limit: 10000
+        refresh-period: 60s
+        burst-capacity: 1000
+      internal:
+        limit: 100000
+        refresh-period: 60s
+        burst-capacity: 10000
+    path-specific:
+      /api/v1/locate/**:
+        limit: 500
+        refresh-period: 60s
+        burst-capacity: 100
+      /api/v1/order/validate:
+        limit: 2000
+        refresh-period: 60s
+        burst-capacity: 500
+  tracing:
+    enabled: true
+    correlation-header: X-Correlation-ID
+    sampling-rate: 1.0
+  logging:
+    include-headers: true
+    include-body: true
+    include-query-params: true
+    sensitive-headers:
+      - Authorization
+      - Cookie
+      - Set-Cookie
+  services:
+    auth-service:
+      url: lb://auth-service
+      timeout: 60000
+      retry-attempts: 5
+    data-ingestion-service:
+      url: lb://data-ingestion-service
+      timeout: 60000
+      retry-attempts: 5
+    calculation-service:
+      url: lb://calculation-service
+      timeout: 60000
+      retry-attempts: 5
+    workflow-service:
+      url: lb://workflow-service
+      timeout: 60000
+      retry-attempts: 5
+    websocket-service:
+      url: lb://websocket-service
+      timeout: 60000
+      retry-attempts: 5
+    monitoring-service:
+      url: lb://monitoring-service
+      timeout: 60000
+      retry-attempts: 5
+    short-sell-service:
+      url: lb://workflow-service
+      timeout: 300
+      retry-attempts: 2
