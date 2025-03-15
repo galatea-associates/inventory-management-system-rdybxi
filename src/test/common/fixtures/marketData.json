@@ -1,0 +1,588 @@
+package com.ims.marketdata.model;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PastOrPresent;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Represents a single market data point in the Inventory Management System.
+ * Market data points can represent various types of financial market data including prices,
+ * NAVs (Net Asset Values), and volatility information for securities.
+ * 
+ * This class is designed to be immutable after creation except for processing status
+ * which can be updated during the data processing lifecycle.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class MarketDataPoint {
+
+    /**
+     * Enumeration of market data types supported by the system
+     */
+    public enum MarketDataType {
+        PRICE("PRICE"),
+        NAV("NAV"),
+        VOLATILITY("VOLATILITY");
+        
+        private final String value;
+        
+        MarketDataType(String value) {
+            this.value = value;
+        }
+        
+        @JsonValue
+        public String getValue() {
+            return value;
+        }
+        
+        @JsonCreator
+        public static MarketDataType fromValue(String value) {
+            for (MarketDataType type : MarketDataType.values()) {
+                if (type.value.equals(value)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("Invalid MarketDataType: " + value);
+        }
+    }
+    
+    /**
+     * Enumeration of processing statuses for market data points
+     */
+    public enum ProcessingStatus {
+        RECEIVED("RECEIVED"),
+        PROCESSING("PROCESSING"),
+        PROCESSED("PROCESSED"),
+        ERROR("ERROR");
+        
+        private final String value;
+        
+        ProcessingStatus(String value) {
+            this.value = value;
+        }
+        
+        @JsonValue
+        public String getValue() {
+            return value;
+        }
+        
+        @JsonCreator
+        public static ProcessingStatus fromValue(String value) {
+            for (ProcessingStatus status : ProcessingStatus.values()) {
+                if (status.value.equals(value)) {
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("Invalid ProcessingStatus: " + value);
+        }
+    }
+
+    private final Long id;
+    
+    @NotBlank(message = "Security ID is required")
+    private final String securityId;
+    
+    @NotNull(message = "Market data type is required")
+    private final MarketDataType marketDataType;
+    
+    @NotNull(message = "Event time is required")
+    @PastOrPresent(message = "Event time must be in the past or present")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    private final Instant eventTime;
+    
+    private final Double price;
+    private final Double bidPrice;
+    private final Double askPrice;
+    private final Integer volume;
+    private final Double navValue;
+    private final Double volatility;
+    private final Integer tenor;
+    
+    @NotBlank(message = "Currency is required")
+    private final String currency;
+    
+    @NotBlank(message = "Source is required")
+    private final String source;
+    
+    private final String batchId;
+    
+    // One of the few mutable fields to allow status updates during processing
+    @NotNull(message = "Processing status is required")
+    private ProcessingStatus processingStatus;
+    
+    // Mutable to allow error messages to be added during processing
+    private String errorMessage;
+    
+    @NotNull(message = "Composite flag is required")
+    private final Boolean isComposite;
+    
+    private final Map<String, String> additionalAttributes;
+
+    /**
+     * Private constructor used by the builder
+     * @param builder The builder object containing all field values
+     */
+    private MarketDataPoint(Builder builder) {
+        this.id = builder.id;
+        this.securityId = builder.securityId;
+        this.marketDataType = builder.marketDataType;
+        this.eventTime = builder.eventTime;
+        this.price = builder.price;
+        this.bidPrice = builder.bidPrice;
+        this.askPrice = builder.askPrice;
+        this.volume = builder.volume;
+        this.navValue = builder.navValue;
+        this.volatility = builder.volatility;
+        this.tenor = builder.tenor;
+        this.currency = builder.currency;
+        this.source = builder.source;
+        this.batchId = builder.batchId;
+        this.processingStatus = builder.processingStatus;
+        this.errorMessage = builder.errorMessage;
+        this.isComposite = builder.isComposite;
+        this.additionalAttributes = Collections.unmodifiableMap(new HashMap<>(builder.additionalAttributes));
+        
+        // Validate based on market data type
+        validate();
+    }
+    
+    /**
+     * Validates that the market data point has the required fields based on its type
+     * @throws IllegalStateException if validation fails
+     */
+    private void validate() {
+        if (marketDataType == MarketDataType.PRICE && price == null && bidPrice == null && askPrice == null) {
+            throw new IllegalStateException("Price data point must have at least one of: price, bidPrice, or askPrice");
+        }
+        
+        if (marketDataType == MarketDataType.NAV && navValue == null) {
+            throw new IllegalStateException("NAV data point must have a navValue");
+        }
+        
+        if (marketDataType == MarketDataType.VOLATILITY && (volatility == null || tenor == null)) {
+            throw new IllegalStateException("Volatility data point must have volatility and tenor values");
+        }
+    }
+
+    /**
+     * Builder pattern implementation for MarketDataPoint
+     */
+    public static class Builder {
+        private Long id;
+        private String securityId;
+        private MarketDataType marketDataType;
+        private Instant eventTime;
+        private Double price;
+        private Double bidPrice;
+        private Double askPrice;
+        private Integer volume;
+        private Double navValue;
+        private Double volatility;
+        private Integer tenor;
+        private String currency;
+        private String source;
+        private String batchId;
+        private ProcessingStatus processingStatus = ProcessingStatus.RECEIVED;
+        private String errorMessage;
+        private Boolean isComposite = false;
+        private Map<String, String> additionalAttributes = new HashMap<>();
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder securityId(String securityId) {
+            this.securityId = securityId;
+            return this;
+        }
+
+        public Builder marketDataType(MarketDataType marketDataType) {
+            this.marketDataType = marketDataType;
+            return this;
+        }
+
+        public Builder marketDataType(String marketDataType) {
+            this.marketDataType = MarketDataType.fromValue(marketDataType);
+            return this;
+        }
+
+        public Builder eventTime(Instant eventTime) {
+            this.eventTime = eventTime;
+            return this;
+        }
+
+        public Builder eventTime(String eventTimeStr) {
+            try {
+                this.eventTime = Instant.parse(eventTimeStr);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid event time format. Expected ISO-8601 format.", e);
+            }
+            return this;
+        }
+
+        public Builder price(Double price) {
+            this.price = price;
+            return this;
+        }
+
+        public Builder bidPrice(Double bidPrice) {
+            this.bidPrice = bidPrice;
+            return this;
+        }
+
+        public Builder askPrice(Double askPrice) {
+            this.askPrice = askPrice;
+            return this;
+        }
+
+        public Builder volume(Integer volume) {
+            this.volume = volume;
+            return this;
+        }
+
+        public Builder navValue(Double navValue) {
+            this.navValue = navValue;
+            return this;
+        }
+
+        public Builder volatility(Double volatility) {
+            this.volatility = volatility;
+            return this;
+        }
+
+        public Builder tenor(Integer tenor) {
+            this.tenor = tenor;
+            return this;
+        }
+
+        public Builder currency(String currency) {
+            this.currency = currency;
+            return this;
+        }
+
+        public Builder source(String source) {
+            this.source = source;
+            return this;
+        }
+
+        public Builder batchId(String batchId) {
+            this.batchId = batchId;
+            return this;
+        }
+
+        public Builder processingStatus(ProcessingStatus processingStatus) {
+            this.processingStatus = processingStatus;
+            return this;
+        }
+
+        public Builder processingStatus(String processingStatus) {
+            this.processingStatus = ProcessingStatus.fromValue(processingStatus);
+            return this;
+        }
+
+        public Builder errorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+            return this;
+        }
+
+        public Builder isComposite(Boolean isComposite) {
+            this.isComposite = isComposite;
+            return this;
+        }
+
+        public Builder additionalAttribute(String key, String value) {
+            this.additionalAttributes.put(key, value);
+            return this;
+        }
+
+        public Builder additionalAttributes(Map<String, String> additionalAttributes) {
+            if (additionalAttributes != null) {
+                this.additionalAttributes.putAll(additionalAttributes);
+            }
+            return this;
+        }
+
+        public MarketDataPoint build() {
+            return new MarketDataPoint(this);
+        }
+    }
+
+    /**
+     * Create a new builder instance
+     * @return A new Builder instance
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Creates a builder pre-populated with the values from this market data point
+     * @return A new Builder instance with values copied from this object
+     */
+    public Builder toBuilder() {
+        return new Builder()
+                .id(this.id)
+                .securityId(this.securityId)
+                .marketDataType(this.marketDataType)
+                .eventTime(this.eventTime)
+                .price(this.price)
+                .bidPrice(this.bidPrice)
+                .askPrice(this.askPrice)
+                .volume(this.volume)
+                .navValue(this.navValue)
+                .volatility(this.volatility)
+                .tenor(this.tenor)
+                .currency(this.currency)
+                .source(this.source)
+                .batchId(this.batchId)
+                .processingStatus(this.processingStatus)
+                .errorMessage(this.errorMessage)
+                .isComposite(this.isComposite)
+                .additionalAttributes(new HashMap<>(this.additionalAttributes));
+    }
+
+    // Type checking methods
+
+    /**
+     * Checks if this market data point is a price data point
+     * @return true if this is a price data point
+     */
+    public boolean isPrice() {
+        return marketDataType == MarketDataType.PRICE;
+    }
+
+    /**
+     * Checks if this market data point is a NAV data point
+     * @return true if this is a NAV data point
+     */
+    public boolean isNAV() {
+        return marketDataType == MarketDataType.NAV;
+    }
+
+    /**
+     * Checks if this market data point is a volatility data point
+     * @return true if this is a volatility data point
+     */
+    public boolean isVolatility() {
+        return marketDataType == MarketDataType.VOLATILITY;
+    }
+
+    /**
+     * Checks if this market data point has been fully processed
+     * @return true if processing status is PROCESSED
+     */
+    public boolean isProcessed() {
+        return processingStatus == ProcessingStatus.PROCESSED;
+    }
+
+    /**
+     * Checks if this market data point has an error
+     * @return true if processing status is ERROR
+     */
+    public boolean hasError() {
+        return processingStatus == ProcessingStatus.ERROR;
+    }
+
+    /**
+     * Gets the mid price if both bid and ask prices are available
+     * @return the average of bid and ask prices, or null if either is missing
+     */
+    public Double getMidPrice() {
+        if (bidPrice != null && askPrice != null) {
+            return (bidPrice + askPrice) / 2.0;
+        }
+        return null;
+    }
+
+    /**
+     * Gets the spread if both bid and ask prices are available
+     * @return the difference between ask and bid prices, or null if either is missing
+     */
+    public Double getSpread() {
+        if (bidPrice != null && askPrice != null) {
+            return askPrice - bidPrice;
+        }
+        return null;
+    }
+
+    // Getters
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getSecurityId() {
+        return securityId;
+    }
+
+    public MarketDataType getMarketDataType() {
+        return marketDataType;
+    }
+
+    public Instant getEventTime() {
+        return eventTime;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public Double getBidPrice() {
+        return bidPrice;
+    }
+
+    public Double getAskPrice() {
+        return askPrice;
+    }
+
+    public Integer getVolume() {
+        return volume;
+    }
+
+    public Double getNavValue() {
+        return navValue;
+    }
+
+    public Double getVolatility() {
+        return volatility;
+    }
+
+    public Integer getTenor() {
+        return tenor;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public String getBatchId() {
+        return batchId;
+    }
+
+    public ProcessingStatus getProcessingStatus() {
+        return processingStatus;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public Boolean getIsComposite() {
+        return isComposite;
+    }
+
+    public Map<String, String> getAdditionalAttributes() {
+        return additionalAttributes; // Already unmodifiable from constructor
+    }
+
+    /**
+     * Gets a specific additional attribute value
+     * @param key The attribute key
+     * @return The attribute value, or null if not found
+     */
+    public String getAdditionalAttribute(String key) {
+        return additionalAttributes.get(key);
+    }
+
+    // Mutable operations
+
+    /**
+     * Updates the processing status of this market data point
+     * @param processingStatus the new processing status
+     */
+    public void setProcessingStatus(ProcessingStatus processingStatus) {
+        this.processingStatus = processingStatus;
+    }
+
+    /**
+     * Updates the processing status using a string value
+     * @param processingStatus the new processing status as a string
+     */
+    public void setProcessingStatus(String processingStatus) {
+        this.processingStatus = ProcessingStatus.fromValue(processingStatus);
+    }
+
+    /**
+     * Sets an error message and updates the processing status to ERROR
+     * @param errorMessage the error message
+     */
+    public void setError(String errorMessage) {
+        this.errorMessage = errorMessage;
+        this.processingStatus = ProcessingStatus.ERROR;
+    }
+
+    /**
+     * Marks this market data point as processed
+     */
+    public void markProcessed() {
+        this.processingStatus = ProcessingStatus.PROCESSED;
+        this.errorMessage = null;
+    }
+
+    /**
+     * Marks this market data point as being processed
+     */
+    public void markProcessing() {
+        this.processingStatus = ProcessingStatus.PROCESSING;
+    }
+
+    // equals, hashCode, and toString
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MarketDataPoint that = (MarketDataPoint) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(securityId, that.securityId) &&
+                marketDataType == that.marketDataType &&
+                Objects.equals(eventTime, that.eventTime) &&
+                Objects.equals(source, that.source);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, securityId, marketDataType, eventTime, source);
+    }
+
+    @Override
+    public String toString() {
+        return "MarketDataPoint{" +
+                "id=" + id +
+                ", securityId='" + securityId + '\'' +
+                ", marketDataType=" + marketDataType +
+                ", eventTime=" + eventTime +
+                ", price=" + price +
+                ", bidPrice=" + bidPrice +
+                ", askPrice=" + askPrice +
+                ", volume=" + volume +
+                ", navValue=" + navValue +
+                ", volatility=" + volatility +
+                ", tenor=" + tenor +
+                ", currency='" + currency + '\'' +
+                ", source='" + source + '\'' +
+                ", batchId='" + batchId + '\'' +
+                ", processingStatus=" + processingStatus +
+                ", errorMessage='" + errorMessage + '\'' +
+                ", isComposite=" + isComposite +
+                ", additionalAttributes=" + additionalAttributes +
+                '}';
+    }
+}
