@@ -1,0 +1,1356 @@
+{
+  "securities": [
+    {
+      "id": 1,
+      "internalId": "SEC-EQ-001",
+      "securityType": "EQUITY",
+      "issuer": "Apple Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "AAPL",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "AAPL",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US0378331005",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "037833100",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "internalId": "SEC-EQ-002",
+      "securityType": "EQUITY",
+      "issuer": "Microsoft Corporation",
+      "description": "Common Stock",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "MSFT",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "MSFT",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US5949181045",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "594918104",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "internalId": "SEC-EQ-003",
+      "securityType": "EQUITY",
+      "issuer": "Tesla, Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "TSLA",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "TSLA",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US88160R1014",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "88160R101",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "internalId": "SEC-EQ-004",
+      "securityType": "EQUITY",
+      "issuer": "Amazon.com, Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "AMZN",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "AMZN",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US0231351067",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "023135106",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "internalId": "SEC-EQ-005",
+      "securityType": "EQUITY",
+      "issuer": "Alphabet Inc.",
+      "description": "Class A Common Stock",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "GOOGL",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "GOOGL",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US02079K3059",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "02079K305",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "internalId": "SEC-ETF-001",
+      "securityType": "ETF",
+      "issuer": "SPDR",
+      "description": "S&P 500 ETF Trust",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "NYSE",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "SPY",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "SPY",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US78462F1030",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "78462F103",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "internalId": "SEC-BD-001",
+      "securityType": "BOND",
+      "issuer": "US Treasury",
+      "description": "10-Year Treasury Note",
+      "currency": "USD",
+      "market": "US",
+      "exchange": "OTC",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "CUSIP",
+      "primaryIdentifierValue": "912828ZL8",
+      "identifiers": [
+        {
+          "identifierType": "CUSIP",
+          "identifierValue": "912828ZL8",
+          "source": "BLOOMBERG",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "US912828ZL82",
+          "source": "REUTERS",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "internalId": "SEC-EQ-006",
+      "securityType": "EQUITY",
+      "issuer": "Toyota Motor Corporation",
+      "description": "Common Stock",
+      "currency": "JPY",
+      "market": "JP",
+      "exchange": "TSE",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "7203",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "7203",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "JP3633400001",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "SEDOL",
+          "identifierValue": "6900643",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "internalId": "SEC-EQ-007",
+      "securityType": "EQUITY",
+      "issuer": "Taiwan Semiconductor Manufacturing Company",
+      "description": "Common Stock",
+      "currency": "TWD",
+      "market": "TW",
+      "exchange": "TWSE",
+      "status": "ACTIVE",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "2330",
+      "identifiers": [
+        {
+          "identifierType": "TICKER",
+          "identifierValue": "2330",
+          "source": "EXCHANGE",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "ISIN",
+          "identifierValue": "TW0002330008",
+          "source": "REUTERS",
+          "isPrimary": false
+        },
+        {
+          "identifierType": "SEDOL",
+          "identifierValue": "6889106",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    }
+  ],
+  "counterparties": [
+    {
+      "id": 1,
+      "counterpartyId": "CP-00001",
+      "name": "ABC Capital Partners",
+      "shortName": "ABC Capital",
+      "type": "INSTITUTIONAL",
+      "category": "INVESTMENT_BANK",
+      "status": "ACTIVE",
+      "kycStatus": "APPROVED",
+      "riskRating": "MEDIUM",
+      "country": "US",
+      "region": "AMERICAS",
+      "identifiers": [
+        {
+          "identifierType": "LEI",
+          "identifierValue": "5493001KJTIIGC8Y1R12",
+          "source": "GLEIF",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "BIC",
+          "identifierValue": "ABCPUS33",
+          "source": "SWIFT",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "counterpartyId": "CP-00002",
+      "name": "XYZ Investment Fund",
+      "shortName": "XYZ Fund",
+      "type": "HEDGE_FUND",
+      "category": "ASSET_MANAGER",
+      "status": "ACTIVE",
+      "kycStatus": "APPROVED",
+      "riskRating": "HIGH",
+      "country": "US",
+      "region": "AMERICAS",
+      "identifiers": [
+        {
+          "identifierType": "LEI",
+          "identifierValue": "549300W8JLPR59JGN225",
+          "source": "GLEIF",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "BLOOMBERG_ID",
+          "identifierValue": "XYZ:US",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "counterpartyId": "CP-00003",
+      "name": "Global Asset Management",
+      "shortName": "Global AM",
+      "type": "ASSET_MANAGER",
+      "category": "ASSET_MANAGER",
+      "status": "ACTIVE",
+      "kycStatus": "APPROVED",
+      "riskRating": "LOW",
+      "country": "GB",
+      "region": "EMEA",
+      "identifiers": [
+        {
+          "identifierType": "LEI",
+          "identifierValue": "213800QGNIWTXFIMBU07",
+          "source": "GLEIF",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "BIC",
+          "identifierValue": "GAMGGB2L",
+          "source": "SWIFT",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "counterpartyId": "CP-00004",
+      "name": "Tech Innovations Corp",
+      "shortName": "TechInno",
+      "type": "CORPORATE",
+      "category": "CORPORATE",
+      "status": "ACTIVE",
+      "kycStatus": "APPROVED",
+      "riskRating": "MEDIUM",
+      "country": "US",
+      "region": "AMERICAS",
+      "identifiers": [
+        {
+          "identifierType": "LEI",
+          "identifierValue": "549300ROYZGVRY4E2H29",
+          "source": "GLEIF",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "BLOOMBERG_ID",
+          "identifierValue": "TIC:US",
+          "source": "BLOOMBERG",
+          "isPrimary": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "counterpartyId": "CP-00005",
+      "name": "European Pension Fund",
+      "shortName": "Euro Pension",
+      "type": "PENSION_FUND",
+      "category": "INSTITUTIONAL",
+      "status": "ACTIVE",
+      "kycStatus": "APPROVED",
+      "riskRating": "LOW",
+      "country": "DE",
+      "region": "EMEA",
+      "identifiers": [
+        {
+          "identifierType": "LEI",
+          "identifierValue": "529900W8XTEHKP7QTR89",
+          "source": "GLEIF",
+          "isPrimary": true
+        },
+        {
+          "identifierType": "BIC",
+          "identifierValue": "EPFGDE2X",
+          "source": "SWIFT",
+          "isPrimary": false
+        }
+      ]
+    }
+  ],
+  "positions": [
+    {
+      "id": "POS-00001",
+      "bookId": "EQUITY-01",
+      "security": {
+        "internalId": "SEC-EQ-001"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "positionType": "TRADING",
+      "isHypothecatable": true,
+      "isReserved": false,
+      "contractualQty": 12500,
+      "settledQty": 10000,
+      "sd0Deliver": 0,
+      "sd0Receipt": 2500,
+      "sd1Deliver": 1000,
+      "sd1Receipt": 0,
+      "sd2Deliver": 500,
+      "sd2Receipt": 1500,
+      "sd3Deliver": 0,
+      "sd3Receipt": 0,
+      "sd4Deliver": 0,
+      "sd4Receipt": 0,
+      "currentNetPosition": 10000,
+      "projectedNetPosition": 12500
+    },
+    {
+      "id": "POS-00002",
+      "bookId": "EQUITY-01",
+      "security": {
+        "internalId": "SEC-EQ-002"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "positionType": "TRADING",
+      "isHypothecatable": true,
+      "isReserved": false,
+      "contractualQty": 4000,
+      "settledQty": 5000,
+      "sd0Deliver": 1000,
+      "sd0Receipt": 0,
+      "sd1Deliver": 0,
+      "sd1Receipt": 500,
+      "sd2Deliver": 0,
+      "sd2Receipt": 0,
+      "sd3Deliver": 0,
+      "sd3Receipt": 0,
+      "sd4Deliver": 0,
+      "sd4Receipt": 0,
+      "currentNetPosition": 5000,
+      "projectedNetPosition": 4500
+    },
+    {
+      "id": "POS-00003",
+      "bookId": "EQUITY-02",
+      "security": {
+        "internalId": "SEC-EQ-003"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00002"
+      },
+      "aggregationUnit": {
+        "id": "AU-002",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "positionType": "TRADING",
+      "isHypothecatable": false,
+      "isReserved": false,
+      "contractualQty": -1500,
+      "settledQty": -2000,
+      "sd0Deliver": 0,
+      "sd0Receipt": 500,
+      "sd1Deliver": 0,
+      "sd1Receipt": 0,
+      "sd2Deliver": 0,
+      "sd2Receipt": 0,
+      "sd3Deliver": 0,
+      "sd3Receipt": 0,
+      "sd4Deliver": 0,
+      "sd4Receipt": 0,
+      "currentNetPosition": -2000,
+      "projectedNetPosition": -1500
+    },
+    {
+      "id": "POS-00004",
+      "bookId": "EQUITY-02",
+      "security": {
+        "internalId": "SEC-EQ-004"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00002"
+      },
+      "aggregationUnit": {
+        "id": "AU-002",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "positionType": "TRADING",
+      "isHypothecatable": true,
+      "isReserved": true,
+      "contractualQty": 3000,
+      "settledQty": 3000,
+      "sd0Deliver": 0,
+      "sd0Receipt": 0,
+      "sd1Deliver": 0,
+      "sd1Receipt": 0,
+      "sd2Deliver": 0,
+      "sd2Receipt": 0,
+      "sd3Deliver": 0,
+      "sd3Receipt": 0,
+      "sd4Deliver": 0,
+      "sd4Receipt": 0,
+      "currentNetPosition": 3000,
+      "projectedNetPosition": 3000
+    },
+    {
+      "id": "POS-00005",
+      "bookId": "EQUITY-03",
+      "security": {
+        "internalId": "SEC-EQ-005"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00003"
+      },
+      "aggregationUnit": {
+        "id": "AU-003",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "positionType": "TRADING",
+      "isHypothecatable": true,
+      "isReserved": false,
+      "contractualQty": 2000,
+      "settledQty": 1500,
+      "sd0Deliver": 0,
+      "sd0Receipt": 500,
+      "sd1Deliver": 0,
+      "sd1Receipt": 0,
+      "sd2Deliver": 0,
+      "sd2Receipt": 0,
+      "sd3Deliver": 0,
+      "sd3Receipt": 0,
+      "sd4Deliver": 0,
+      "sd4Receipt": 0,
+      "currentNetPosition": 1500,
+      "projectedNetPosition": 2000
+    }
+  ],
+  "inventories": [
+    {
+      "id": "INV-00001",
+      "security": {
+        "internalId": "SEC-EQ-001"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "calculationType": "FOR_LOAN",
+      "grossQuantity": 12500,
+      "netQuantity": 10000,
+      "availableQuantity": 9500,
+      "reservedQuantity": 500,
+      "decrementQuantity": 0,
+      "market": "US",
+      "securityTemperature": "GC",
+      "borrowRate": 0.25
+    },
+    {
+      "id": "INV-00002",
+      "security": {
+        "internalId": "SEC-EQ-001"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "calculationType": "FOR_PLEDGE",
+      "grossQuantity": 12500,
+      "netQuantity": 10000,
+      "availableQuantity": 8000,
+      "reservedQuantity": 2000,
+      "decrementQuantity": 0,
+      "market": "US",
+      "securityTemperature": "GC",
+      "borrowRate": 0.25
+    },
+    {
+      "id": "INV-00003",
+      "security": {
+        "internalId": "SEC-EQ-001"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "calculationType": "LOCATE",
+      "grossQuantity": 12500,
+      "netQuantity": 10000,
+      "availableQuantity": 7500,
+      "reservedQuantity": 2500,
+      "decrementQuantity": 1000,
+      "market": "US",
+      "securityTemperature": "GC",
+      "borrowRate": 0.25
+    },
+    {
+      "id": "INV-00004",
+      "security": {
+        "internalId": "SEC-EQ-002"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00001"
+      },
+      "aggregationUnit": {
+        "id": "AU-001",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "calculationType": "FOR_LOAN",
+      "grossQuantity": 4000,
+      "netQuantity": 5000,
+      "availableQuantity": 4500,
+      "reservedQuantity": 500,
+      "decrementQuantity": 0,
+      "market": "US",
+      "securityTemperature": "GC",
+      "borrowRate": 0.2
+    },
+    {
+      "id": "INV-00005",
+      "security": {
+        "internalId": "SEC-EQ-003"
+      },
+      "counterparty": {
+        "counterpartyId": "CP-00002"
+      },
+      "aggregationUnit": {
+        "id": "AU-002",
+        "name": "US Equity Trading",
+        "market": "US"
+      },
+      "businessDate": "2023-06-15",
+      "calculationType": "SHORT_SELL",
+      "grossQuantity": 0,
+      "netQuantity": 0,
+      "availableQuantity": 5000,
+      "reservedQuantity": 0,
+      "decrementQuantity": 1500,
+      "market": "US",
+      "securityTemperature": "HTB",
+      "borrowRate": 2.5
+    }
+  ],
+  "locates": [
+    {
+      "id": 1,
+      "requestId": "LOC-20230615-00001",
+      "security": {
+        "internalId": "SEC-EQ-001",
+        "description": "Apple Inc. Common Stock"
+      },
+      "requestor": {
+        "counterpartyId": "CP-00001",
+        "name": "ABC Capital Partners"
+      },
+      "client": {
+        "counterpartyId": "CP-00001",
+        "name": "ABC Capital Partners"
+      },
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-US-001",
+        "name": "US Equity Trading"
+      },
+      "locateType": "SHORT_SELL",
+      "requestedQuantity": 5000,
+      "requestTimestamp": "2023-06-15T09:32:15Z",
+      "status": "APPROVED",
+      "swapCashIndicator": "CASH"
+    },
+    {
+      "id": 2,
+      "requestId": "LOC-20230615-00002",
+      "security": {
+        "internalId": "SEC-EQ-003",
+        "description": "Tesla, Inc. Common Stock"
+      },
+      "requestor": {
+        "counterpartyId": "CP-00002",
+        "name": "XYZ Investment Fund"
+      },
+      "client": {
+        "counterpartyId": "CP-00002",
+        "name": "XYZ Investment Fund"
+      },
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-US-001",
+        "name": "US Equity Trading"
+      },
+      "locateType": "SHORT_SELL",
+      "requestedQuantity": 2500,
+      "requestTimestamp": "2023-06-15T09:35:22Z",
+      "status": "APPROVED",
+      "swapCashIndicator": "CASH"
+    },
+    {
+      "id": 3,
+      "requestId": "LOC-20230615-00003",
+      "security": {
+        "internalId": "SEC-EQ-002",
+        "description": "Microsoft Corporation Common Stock"
+      },
+      "requestor": {
+        "counterpartyId": "CP-00003",
+        "name": "Global Asset Management"
+      },
+      "client": {
+        "counterpartyId": "CP-00003",
+        "name": "Global Asset Management"
+      },
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-US-001",
+        "name": "US Equity Trading"
+      },
+      "locateType": "SHORT_SELL",
+      "requestedQuantity": 10000,
+      "requestTimestamp": "2023-06-15T09:40:05Z",
+      "status": "REJECTED",
+      "swapCashIndicator": "CASH"
+    },
+    {
+      "id": 4,
+      "requestId": "LOC-20230615-00004",
+      "security": {
+        "internalId": "SEC-EQ-004",
+        "description": "Amazon.com, Inc. Common Stock"
+      },
+      "requestor": {
+        "counterpartyId": "CP-00004",
+        "name": "Tech Innovations Corp"
+      },
+      "client": {
+        "counterpartyId": "CP-00004",
+        "name": "Tech Innovations Corp"
+      },
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-US-001",
+        "name": "US Equity Trading"
+      },
+      "locateType": "SHORT_SELL",
+      "requestedQuantity": 3000,
+      "requestTimestamp": "2023-06-15T09:42:18Z",
+      "status": "PENDING",
+      "swapCashIndicator": "CASH"
+    },
+    {
+      "id": 5,
+      "requestId": "LOC-20230615-00005",
+      "security": {
+        "internalId": "SEC-EQ-005",
+        "description": "Alphabet Inc. Class A Common Stock"
+      },
+      "requestor": {
+        "counterpartyId": "CP-00005",
+        "name": "European Pension Fund"
+      },
+      "client": {
+        "counterpartyId": "CP-00005",
+        "name": "European Pension Fund"
+      },
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-US-001",
+        "name": "US Equity Trading"
+      },
+      "locateType": "SHORT_SELL",
+      "requestedQuantity": 7500,
+      "requestTimestamp": "2023-06-15T09:45:30Z",
+      "status": "PENDING",
+      "swapCashIndicator": "CASH"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "orderId": "ORD-00001",
+      "orderType": "SHORT_SELL",
+      "securityId": "SEC-EQ-001",
+      "security": {
+        "internalId": "SEC-EQ-001",
+        "securityType": "EQUITY",
+        "issuer": "Apple Inc.",
+        "description": "Common Stock",
+        "currency": "USD",
+        "market": "US",
+        "exchange": "NASDAQ",
+        "status": "ACTIVE",
+        "primaryIdentifierType": "TICKER",
+        "primaryIdentifierValue": "AAPL"
+      },
+      "clientId": "CP-00001",
+      "client": {
+        "counterpartyId": "CP-00001",
+        "name": "ABC Capital Partners",
+        "shortName": "ABC Capital",
+        "type": "INSTITUTIONAL",
+        "status": "ACTIVE"
+      },
+      "aggregationUnitId": "AU-00001",
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-00001",
+        "name": "US Equity Trading",
+        "type": "TRADING",
+        "market": "US",
+        "region": "AMERICAS",
+        "status": "ACTIVE"
+      },
+      "side": "SELL",
+      "price": 175.5,
+      "quantity": 5000,
+      "orderDate": "2023-06-15",
+      "orderTime": "09:30:00",
+      "status": "NEW",
+      "bookId": "EQUITY-01"
+    },
+    {
+      "id": 2,
+      "orderId": "ORD-00002",
+      "orderType": "LONG_SELL",
+      "securityId": "SEC-EQ-002",
+      "security": {
+        "internalId": "SEC-EQ-002",
+        "securityType": "EQUITY",
+        "issuer": "Microsoft Corporation",
+        "description": "Common Stock",
+        "currency": "USD",
+        "market": "US",
+        "exchange": "NASDAQ",
+        "status": "ACTIVE",
+        "primaryIdentifierType": "TICKER",
+        "primaryIdentifierValue": "MSFT"
+      },
+      "clientId": "CP-00002",
+      "client": {
+        "counterpartyId": "CP-00002",
+        "name": "XYZ Investment Fund",
+        "shortName": "XYZ Fund",
+        "type": "HEDGE_FUND",
+        "status": "ACTIVE"
+      },
+      "aggregationUnitId": "AU-00001",
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-00001",
+        "name": "US Equity Trading",
+        "type": "TRADING",
+        "market": "US",
+        "region": "AMERICAS",
+        "status": "ACTIVE"
+      },
+      "side": "SELL",
+      "price": 340.25,
+      "quantity": 2500,
+      "orderDate": "2023-06-15",
+      "orderTime": "09:35:00",
+      "status": "NEW",
+      "bookId": "EQUITY-01"
+    },
+    {
+      "id": 3,
+      "orderId": "ORD-00003",
+      "orderType": "SHORT_SELL",
+      "securityId": "SEC-EQ-003",
+      "security": {
+        "internalId": "SEC-EQ-003",
+        "securityType": "EQUITY",
+        "issuer": "Tesla, Inc.",
+        "description": "Common Stock",
+        "currency": "USD",
+        "market": "US",
+        "exchange": "NASDAQ",
+        "status": "ACTIVE",
+        "primaryIdentifierType": "TICKER",
+        "primaryIdentifierValue": "TSLA"
+      },
+      "clientId": "CP-00003",
+      "client": {
+        "counterpartyId": "CP-00003",
+        "name": "Global Asset Management",
+        "shortName": "Global AM",
+        "type": "ASSET_MANAGER",
+        "status": "ACTIVE"
+      },
+      "aggregationUnitId": "AU-00001",
+      "aggregationUnit": {
+        "aggregationUnitId": "AU-00001",
+        "name": "US Equity Trading",
+        "type": "TRADING",
+        "market": "US",
+        "region": "AMERICAS",
+        "status": "ACTIVE"
+      },
+      "side": "SELL",
+      "price": 248.75,
+      "quantity": 1000,
+      "orderDate": "2023-06-15",
+      "orderTime": "09:40:00",
+      "status": "NEW",
+      "bookId": "EQUITY-02"
+    }
+  ],
+  "aggregationUnits": [
+    {
+      "id": "AU-001",
+      "aggregationUnitId": "AU-00001",
+      "name": "US Equity Trading",
+      "type": "TRADING",
+      "market": "US",
+      "region": "AMERICAS",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "AU-002",
+      "aggregationUnitId": "AU-00002",
+      "name": "ETF Trading",
+      "type": "TRADING",
+      "market": "US",
+      "region": "AMERICAS",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "AU-003",
+      "aggregationUnitId": "AU-00003",
+      "name": "Fixed Income Trading",
+      "type": "TRADING",
+      "market": "US",
+      "region": "AMERICAS",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "AU-004",
+      "aggregationUnitId": "AU-00004",
+      "name": "Japan Equity Trading",
+      "type": "TRADING",
+      "market": "JP",
+      "region": "APAC",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "AU-005",
+      "aggregationUnitId": "AU-00005",
+      "name": "Taiwan Equity Trading",
+      "type": "TRADING",
+      "market": "TW",
+      "region": "APAC",
+      "status": "ACTIVE"
+    }
+  ],
+  "books": [
+    {
+      "id": "EQUITY-01",
+      "name": "US Equity Trading Book 1",
+      "type": "TRADING",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "EQUITY-02",
+      "name": "US Equity Trading Book 2",
+      "type": "TRADING",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "EQUITY-03",
+      "name": "US Equity Trading Book 3",
+      "type": "TRADING",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "ETF-01",
+      "name": "ETF Trading Book",
+      "type": "TRADING",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "FIXED-01",
+      "name": "Fixed Income Trading Book",
+      "type": "TRADING",
+      "status": "ACTIVE"
+    }
+  ],
+  "scenarios": {
+    "locateApproval": {
+      "description": "Locate approval workflow test scenario",
+      "securities": [
+        "SEC-EQ-001",
+        "SEC-EQ-002",
+        "SEC-EQ-003",
+        "SEC-EQ-004",
+        "SEC-EQ-005"
+      ],
+      "counterparties": [
+        "CP-00001",
+        "CP-00002",
+        "CP-00003",
+        "CP-00004",
+        "CP-00005"
+      ],
+      "aggregationUnits": [
+        "AU-00001",
+        "AU-00002"
+      ],
+      "requestQuantityRange": [
+        1000,
+        10000
+      ],
+      "approvalRate": 0.8,
+      "autoApprovalRate": 0.6,
+      "securityTemperatures": {
+        "SEC-EQ-001": "GC",
+        "SEC-EQ-002": "GC",
+        "SEC-EQ-003": "HTB",
+        "SEC-EQ-004": "GC",
+        "SEC-EQ-005": "GC"
+      },
+      "borrowRates": {
+        "SEC-EQ-001": 0.25,
+        "SEC-EQ-002": 0.2,
+        "SEC-EQ-003": 2.5,
+        "SEC-EQ-004": 0.15,
+        "SEC-EQ-005": 0.18
+      }
+    },
+    "shortSellValidation": {
+      "description": "Short sell validation workflow test scenario",
+      "securities": [
+        "SEC-EQ-001",
+        "SEC-EQ-002",
+        "SEC-EQ-003",
+        "SEC-EQ-004",
+        "SEC-EQ-005"
+      ],
+      "counterparties": [
+        "CP-00001",
+        "CP-00002",
+        "CP-00003",
+        "CP-00004",
+        "CP-00005"
+      ],
+      "aggregationUnits": [
+        "AU-00001",
+        "AU-00002"
+      ],
+      "books": [
+        "EQUITY-01",
+        "EQUITY-02",
+        "EQUITY-03"
+      ],
+      "orderQuantityRange": [
+        1000,
+        10000
+      ],
+      "priceRanges": {
+        "SEC-EQ-001": [
+          170.0,
+          180.0
+        ],
+        "SEC-EQ-002": [
+          335.0,
+          345.0
+        ],
+        "SEC-EQ-003": [
+          240.0,
+          255.0
+        ],
+        "SEC-EQ-004": [
+          125.0,
+          135.0
+        ],
+        "SEC-EQ-005": [
+          120.0,
+          130.0
+        ]
+      },
+      "approvalRate": 0.75
+    },
+    "positionCalculation": {
+      "description": "Position calculation test scenario",
+      "securities": [
+        "SEC-EQ-001",
+        "SEC-EQ-002",
+        "SEC-EQ-003",
+        "SEC-EQ-004",
+        "SEC-EQ-005"
+      ],
+      "books": [
+        "EQUITY-01",
+        "EQUITY-02",
+        "EQUITY-03"
+      ],
+      "counterparties": [
+        "CP-00001",
+        "CP-00002",
+        "CP-00003",
+        "CP-00004",
+        "CP-00005"
+      ],
+      "tradeQuantityRange": [
+        500,
+        5000
+      ],
+      "settlementDays": [
+        0,
+        1,
+        2
+      ],
+      "tradeTypes": [
+        "BUY",
+        "SELL",
+        "SHORT_SELL"
+      ]
+    },
+    "inventoryCalculation": {
+      "description": "Inventory calculation test scenario",
+      "securities": [
+        "SEC-EQ-001",
+        "SEC-EQ-002",
+        "SEC-EQ-003",
+        "SEC-EQ-004",
+        "SEC-EQ-005"
+      ],
+      "counterparties": [
+        "CP-00001",
+        "CP-00002",
+        "CP-00003",
+        "CP-00004",
+        "CP-00005"
+      ],
+      "aggregationUnits": [
+        "AU-00001",
+        "AU-00002",
+        "AU-00003"
+      ],
+      "calculationTypes": [
+        "FOR_LOAN",
+        "FOR_PLEDGE",
+        "LOCATE",
+        "SHORT_SELL"
+      ],
+      "quantityRange": [
+        1000,
+        20000
+      ],
+      "reservedQuantityPercentRange": [
+        0,
+        30
+      ]
+    },
+    "dataIngestion": {
+      "description": "Data ingestion test scenario",
+      "referenceData": {
+        "securities": [
+          "SEC-EQ-001",
+          "SEC-EQ-002",
+          "SEC-EQ-003",
+          "SEC-EQ-004",
+          "SEC-EQ-005"
+        ],
+        "counterparties": [
+          "CP-00001",
+          "CP-00002",
+          "CP-00003",
+          "CP-00004",
+          "CP-00005"
+        ],
+        "updateFrequency": 0.2,
+        "newEntityFrequency": 0.1
+      },
+      "marketData": {
+        "securities": [
+          "SEC-EQ-001",
+          "SEC-EQ-002",
+          "SEC-EQ-003",
+          "SEC-EQ-004",
+          "SEC-EQ-005"
+        ],
+        "priceChangePercentRange": [
+          -2.0,
+          2.0
+        ],
+        "updateFrequency": 0.5
+      },
+      "tradeData": {
+        "securities": [
+          "SEC-EQ-001",
+          "SEC-EQ-002",
+          "SEC-EQ-003",
+          "SEC-EQ-004",
+          "SEC-EQ-005"
+        ],
+        "counterparties": [
+          "CP-00001",
+          "CP-00002",
+          "CP-00003",
+          "CP-00004",
+          "CP-00005"
+        ],
+        "books": [
+          "EQUITY-01",
+          "EQUITY-02",
+          "EQUITY-03"
+        ],
+        "tradeQuantityRange": [
+          100,
+          10000
+        ],
+        "tradeTypes": [
+          "BUY",
+          "SELL",
+          "SHORT_SELL"
+        ]
+      }
+    },
+    "apiLoad": {
+      "description": "API load test scenario",
+      "endpoints": {
+        "positions": {
+          "weight": 0.3,
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "methodWeights": {
+            "GET": 0.8,
+            "POST": 0.2
+          }
+        },
+        "inventory": {
+          "weight": 0.25,
+          "methods": [
+            "GET"
+          ],
+          "methodWeights": {
+            "GET": 1.0
+          }
+        },
+        "locates": {
+          "weight": 0.2,
+          "methods": [
+            "GET",
+            "POST",
+            "PUT"
+          ],
+          "methodWeights": {
+            "GET": 0.6,
+            "POST": 0.3,
+            "PUT": 0.1
+          }
+        },
+        "orders": {
+          "weight": 0.15,
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "methodWeights": {
+            "GET": 0.7,
+            "POST": 0.3
+          }
+        },
+        "reference": {
+          "weight": 0.1,
+          "methods": [
+            "GET"
+          ],
+          "methodWeights": {
+            "GET": 1.0
+          }
+        }
+      },
+      "userConcurrency": {
+        "low": 50,
+        "medium": 200,
+        "high": 500,
+        "peak": 1000
+      },
+      "thinkTimeRange": [
+        1,
+        5
+      ]
+    }
+  }
+}
