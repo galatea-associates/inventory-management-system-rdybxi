@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ims-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    environment: dev
+    app: ims
+    part-of: inventory-management-system
+  annotations:
+    description: Inventory Management System Development Environment
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/organization/inventory-management-system.git
+    targetRevision: develop
+    path: infrastructure/kubernetes/helm/ims
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+      parameters:
+        - name: global.environment
+          value: dev
+        - name: global.logLevel
+          value: DEBUG
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ims-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: "5s"
+        factor: 2
+        maxDuration: "3m"
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/metrics/0/resource/target/averageUtilization
