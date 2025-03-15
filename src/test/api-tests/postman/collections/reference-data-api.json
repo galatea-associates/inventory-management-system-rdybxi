@@ -1,0 +1,964 @@
+{
+  "info": {
+    "name": "Reference Data API Tests",
+    "description": "API tests for the Reference Data endpoints of the Inventory Management System. This collection contains requests for testing security, counterparty, and aggregation unit reference data operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Reference Data Ingestion",
+      "description": "Tests for reference data ingestion endpoints",
+      "item": [
+        {
+          "name": "Upload Reference Data Batch",
+          "description": "Test uploading a batch file of reference data",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/batch",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "./reference-data-batch.csv"
+                },
+                {
+                  "key": "source",
+                  "value": "Reuters",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has batch ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.batchId).to.exist;",
+                  "    ",
+                  "    // Save batch ID for later use",
+                  "    pm.collectionVariables.set(\"batchId\", jsonData.batchId);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates successful receipt\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(\"RECEIVED\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Batch Status",
+          "description": "Test retrieving the status of a reference data batch",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/batch/{{batchId}}/status",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains batch processing status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.batchId).to.exist;",
+                  "    pm.expect(jsonData.totalRecords).to.exist;",
+                  "    pm.expect(jsonData.processedRecords).to.exist;",
+                  "    pm.expect(jsonData.errorRecords).to.exist;",
+                  "    pm.expect(jsonData.pendingRecords).to.exist;",
+                  "    pm.expect(jsonData.completionPercentage).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Reference Data",
+          "description": "Test submitting a single reference data item",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalId\": \"AAPL.O\",\n  \"identifierType\": \"REUTERS_ID\",\n  \"identifierValue\": \"AAPL.O\",\n  \"securityType\": \"EQUITY\",\n  \"issuer\": \"Apple Inc.\",\n  \"description\": \"Apple Inc. Common Stock\",\n  \"currency\": \"USD\",\n  \"market\": \"US\",\n  \"exchange\": \"NASDAQ\",\n  \"status\": \"ACTIVE\",\n  \"isBasketProduct\": false,\n  \"source\": \"Reuters\",\n  \"additionalAttributes\": {\n    \"isin\": \"US0378331005\",\n    \"cusip\": \"037833100\",\n    \"sedol\": \"2046251\",\n    \"ticker\": \"AAPL\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates successful processing\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reprocess Failed Items",
+          "description": "Test reprocessing reference data items that failed processing",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/batch/{{batchId}}/reprocess",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains reprocessed count\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.reprocessedCount).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reference Data Conflicts",
+      "description": "Tests for reference data conflict detection and resolution",
+      "item": [
+        {
+          "name": "Detect Reference Data Conflicts",
+          "description": "Test detecting conflicts in reference data from different sources",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/conflicts",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Conflict items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].externalId).to.exist;",
+                  "        pm.expect(jsonData[0].identifierType).to.exist;",
+                  "        pm.expect(jsonData[0].source).to.exist;",
+                  "        ",
+                  "        // Save a conflict item for resolution testing",
+                  "        pm.collectionVariables.set(\"conflictData\", JSON.stringify([jsonData[0]]));",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve Reference Data Conflicts",
+          "description": "Test resolving conflicts in reference data using configured resolution rules",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/conflicts/resolve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{conflictData}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Resolved items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].externalId).to.exist;",
+                  "        pm.expect(jsonData[0].identifierType).to.exist;",
+                  "        pm.expect(jsonData[0].source).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reference Data Subscriptions",
+      "description": "Tests for reference data subscription endpoints",
+      "item": [
+        {
+          "name": "Subscribe to Reference Data Updates",
+          "description": "Test subscribing to real-time reference data updates for specific securities",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/ingestion/reference-data/subscribe",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"securityIds\": [\"US0378331005\", \"US5949181045\", \"US0231351067\"],\n  \"sources\": [\"Reuters\", \"Bloomberg\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates successful subscription\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security Reference Data",
+      "description": "Tests for security reference data retrieval endpoints",
+      "item": [
+        {
+          "name": "Get Security By ID",
+          "description": "Test retrieving a security by its internal ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/US0378331005",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains security data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.internalId).to.equal(\"US0378331005\");",
+                  "    pm.expect(jsonData.securityType).to.exist;",
+                  "    pm.expect(jsonData.issuer).to.exist;",
+                  "    pm.expect(jsonData.description).to.exist;",
+                  "    pm.expect(jsonData.currency).to.exist;",
+                  "    pm.expect(jsonData.market).to.exist;",
+                  "    pm.expect(jsonData.exchange).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Security By External ID",
+          "description": "Test retrieving a security by its external ID and source",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/external/AAPL.O?source=Reuters&identifierType=REUTERS_ID",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains security data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.internalId).to.exist;",
+                  "    pm.expect(jsonData.securityType).to.exist;",
+                  "    pm.expect(jsonData.issuer).to.exist;",
+                  "    ",
+                  "    // Verify identifier exists",
+                  "    var found = false;",
+                  "    if (jsonData.identifiers) {",
+                  "        for (var i = 0; i < jsonData.identifiers.length; i++) {",
+                  "            if (jsonData.identifiers[i].identifierType === 'REUTERS_ID' && ",
+                  "                jsonData.identifiers[i].identifierValue === 'AAPL.O') {",
+                  "                found = true;",
+                  "                break;",
+                  "            }",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Securities",
+          "description": "Test searching for securities by various criteria",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/search?issuer=Apple&securityType=EQUITY&market=US",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Search results have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].internalId).to.exist;",
+                  "        pm.expect(jsonData[0].securityType).to.equal(\"EQUITY\");",
+                  "        pm.expect(jsonData[0].market).to.equal(\"US\");",
+                  "        pm.expect(jsonData[0].issuer).to.include(\"Apple\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Securities By Type",
+          "description": "Test retrieving securities by type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/type/EQUITY",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Securities have correct type\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].securityType).to.equal(\"EQUITY\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Securities By Market",
+          "description": "Test retrieving securities by market",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/market/US",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Securities have correct market\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].market).to.equal(\"US\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Counterparty Reference Data",
+      "description": "Tests for counterparty reference data retrieval endpoints",
+      "item": [
+        {
+          "name": "Get Counterparty By ID",
+          "description": "Test retrieving a counterparty by its ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/counterparties/CP001",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains counterparty data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.counterpartyId).to.equal(\"CP001\");",
+                  "    pm.expect(jsonData.name).to.exist;",
+                  "    pm.expect(jsonData.type).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.kycStatus).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Counterparties",
+          "description": "Test searching for counterparties by various criteria",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/counterparties/search?name=Capital&type=CLIENT&status=ACTIVE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Search results have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].counterpartyId).to.exist;",
+                  "        pm.expect(jsonData[0].type).to.equal(\"CLIENT\");",
+                  "        pm.expect(jsonData[0].status).to.equal(\"ACTIVE\");",
+                  "        pm.expect(jsonData[0].name).to.include(\"Capital\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Counterparties By Type",
+          "description": "Test retrieving counterparties by type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/counterparties/type/CLIENT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Counterparties have correct type\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].type).to.equal(\"CLIENT\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Counterparties By KYC Status",
+          "description": "Test retrieving counterparties by KYC status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/counterparties/kyc-status/APPROVED",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Counterparties have correct KYC status\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].kycStatus).to.equal(\"APPROVED\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Aggregation Unit Reference Data",
+      "description": "Tests for aggregation unit reference data retrieval endpoints",
+      "item": [
+        {
+          "name": "Get Aggregation Unit By ID",
+          "description": "Test retrieving an aggregation unit by its ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/aggregation-units/AU001",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains aggregation unit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.aggregationUnitId).to.equal(\"AU001\");",
+                  "    pm.expect(jsonData.name).to.exist;",
+                  "    pm.expect(jsonData.type).to.exist;",
+                  "    pm.expect(jsonData.market).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.books).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Aggregation Units By Market",
+          "description": "Test retrieving aggregation units by market",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/aggregation-units/market/US",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Aggregation units have correct market\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].market).to.equal(\"US\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Aggregation Units By Type",
+          "description": "Test retrieving aggregation units by type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/aggregation-units/type/REGULATORY",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Aggregation units have correct type\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].type).to.equal(\"REGULATORY\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Aggregation Units By Book",
+          "description": "Test retrieving aggregation units containing a specific book",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/aggregation-units/book/EQUITY-01",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Aggregation units contain the specified book\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].books).to.include(\"EQUITY-01\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Index Composition Reference Data",
+      "description": "Tests for index composition reference data retrieval endpoints",
+      "item": [
+        {
+          "name": "Get Index Composition",
+          "description": "Test retrieving the composition of an index",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/US78462F1030/composition",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Composition items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].indexSecurity).to.exist;",
+                  "        pm.expect(jsonData[0].constituentSecurity).to.exist;",
+                  "        pm.expect(jsonData[0].weight).to.exist;",
+                  "        pm.expect(jsonData[0].effectiveDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Securities In Indices",
+          "description": "Test retrieving all indices that contain a specific security",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/reference-data/securities/US0378331005/indices",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Index items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].indexSecurity).to.exist;",
+                  "        pm.expect(jsonData[0].constituentSecurity.internalId).to.equal(\"US0378331005\");",
+                  "        pm.expect(jsonData[0].weight).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "batchId",
+      "value": ""
+    },
+    {
+      "key": "conflictData",
+      "value": "[]"
+    }
+  ]
+}
