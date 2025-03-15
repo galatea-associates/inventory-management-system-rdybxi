@@ -1,0 +1,393 @@
+# API Security Penetration Testing Configuration
+# Inventory Management System (IMS)
+# Version: 1.0.0
+
+# This configuration defines security penetration testing scenarios for the API endpoints
+# of the Inventory Management System. It covers authentication, authorization, injection prevention,
+# rate limiting, data protection, and error handling test cases.
+
+name: api_security_tests
+description: Security penetration tests for API endpoints of the Inventory Management System
+
+# Target configuration
+target:
+  url: ${BASE_URL}
+  context_name: IMS API Context
+  include_paths:
+    - ^${BASE_URL}/api/v1/.*$
+  exclude_paths:
+    - ^${BASE_URL}/api/v1/auth/health$
+    - ^${BASE_URL}/api/v1/actuator/.*$
+    - ^${BASE_URL}/assets/.*$
+    - ^${BASE_URL}/static/.*$
+
+# Authentication configuration
+authentication:
+  method: oauth2
+  login_url: ${BASE_URL}/api/v1/auth/login
+  username_parameter: username
+  password_parameter: password
+  token_endpoint: ${BASE_URL}/api/v1/auth/token
+  client_id: ${CLIENT_ID}
+  client_secret: ${CLIENT_SECRET}
+
+# Authentication test configuration
+auth_test_configuration:
+  login_tests:
+    valid_credentials:
+      username: ${TEST_USERNAME}
+      password: ${TEST_PASSWORD}
+      expected_status: 200
+    invalid_credentials:
+      - username: nonexistent_user
+        password: WrongPassword123!
+        expected_status: 401
+      - username: ${TEST_USERNAME}
+        password: WrongPassword123!
+        expected_status: 401
+    account_lockout:
+      max_attempts: 5
+      lockout_duration_seconds: 300
+  token_tests:
+    token_lifetime:
+      access_token_seconds: 3600
+      refresh_token_seconds: 86400
+    token_validation:
+      required_claims:
+        - sub
+        - exp
+        - iat
+        - roles
+      optional_claims:
+        - jti
+        - iss
+        - aud
+  mfa_tests:
+    mfa_enabled_user: ${MFA_USERNAME}
+    mfa_test_code: ${MFA_TEST_CODE}
+    mfa_delivery_methods:
+      - totp
+      - sms
+
+# Test scenarios
+test_scenarios:
+  - name: Authorization Tests
+    description: Tests for API authorization controls
+    test_cases:
+      - name: Access Protected Endpoint - Valid Token
+        description: Test accessing a protected endpoint with a valid token
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Valid token
+        expected_result: 200 OK with position data
+      
+      - name: Access Protected Endpoint - Invalid Token
+        description: Test accessing a protected endpoint with an invalid token
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Invalid token
+        expected_result: 401 Unauthorized without sensitive information disclosure
+      
+      - name: Access Protected Endpoint - Expired Token
+        description: Test accessing a protected endpoint with an expired token
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Expired token
+        expected_result: 401 Unauthorized with token expiration message
+      
+      - name: Access Admin Endpoint - Regular User Token
+        description: Test accessing an admin endpoint with a regular user token
+        target_endpoints:
+          - /api/v1/admin/users
+        attack_vector: Regular user token
+        expected_result: 403 Forbidden with insufficient permissions message
+      
+      - name: Access Admin Endpoint - Admin Token
+        description: Test accessing an admin endpoint with an admin token
+        target_endpoints:
+          - /api/v1/admin/users
+        attack_vector: Admin token
+        expected_result: 200 OK with user data
+      
+      - name: Write Operation - Read-Only Token
+        description: Test performing a write operation with a read-only token
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Read-only token with POST request
+        expected_result: 403 Forbidden with insufficient permissions message
+
+  - name: Injection Tests
+    description: Tests for SQL injection, XSS, and other injection vulnerabilities
+    test_cases:
+      - name: SQL Injection - Position Search
+        description: Test SQL injection protection in position search endpoint
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: SQL injection in query parameters
+        expected_result: No SQL errors or data leakage
+      
+      - name: SQL Injection - Security Search
+        description: Test SQL injection protection in security search endpoint
+        target_endpoints:
+          - /api/v1/securities
+        attack_vector: SQL injection in query parameters
+        expected_result: No SQL errors or data leakage
+      
+      - name: XSS - Security Creation
+        description: Test XSS protection in security creation endpoint
+        target_endpoints:
+          - /api/v1/securities
+        attack_vector: XSS payload in request body
+        expected_result: No XSS vulnerability, proper input sanitization
+      
+      - name: Command Injection - Export Endpoint
+        description: Test command injection protection in export endpoint
+        target_endpoints:
+          - /api/v1/positions/export
+        attack_vector: Command injection in query parameters
+        expected_result: No command execution, proper input validation
+      
+      - name: Path Traversal - File Download
+        description: Test path traversal protection in file download endpoint
+        target_endpoints:
+          - /api/v1/reports/download
+        attack_vector: Path traversal in query parameters
+        expected_result: No access to unauthorized files
+
+  - name: Rate Limiting Tests
+    description: Tests for API rate limiting protection
+    test_cases:
+      - name: Rapid Requests - Position API
+        description: Test rate limiting by making rapid requests to position API
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: High frequency requests
+        expected_result: 429 Too Many Requests after threshold
+      
+      - name: Rapid Requests - Locate API
+        description: Test rate limiting by making rapid requests to locate API
+        target_endpoints:
+          - /api/v1/locates
+        attack_vector: High frequency requests
+        expected_result: 429 Too Many Requests after threshold
+      
+      - name: Check Rate Limit Headers
+        description: Test that responses include rate limit headers
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Normal request
+        expected_result: Response includes rate limit headers
+
+  - name: Data Protection Tests
+    description: Tests for data protection mechanisms
+    test_cases:
+      - name: Check HTTPS Enforcement
+        description: Test that HTTPS is enforced for all API requests
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: HTTP request
+        expected_result: Redirect to HTTPS or connection refused
+      
+      - name: Check Security Headers
+        description: Test that responses include appropriate security headers
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Normal request
+        expected_result: Response includes security headers (CSP, X-Content-Type-Options, etc.)
+      
+      - name: Check PII Data Masking
+        description: Test that PII data is properly masked in responses
+        target_endpoints:
+          - /api/v1/users/profile
+        attack_vector: Normal request
+        expected_result: PII data is properly masked
+
+  - name: Error Handling Tests
+    description: Tests for proper error handling and information disclosure
+    test_cases:
+      - name: Invalid Request Format
+        description: Test error handling for invalid request format
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Malformed JSON request
+        expected_result: 400 Bad Request without stack traces or sensitive information
+      
+      - name: Resource Not Found
+        description: Test error handling for non-existent resource
+        target_endpoints:
+          - /api/v1/positions/non-existent-id
+        attack_vector: Request for non-existent resource
+        expected_result: 404 Not Found without internal details
+      
+      - name: Method Not Allowed
+        description: Test error handling for unsupported HTTP method
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Unsupported HTTP method
+        expected_result: 405 Method Not Allowed with Allow header
+      
+      - name: Server Error Handling
+        description: Test handling of server errors without exposing sensitive information
+        target_endpoints:
+          - /api/v1/debug/trigger-error
+        attack_vector: Request that triggers server error
+        expected_result: 500 Internal Server Error without stack traces or sensitive information
+
+  - name: API Versioning Tests
+    description: Tests for API versioning implementation
+    test_cases:
+      - name: Current API Version
+        description: Test access to current API version
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Normal request
+        expected_result: 200 OK with API version header
+      
+      - name: Unsupported API Version
+        description: Test access to unsupported API version
+        target_endpoints:
+          - /api/v0/positions
+        attack_vector: Request to unsupported version
+        expected_result: 404 Not Found with version information
+
+  - name: CORS Tests
+    description: Tests for Cross-Origin Resource Sharing implementation
+    test_cases:
+      - name: CORS Preflight Request
+        description: Test CORS preflight request handling
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: OPTIONS request with Origin header
+        expected_result: 200 OK with CORS headers
+      
+      - name: CORS Actual Request
+        description: Test CORS headers on actual request
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: GET request with Origin header
+        expected_result: 200 OK with CORS headers
+      
+      - name: CORS Disallowed Origin
+        description: Test CORS with disallowed origin
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Request with disallowed Origin header
+        expected_result: No CORS headers for disallowed origin
+
+  - name: Content Security Tests
+    description: Tests for content security implementation
+    test_cases:
+      - name: Content Type Validation - JSON
+        description: Test content type validation for JSON requests
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: POST request with incorrect Content-Type
+        expected_result: 415 Unsupported Media Type
+      
+      - name: Content Length Validation
+        description: Test content length validation for large requests
+        target_endpoints:
+          - /api/v1/positions
+        attack_vector: Request with very large payload
+        expected_result: 413 Payload Too Large
+
+  - name: Short Sell Validation Tests
+    description: Tests for short sell validation API with strict SLA requirements
+    test_cases:
+      - name: Short Sell Validation - Valid Request
+        description: Test short sell validation with valid request
+        target_endpoints:
+          - /api/v1/orders/validate
+        attack_vector: Valid short sell order
+        expected_result: 200 OK with validation result within 150ms SLA
+      
+      - name: Short Sell Validation - Invalid Request
+        description: Test short sell validation with invalid request
+        target_endpoints:
+          - /api/v1/orders/validate
+        attack_vector: Invalid short sell order
+        expected_result: 200 OK with rejection reason within 150ms SLA
+
+# Test execution configuration
+execution:
+  max_scan_duration: 180
+  thread_count: 5
+  delay_in_ms: 200
+  max_rule_duration: 60
+  max_results: 1000
+
+# Reporting configuration
+reporting:
+  output_format:
+    - HTML
+    - JSON
+    - XML
+  report_directory: target/security-reports
+  report_filename: api-security-report
+  include_passing_tests: false
+  fail_on_severity: HIGH
+
+# CI/CD integration
+ci_cd_integration:
+  github_actions: .github/workflows/security-scan.yml
+  jenkins: infrastructure/ci/jenkins/Jenkinsfile
+
+# Test parameters
+test_parameters:
+  injection_tests:
+    sql_injection_payloads:
+      - "' OR 1=1 --"
+      - "'; DROP TABLE users; --"
+      - "' UNION SELECT username, password FROM users --"
+    nosql_injection_payloads:
+      - '{"$gt": ""}'
+      - '{"$where": "this.password == this.username"}'
+      - '{"$regex": ".*"}'
+    xss_payloads:
+      - '<script>alert(1)</script>'
+      - '<img src="x" onerror="alert(1)">'
+      - '"><script>alert(1)</script>'
+  
+  authentication_tests:
+    weak_credentials:
+      - username: admin
+        password: admin
+      - username: test
+        password: test
+      - username: user
+        password: password
+    brute_force_detection:
+      attempts: 10
+      timeframe_seconds: 60
+      expected_lockout: true
+  
+  financial_specific_tests:
+    locate_request_validation:
+      invalid_requests:
+        - requestorId: INVALID_USER
+          clientId: CLIENT001
+          securityId: SEC-EQ-001
+          quantity: 1000
+        - requestorId: USER001
+          clientId: CLIENT001
+          securityId: SEC-EQ-001
+          quantity: -1000
+        - requestorId: USER001
+          clientId: INVALID_CLIENT
+          securityId: SEC-EQ-001
+          quantity: 1000
+      expected_status: 400
+    
+    short_sell_validation:
+      invalid_requests:
+        - orderId: ORD123
+          securityId: SEC-EQ-001
+          quantity: -1000
+          clientId: CLIENT001
+          aggregationUnitId: AU001
+        - orderId: ORD124
+          securityId: SEC-EQ-001
+          quantity: -1000
+          clientId: CLIENT001
+          aggregationUnitId: INVALID_AU
+      expected_status: 400
