@@ -1,0 +1,867 @@
+# Production environment specific values for the Inventory Management System (IMS) Helm chart
+# These values override the defaults in values.yaml for production deployment
+
+# Global configuration values
+global:
+  environment: production
+  logLevel: INFO
+  domain: ims.example.com
+  region: us-east-1
+  clusterName: ims-prod-cluster
+
+# Service configurations for production
+services:
+  dataIngestion:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8081"
+  calculation:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8082"
+  workflow:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8083"
+  apiGateway:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8080"
+  websocket:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8085"
+    sessionAffinity: ClientIP
+    sessionAffinityConfig:
+      clientIP:
+        timeoutSeconds: 10800
+  monitoring:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8086"
+  auth:
+    enabled: true
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+      prometheus.io/port: "8084"
+
+# Deployment configurations for production environment
+deployments:
+  dataIngestion:
+    enabled: true
+    image:
+      repository: ims-registry/data-ingestion-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - data-ingestion-service
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-memory
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+
+  calculation:
+    enabled: true
+    image:
+      repository: ims-registry/calculation-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 10
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms4g -Xmx8g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+      - name: HAZELCAST_CLUSTER_NAME
+        value: "ims-calculation-cluster"
+      - name: HAZELCAST_MULTICAST_ENABLED
+        value: "false"
+      - name: HAZELCAST_TCP_IP_MEMBERS
+        value: "calculation-service-0.calculation-service.$(NAMESPACE).svc.cluster.local,calculation-service-1.calculation-service.$(NAMESPACE).svc.cluster.local,calculation-service-2.calculation-service.$(NAMESPACE).svc.cluster.local,calculation-service-3.calculation-service.$(NAMESPACE).svc.cluster.local,calculation-service-4.calculation-service.$(NAMESPACE).svc.cluster.local"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - calculation-service
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-cpu
+    priorityClassName: critical-priority
+    terminationGracePeriodSeconds: 120
+
+  workflow:
+    enabled: true
+    image:
+      repository: ims-registry/workflow-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - workflow-service
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-memory
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+
+  apiGateway:
+    enabled: true
+    image:
+      repository: ims-registry/api-gateway
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - api-gateway
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-memory
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+
+  websocket:
+    enabled: true
+    image:
+      repository: ims-registry/websocket-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - websocket-service
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-memory
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+
+  monitoring:
+    enabled: true
+    image:
+      repository: ims-registry/monitoring-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 3
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - monitoring-service
+            topologyKey: kubernetes.io/hostname
+    nodeSelector:
+      node-type: standard
+    priorityClassName: medium-priority
+    terminationGracePeriodSeconds: 30
+
+  auth:
+    enabled: true
+    image:
+      repository: ims-registry/auth-service
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    replicaCount: 5
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "production"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: JAVA_OPTS
+        value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - auth-service
+            topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+    nodeSelector:
+      node-type: high-memory
+    priorityClassName: high-priority
+    terminationGracePeriodSeconds: 60
+
+# Ingress configuration for production
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+  hosts:
+    - host: ims.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+        - path: /ws
+          pathType: Prefix
+          service: websocket-service
+          port: 8085
+  tls:
+    - secretName: ims-tls-cert
+      hosts:
+        - ims.example.com
+
+# ConfigMap definitions for production environment
+configMaps:
+  common:
+    enabled: true
+    data:
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      KAFKA_BOOTSTRAP_SERVERS: kafka-headless.kafka.svc.cluster.local:9092
+      EUREKA_SERVICE_URL: http://ims-service-registry:8761/eureka/
+      SERVICE_DOMAIN: ims.svc.cluster.local
+      CORS_ALLOWED_ORIGINS: https://ims.example.com
+      JWT_ISSUER_URI: https://auth.ims.example.com/
+      JWT_AUDIENCE: ims-api
+
+  dataIngestion:
+    enabled: true
+    data:
+      INGESTION_BATCH_MAX_BATCH_SIZE: "10000"
+      INGESTION_BATCH_PROCESSING_THREADS: "20"
+      INGESTION_VALIDATION_STRICT_MODE: "true"
+      INGESTION_BATCH_RETRY_ATTEMPTS: "3"
+      INGESTION_BATCH_RETRY_DELAY_MS: "1000"
+      REUTERS_API_URL: https://api.reuters.com/data/v1
+      BLOOMBERG_API_URL: https://api.bloomberg.com/data/v1
+      MARKIT_API_URL: https://api.markit.com/data/v1
+      ULTUMUS_API_URL: https://api.ultumus.com/data/v1
+      RIMES_API_URL: https://api.rimes.com/data/v1
+
+  calculation:
+    enabled: true
+    data:
+      CALCULATION_POSITION_CACHE_TTL_SECONDS: "3600"
+      CALCULATION_INVENTORY_CACHE_TTL_SECONDS: "1800"
+      CALCULATION_LIMIT_CACHE_TTL_SECONDS: "1800"
+      CALCULATION_RULE_CACHE_TTL_SECONDS: "7200"
+      CALCULATION_PERFORMANCE_THREAD_POOL_SIZE: "40"
+      CALCULATION_PERFORMANCE_QUEUE_CAPACITY: "2000"
+
+  workflow:
+    enabled: true
+    data:
+      WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED: "true"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY: "100000"
+      WORKFLOW_LOCATE_AUTO_APPROVAL_MIN_INVENTORY_RATIO: "2.0"
+      WORKFLOW_LOCATE_MANUAL_REVIEW_TIMEOUT_MINUTES: "30"
+      WORKFLOW_LOCATE_PERFORMANCE_THREAD_POOL_SIZE: "20"
+      WORKFLOW_LOCATE_PERFORMANCE_QUEUE_CAPACITY: "200"
+      WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS: "150"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_THREAD_POOL_SIZE: "40"
+      WORKFLOW_SHORT_SELL_PERFORMANCE_QUEUE_CAPACITY: "1000"
+
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_DEFAULT_REPLENISH_RATE: "1000"
+      RATE_LIMIT_DEFAULT_BURST_CAPACITY: "2000"
+      RATE_LIMIT_CRITICAL_REPLENISH_RATE: "10000"
+      RATE_LIMIT_CRITICAL_BURST_CAPACITY: "20000"
+
+  websocket:
+    enabled: true
+    data:
+      WEBSOCKET_MAX_TEXT_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_BINARY_MESSAGE_SIZE: "65536"
+      WEBSOCKET_MAX_FRAME_SIZE: "65536"
+      WEBSOCKET_IDLE_TIMEOUT: "300000"
+      WEBSOCKET_MAX_SESSIONS_PER_USER: "5"
+
+  monitoring:
+    enabled: true
+    data:
+      MONITORING_HEALTH_CHECK_INTERVAL_SECONDS: "10"
+      MONITORING_METRICS_RETENTION_DAYS: "30"
+      MONITORING_ALERT_ENABLED: "true"
+      MONITORING_ALERT_RECIPIENTS: ops@example.com,alerts@example.com
+
+  auth:
+    enabled: true
+    data:
+      AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS: "3600"
+      AUTH_TOKEN_REFRESH_TOKEN_VALIDITY_SECONDS: "86400"
+      AUTH_PASSWORD_POLICY_MIN_LENGTH: "12"
+      AUTH_PASSWORD_POLICY_REQUIRE_SPECIAL_CHAR: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_DIGIT: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_UPPERCASE: "true"
+      AUTH_PASSWORD_POLICY_REQUIRE_LOWERCASE: "true"
+      AUTH_PASSWORD_POLICY_MAX_AGE_DAYS: "90"
+      AUTH_PASSWORD_POLICY_HISTORY_COUNT: "24"
+      AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS: "5"
+      AUTH_ACCOUNT_LOCKOUT_DURATION_MINUTES: "30"
+      AUTH_MFA_ENABLED: "true"
+      AUTH_MFA_METHODS: "totp,push,sms"
+
+# Secret templates for production environment
+secrets:
+  common:
+    enabled: true
+    data:
+      JWT_SECRET: ""
+      ENCRYPTION_KEY: ""
+
+  dataIngestion:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      REUTERS_API_KEY: ""
+      REUTERS_API_SECRET: ""
+      BLOOMBERG_API_KEY: ""
+      BLOOMBERG_API_SECRET: ""
+      MARKIT_API_KEY: ""
+      MARKIT_API_SECRET: ""
+      ULTUMUS_API_KEY: ""
+      ULTUMUS_API_SECRET: ""
+      RIMES_API_KEY: ""
+      RIMES_API_SECRET: ""
+
+  calculation:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      HAZELCAST_CLUSTER_PASSWORD: ""
+      REDIS_PASSWORD: ""
+
+  workflow:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      CAMUNDA_ADMIN_PASSWORD: ""
+      NOTIFICATION_SERVICE_API_KEY: ""
+
+  apiGateway:
+    enabled: true
+    data:
+      RATE_LIMIT_REDIS_PASSWORD: ""
+
+  websocket:
+    enabled: true
+    data:
+      REDIS_PASSWORD: ""
+
+  monitoring:
+    enabled: true
+    data:
+      ALERT_SMTP_PASSWORD: ""
+      PAGERDUTY_API_KEY: ""
+      SLACK_WEBHOOK_URL: ""
+
+  auth:
+    enabled: true
+    data:
+      DB_PASSWORD: ""
+      AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET: ""
+      AUTH_SMS_PROVIDER_API_KEY: ""
+      AUTH_EMAIL_PROVIDER_API_KEY: ""
+
+# Horizontal Pod Autoscaler for production
+horizontalPodAutoscaler:
+  dataIngestion:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  calculation:
+    enabled: true
+    minReplicas: 10
+    maxReplicas: 30
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  workflow:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  apiGateway:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  websocket:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  auth:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+# Pod Disruption Budget for high availability in production
+podDisruptionBudget:
+  dataIngestion:
+    enabled: true
+    minAvailable: 3
+
+  calculation:
+    enabled: true
+    minAvailable: 5
+
+  workflow:
+    enabled: true
+    minAvailable: 3
+
+  apiGateway:
+    enabled: true
+    minAvailable: 3
+
+  websocket:
+    enabled: true
+    minAvailable: 3
+
+  auth:
+    enabled: true
+    minAvailable: 3
+
+# Persistence configuration for production
+persistence:
+  enabled: true
+  storageClass: premium-ssd
+  accessMode: ReadWriteOnce
+  size: 20Gi
+
+# PostgreSQL configuration for production
+postgresql:
+  enabled: true
+  auth:
+    username: ims_app
+    password: ""
+    database: ims_db
+    postgresPassword: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+  readReplicas:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+
+# Redis configuration for production
+redis:
+  enabled: true
+  auth:
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+  replica:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+
+# Kafka configuration for production
+kafka:
+  enabled: true
+  replicaCount: 5
+  resources:
+    requests:
+      cpu: "4"
+      memory: "8Gi"
+    limits:
+      cpu: "8"
+      memory: "16Gi"
+  persistence:
+    enabled: true
+    size: 200Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+  externalAccess:
+    enabled: false
+  metrics:
+    jmx:
+      enabled: true
+    kafka:
+      enabled: true
+
+# TimescaleDB configuration for production
+timescaledb:
+  enabled: true
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "4"
+      memory: "8Gi"
+    limits:
+      cpu: "8"
+      memory: "16Gi"
+  persistence:
+    enabled: true
+    size: 200Gi
+  credentials:
+    username: ims_app
+    password: ""
+
+# Elasticsearch configuration for production
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 3
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    persistence:
+      enabled: true
+      size: 20Gi
+  data:
+    replicaCount: 5
+    resources:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+    persistence:
+      enabled: true
+      size: 200Gi
+  coordinating:
+    replicaCount: 3
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+  security:
+    enabled: true
+    elasticPassword: ""
+
+# Prometheus configuration for production
+prometheus:
+  enabled: true
+  server:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    persistentVolume:
+      enabled: true
+      size: 100Gi
+    retention: 30d
+  alertmanager:
+    enabled: true
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+  nodeExporter:
+    enabled: true
+  pushgateway:
+    enabled: true
+  serviceMonitors:
+    enabled: true
+
+# Grafana configuration for production
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+  persistence:
+    enabled: true
+    size: 10Gi
+  adminPassword: ""
