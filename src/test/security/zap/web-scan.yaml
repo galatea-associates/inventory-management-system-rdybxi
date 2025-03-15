@@ -1,0 +1,195 @@
+# OWASP ZAP Web Application Security Scan Configuration
+# Version: 2.12.0
+# 
+# This configuration file defines the security scanning parameters for the
+# Inventory Management System (IMS) web interface. It specifies target URLs,
+# authentication methods, scan policies, and reporting settings for automated
+# security testing.
+
+name: web_scan
+description: Configuration for web application security scanning of the Inventory Management System
+
+# Target configuration
+target:
+  url: https://app.ims.com
+  context_name: IMS Web Context
+  include_paths:
+    - ^https://app\.ims\.com/.*$
+  exclude_paths:
+    - ^https://app\.ims\.com/logout$
+    - ^https://app\.ims\.com/api/.*$
+    - ^https://app\.ims\.com/assets/.*\.(jpg|png|gif|svg|woff|ttf)$
+
+# Authentication configuration
+authentication:
+  method: form_based
+  login_url: https://app.ims.com/login
+  username_field: username
+  password_field: password
+  username: ${TEST_USERNAME}
+  password: ${TEST_PASSWORD}
+  logged_in_indicator: Dashboard | IMS
+  logged_out_indicator: Login | IMS
+
+# Session management configuration
+session_management:
+  method: cookie
+  session_tokens:
+    - JSESSIONID
+    - ims-session
+
+# Scan policy configuration
+scan_policy:
+  default_strength: medium
+  default_threshold: medium
+  rules:
+    - id: 40012
+      name: SQL Injection
+      strength: high
+      threshold: medium
+    - id: 40014
+      name: Cross Site Scripting (XSS)
+      strength: high
+      threshold: medium
+    - id: 10040
+      name: Secure Flag Not Set in Cookie
+      strength: medium
+      threshold: medium
+    - id: 10010
+      name: Cookie No HttpOnly Flag
+      strength: medium
+      threshold: medium
+    - id: 10054
+      name: Cookie Without SameSite Attribute
+      strength: medium
+      threshold: medium
+    - id: 10038
+      name: Content Security Policy Header Not Set
+      strength: medium
+      threshold: medium
+    - id: 10055
+      name: CSP Scanner
+      strength: medium
+      threshold: medium
+    - id: 10098
+      name: Cross-Domain Misconfiguration
+      strength: high
+      threshold: medium
+    - id: 110001
+      name: JWT Token Exposure
+      strength: high
+      threshold: medium
+    - id: 110002
+      name: Financial Data Exposure
+      strength: high
+      threshold: medium
+
+# Spider configuration
+spider_configuration:
+  max_depth: 10
+  thread_count: 8
+  parse_comments: true
+  parse_robots_txt: true
+  parse_sitemap_xml: true
+  handle_parameters: use_all
+  handle_odata: true
+  max_duration: 60  # minutes
+
+# AJAX Spider configuration
+ajax_spider_configuration:
+  browser: chrome-headless
+  max_crawl_depth: 10
+  max_duration: 60  # minutes
+  event_wait_time: 1000  # milliseconds
+  max_states: 0  # unlimited
+
+# Target pages for focused scanning
+target_pages:
+  - url: https://app.ims.com/dashboard
+    name: Dashboard Page
+  - url: https://app.ims.com/positions
+    name: Positions Page
+  - url: https://app.ims.com/inventory
+    name: Inventory Page
+  - url: https://app.ims.com/locates
+    name: Locates Page
+  - url: https://app.ims.com/exceptions
+    name: Exceptions Page
+  - url: https://app.ims.com/rules
+    name: Rules Page
+  - url: https://app.ims.com/settings
+    name: Settings Page
+
+# Execution parameters
+execution:
+  max_scan_duration: 180  # minutes
+  thread_count: 8
+  delay_in_ms: 100
+  max_rule_duration: 60  # minutes
+  max_results: 1000
+
+# Reporting configuration
+reporting:
+  output_format:
+    - HTML
+    - JSON
+    - XML
+  report_directory: target/zap-reports
+  report_filename: web-scan-report
+  include_passing_rules: false
+  fail_on_severity: HIGH
+
+# CI/CD Integration
+ci_cd_integration:
+  github_actions: .github/workflows/security-scan.yml
+  jenkins: infrastructure/ci/jenkins/Jenkinsfile
+
+# Test parameters for specific forms and UI components
+test_parameters:
+  # Form testing configurations
+  form_tests:
+    login_form:
+      invalid_credentials:
+        - username: admin
+          password: admin
+        - username: test
+          password: test
+        - username: user
+          password: password
+      expected_status: Login failed
+    locate_form:
+      invalid_inputs:
+        - clientId: ""
+          securityId: SEC123
+          quantity: 1000
+        - clientId: CLIENT001
+          securityId: ""
+          quantity: 1000
+        - clientId: CLIENT001
+          securityId: SEC123
+          quantity: -1000
+      expected_validation: Field is required
+  
+  # Session testing configurations
+  session_tests:
+    session_timeout:
+      timeout_minutes: 30
+      expected_behavior: redirect to login
+    concurrent_sessions:
+      max_sessions: 3
+      expected_behavior: terminate oldest session
+  
+  # UI security testing configurations
+  ui_security_tests:
+    sensitive_data_exposure:
+      selectors:
+        - .position-value
+        - .inventory-total
+        - .client-limit
+      expected_behavior: masked or authorized only
+    client_side_validation:
+      test_forms:
+        - locate-request-form
+        - short-sell-form
+        - rule-editor-form
+      expected_behavior: validate before submission
