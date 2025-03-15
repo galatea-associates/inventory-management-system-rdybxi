@@ -1,0 +1,996 @@
+{
+  "info": {
+    "name": "Inventory API Tests",
+    "description": "API tests for the Inventory endpoints of the Inventory Management System. This collection contains requests for testing inventory availability calculations, inventory types, and related operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Inventory Availability",
+      "description": "Tests for inventory availability calculation endpoints",
+      "item": [
+        {
+          "name": "Calculate All Inventory Types",
+          "description": "Test calculating all inventory types for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a map of inventory types\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "    pm.expect(jsonData.FOR_LOAN).to.exist;",
+                  "    pm.expect(jsonData.FOR_PLEDGE).to.exist;",
+                  "    pm.expect(jsonData.LONG_SELL).to.exist;",
+                  "    pm.expect(jsonData.SHORT_SELL).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Each inventory type contains an array of items\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.FOR_LOAN).to.be.an('array');",
+                  "    pm.expect(jsonData.FOR_PLEDGE).to.be.an('array');",
+                  "    pm.expect(jsonData.LONG_SELL).to.be.an('array');",
+                  "    pm.expect(jsonData.SHORT_SELL).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().FOR_LOAN.length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var item = pm.response.json().FOR_LOAN[0];",
+                  "        pm.expect(item.security).to.exist;",
+                  "        pm.expect(item.calculationType).to.equal(\"FOR_LOAN\");",
+                  "        pm.expect(item.availableQuantity).to.exist;",
+                  "        pm.expect(item.businessDate).to.exist;",
+                  "        ",
+                  "        // Save a security for later tests",
+                  "        pm.collectionVariables.set(\"testSecurityId\", item.security.internalId);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Inventory For Security",
+          "description": "Test calculating all inventory types for a specific security and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/security/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a map of inventory types\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Inventory items are for the correct security\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var securityId = pm.collectionVariables.get(\"testSecurityId\");",
+                  "    ",
+                  "    // Check each inventory type for the security",
+                  "    Object.keys(jsonData).forEach(function(key) {",
+                  "        if (jsonData[key].length > 0) {",
+                  "            pm.expect(jsonData[key][0].security.internalId).to.equal(securityId);",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate For Loan Availability",
+          "description": "Test calculating for loan availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/for-loan?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"FOR_LOAN\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate For Pledge Availability",
+          "description": "Test calculating for pledge availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/for-pledge?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"FOR_PLEDGE\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Long Sell Availability",
+          "description": "Test calculating long sell availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/long-sell?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"LONG_SELL\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Short Sell Availability",
+          "description": "Test calculating short sell availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/short-sell?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"SHORT_SELL\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Identify Overborrows",
+          "description": "Test identifying overborrows for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/overborrows?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Overborrow items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"OVERBORROW\");",
+                  "        pm.expect(jsonData[0].excessQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Locate Availability",
+      "description": "Tests for locate availability endpoints",
+      "item": [
+        {
+          "name": "Calculate Locate Availability",
+          "description": "Test calculating locate availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/locate?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"LOCATE\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Locate Availability For Security",
+          "description": "Test calculating locate availability for a specific security and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/locate/security/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items are for the correct security\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "        pm.expect(jsonData[0].calculationType).to.equal(\"LOCATE\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Locate Availability By Temperature",
+          "description": "Test retrieving locate availability filtered by security temperature (HTB/GC)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/locate?businessDate={{businessDate}}&temperature=HTB",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"All securities have HTB temperature\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        jsonData.forEach(function(item) {",
+                  "            pm.expect(item.securityTemperature).to.equal(\"HTB\");",
+                  "        });",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trading Limits",
+      "description": "Tests for trading limit endpoints related to inventory",
+      "item": [
+        {
+          "name": "Get Client Limit",
+          "description": "Test retrieving a client limit for a specific client, security, and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/client/{{testClientId}}/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains client limit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.clientId).to.equal(pm.collectionVariables.get(\"testClientId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.longSellLimit).to.exist;",
+                  "    pm.expect(jsonData.shortSellLimit).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Aggregation Unit Limit",
+          "description": "Test retrieving an aggregation unit limit for a specific aggregation unit, security, and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/aggregation-unit/{{testAggregationUnitId}}/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains aggregation unit limit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.aggregationUnitId).to.equal(pm.collectionVariables.get(\"testAggregationUnitId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.longSellLimit).to.exist;",
+                  "    pm.expect(jsonData.shortSellLimit).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Order Against Limits",
+          "description": "Test validating an order against both client and aggregation unit limits",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/validate?clientId={{testClientId}}&aggregationUnitId={{testAggregationUnitId}}&securityId={{testSecurityId}}&orderType=SHORT_SELL&quantity=1000",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a boolean\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recalculate Limits",
+          "description": "Test triggering a recalculation of all limits for the current business date",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/recalculate",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Calculation Rules",
+      "description": "Tests for calculation rule endpoints related to inventory",
+      "item": [
+        {
+          "name": "Get Active Rules",
+          "description": "Test retrieving all active calculation rules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Rules have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].name).to.exist;",
+                  "        pm.expect(jsonData[0].ruleType).to.exist;",
+                  "        pm.expect(jsonData[0].market).to.exist;",
+                  "        pm.expect(jsonData[0].status).to.equal(\"ACTIVE\");",
+                  "        ",
+                  "        // Save a rule for later tests",
+                  "        pm.collectionVariables.set(\"testRuleName\", jsonData[0].name);",
+                  "        pm.collectionVariables.set(\"testRuleMarket\", jsonData[0].market);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Rules By Type And Market",
+          "description": "Test retrieving active calculation rules for a specific rule type and market",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules/type/FOR_LOAN/market/GLOBAL",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Rules are for the correct type and market\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        jsonData.forEach(function(rule) {",
+                  "            pm.expect(rule.ruleType).to.equal(\"FOR_LOAN\");",
+                  "            pm.expect(rule.market).to.equal(\"GLOBAL\");",
+                  "        });",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Rule By Name And Market",
+          "description": "Test retrieving a calculation rule by its name and market",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules/name/{{testRuleName}}/market/{{testRuleMarket}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains rule data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.equal(pm.collectionVariables.get(\"testRuleName\"));",
+                  "    pm.expect(jsonData.market).to.equal(pm.collectionVariables.get(\"testRuleMarket\"));",
+                  "    pm.expect(jsonData.ruleType).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Rule",
+          "description": "Test creating a new calculation rule",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Rule {{$timestamp}}\",\n    \"description\": \"Test rule created by Postman\",\n    \"ruleType\": \"FOR_LOAN\",\n    \"market\": \"GLOBAL\",\n    \"priority\": 100,\n    \"conditions\": [\n        {\n            \"attribute\": \"security.market\",\n            \"operator\": \"EQUALS\",\n            \"value\": \"US\",\n            \"logicalOperator\": \"AND\"\n        }\n    ],\n    \"actions\": [\n        {\n            \"actionType\": \"INCLUDE\",\n            \"parameters\": \"ALL\"\n        }\n    ],\n    \"status\": \"ACTIVE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains created rule data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.include(\"Test Rule\");",
+                  "    pm.expect(jsonData.ruleType).to.equal(\"FOR_LOAN\");",
+                  "    pm.expect(jsonData.market).to.equal(\"GLOBAL\");",
+                  "    pm.expect(jsonData.status).to.equal(\"ACTIVE\");",
+                  "    ",
+                  "    // Save the created rule for update test",
+                  "    pm.collectionVariables.set(\"createdRuleName\", jsonData.name);",
+                  "    pm.collectionVariables.set(\"createdRuleId\", jsonData.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Rule",
+          "description": "Test updating an existing calculation rule",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"{{createdRuleId}}\",\n    \"name\": \"{{createdRuleName}}\",\n    \"description\": \"Updated test rule\",\n    \"ruleType\": \"FOR_LOAN\",\n    \"market\": \"GLOBAL\",\n    \"priority\": 200,\n    \"conditions\": [\n        {\n            \"attribute\": \"security.market\",\n            \"operator\": \"EQUALS\",\n            \"value\": \"US\",\n            \"logicalOperator\": \"AND\"\n        }\n    ],\n    \"actions\": [\n        {\n            \"actionType\": \"INCLUDE\",\n            \"parameters\": \"ALL\"\n        }\n    ],\n    \"status\": \"ACTIVE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains updated rule data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"createdRuleId\"));",
+                  "    pm.expect(jsonData.name).to.equal(pm.collectionVariables.get(\"createdRuleName\"));",
+                  "    pm.expect(jsonData.description).to.equal(\"Updated test rule\");",
+                  "    pm.expect(jsonData.priority).to.equal(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear Rule Cache",
+          "description": "Test clearing the rule cache to force fresh rule loading",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/rules/clear-cache",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Tests for error handling in inventory-related endpoints",
+      "item": [
+        {
+          "name": "Invalid Business Date",
+          "description": "Test error handling for an invalid business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory?businessDate=invalid-date",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Security Not Found",
+          "description": "Test error handling for a non-existent security",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/security/NONEXISTENT?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Access",
+          "description": "Test error handling for unauthorized access",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing Required Parameter",
+          "description": "Test error handling for missing required parameter",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error about missing parameter\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message || jsonData.error).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "testSecurityId",
+      "value": "US0378331005"
+    },
+    {
+      "key": "testClientId",
+      "value": "CP001"
+    },
+    {
+      "key": "testAggregationUnitId",
+      "value": "AU001"
+    },
+    {
+      "key": "testRuleName",
+      "value": "Global For Loan Availability"
+    },
+    {
+      "key": "testRuleMarket",
+      "value": "GLOBAL"
+    },
+    {
+      "key": "createdRuleName",
+      "value": ""
+    },
+    {
+      "key": "createdRuleId",
+      "value": ""
+    },
+    {
+      "key": "businessDate",
+      "value": "2023-06-15"
+    }
+  ]
+}
