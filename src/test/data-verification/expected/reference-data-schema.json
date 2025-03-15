@@ -1,0 +1,550 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Inventory Management System Reference Data Schema",
+  "description": "JSON Schema for validating reference data in the Inventory Management System, including securities, counterparties, aggregation units, and index compositions",
+  "type": "object",
+  "required": ["securities", "counterparties", "aggregationUnits", "indexCompositions"],
+  "properties": {
+    "securities": {
+      "type": "array",
+      "description": "List of financial securities in the system",
+      "items": {
+        "type": "object",
+        "required": ["internalId", "securityType", "status"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Database identifier"
+          },
+          "internalId": {
+            "type": "string",
+            "description": "Unique internal identifier for the security",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "securityType": {
+            "type": "string",
+            "description": "Type of security (EQUITY, BOND, etc.)",
+            "enum": ["EQUITY", "BOND", "ETF", "INDEX", "FUTURE", "OPTION", "SWAP", "WARRANT", "OTHER"]
+          },
+          "issuer": {
+            "type": "string",
+            "description": "Issuer of the security",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the security",
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the security",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "issueDate": {
+            "type": "string",
+            "description": "Date when the security was issued",
+            "format": "date"
+          },
+          "maturityDate": {
+            "type": "string",
+            "description": "Date when the security matures",
+            "format": "date"
+          },
+          "market": {
+            "type": "string",
+            "description": "Market where the security is traded",
+            "maxLength": 50
+          },
+          "exchange": {
+            "type": "string",
+            "description": "Exchange where the security is listed",
+            "maxLength": 50
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the security",
+            "enum": ["ACTIVE", "INACTIVE", "SUSPENDED", "DELISTED", "MATURED", "PENDING"]
+          },
+          "isBasketProduct": {
+            "type": "boolean",
+            "description": "Indicates if the security is a basket product (ETF, index)"
+          },
+          "basketType": {
+            "type": "string",
+            "description": "Type of basket product",
+            "enum": ["ETF", "INDEX", "FUND", "OTHER", null]
+          },
+          "primaryIdentifierType": {
+            "type": "string",
+            "description": "Type of the primary identifier",
+            "enum": ["ISIN", "CUSIP", "SEDOL", "BLOOMBERG_ID", "REUTERS_ID", "TICKER", "OTHER"]
+          },
+          "primaryIdentifierValue": {
+            "type": "string",
+            "description": "Value of the primary identifier",
+            "maxLength": 50
+          },
+          "identifiers": {
+            "type": "array",
+            "description": "List of external identifiers for this security",
+            "items": {
+              "$ref": "#/definitions/securityIdentifier"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User who created the security record"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the security record was created",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "description": "User who last modified the security record"
+          },
+          "lastModifiedAt": {
+            "type": "string",
+            "description": "Timestamp when the security record was last modified",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version number for optimistic locking",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "counterparties": {
+      "type": "array",
+      "description": "List of counterparties in the system",
+      "items": {
+        "type": "object",
+        "required": ["counterpartyId", "name", "type", "status"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Database identifier"
+          },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Unique internal identifier for the counterparty",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the counterparty",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Short name or abbreviation of the counterparty",
+            "maxLength": 50
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of counterparty",
+            "enum": ["CLIENT", "BROKER", "CUSTODIAN", "EXCHANGE", "CLEARING_HOUSE", "INTERNAL", "OTHER"]
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the counterparty",
+            "maxLength": 50
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the counterparty",
+            "enum": ["ACTIVE", "INACTIVE", "SUSPENDED", "PENDING", "CLOSED"]
+          },
+          "kycStatus": {
+            "type": "string",
+            "description": "Know Your Customer status",
+            "enum": ["APPROVED", "PENDING", "REJECTED", "EXPIRED", "NOT_REQUIRED"]
+          },
+          "riskRating": {
+            "type": "string",
+            "description": "Risk rating of the counterparty",
+            "enum": ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"]
+          },
+          "country": {
+            "type": "string",
+            "description": "Country of the counterparty",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "region": {
+            "type": "string",
+            "description": "Region of the counterparty",
+            "enum": ["AMERICAS", "EMEA", "APAC", "GLOBAL"]
+          },
+          "primaryIdentifierType": {
+            "type": "string",
+            "description": "Type of the primary identifier",
+            "enum": ["LEI", "BIC", "SWIFT", "BLOOMBERG_ID", "REUTERS_ID", "TAX_ID", "OTHER"]
+          },
+          "primaryIdentifierValue": {
+            "type": "string",
+            "description": "Value of the primary identifier",
+            "maxLength": 50
+          },
+          "identifiers": {
+            "type": "array",
+            "description": "List of external identifiers for this counterparty",
+            "items": {
+              "$ref": "#/definitions/counterpartyIdentifier"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User who created the counterparty record"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the counterparty record was created",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "description": "User who last modified the counterparty record"
+          },
+          "lastModifiedAt": {
+            "type": "string",
+            "description": "Timestamp when the counterparty record was last modified",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version number for optimistic locking",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aggregationUnits": {
+      "type": "array",
+      "description": "List of aggregation units in the system",
+      "items": {
+        "type": "object",
+        "required": ["aggregationUnitId", "name", "type", "market", "status"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Database identifier"
+          },
+          "aggregationUnitId": {
+            "type": "string",
+            "description": "Unique internal identifier for the aggregation unit",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the aggregation unit",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of aggregation unit",
+            "enum": ["REGULATORY", "TRADING", "RISK", "REPORTING", "OTHER"]
+          },
+          "market": {
+            "type": "string",
+            "description": "Market associated with the aggregation unit",
+            "maxLength": 50
+          },
+          "region": {
+            "type": "string",
+            "description": "Region of the aggregation unit",
+            "enum": ["AMERICAS", "EMEA", "APAC", "GLOBAL"]
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the aggregation unit",
+            "enum": ["ACTIVE", "INACTIVE", "SUSPENDED", "PENDING"]
+          },
+          "officerId": {
+            "type": "string",
+            "description": "ID of the officer responsible for the aggregation unit",
+            "maxLength": 50
+          },
+          "regulatoryId": {
+            "type": "string",
+            "description": "Regulatory identifier for the aggregation unit",
+            "maxLength": 50
+          },
+          "parentEntityId": {
+            "type": "string",
+            "description": "ID of the parent entity",
+            "maxLength": 50
+          },
+          "books": {
+            "type": "array",
+            "description": "List of book IDs associated with this aggregation unit",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User who created the aggregation unit record"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the aggregation unit record was created",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "description": "User who last modified the aggregation unit record"
+          },
+          "lastModifiedAt": {
+            "type": "string",
+            "description": "Timestamp when the aggregation unit record was last modified",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version number for optimistic locking",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "indexCompositions": {
+      "type": "array",
+      "description": "List of index/basket compositions in the system",
+      "items": {
+        "type": "object",
+        "required": ["indexSecurityId", "constituentSecurityId", "weight"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Database identifier"
+          },
+          "indexSecurityId": {
+            "type": "string",
+            "description": "Internal ID of the index/basket security",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "constituentSecurityId": {
+            "type": "string",
+            "description": "Internal ID of the constituent security",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "weight": {
+            "type": "number",
+            "description": "Weight of the constituent in the index/basket (0-1)",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "compositionType": {
+            "type": "string",
+            "description": "Type of composition relationship",
+            "enum": ["STANDARD", "CREATION_BASKET", "REDEMPTION_BASKET", "THEORETICAL", "OTHER"]
+          },
+          "effectiveDate": {
+            "type": "string",
+            "description": "Date when the composition becomes effective",
+            "format": "date"
+          },
+          "expiryDate": {
+            "type": "string",
+            "description": "Date when the composition expires",
+            "format": "date"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the composition data",
+            "maxLength": 50
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Indicates if the composition is active"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User who created the composition record"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the composition record was created",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "description": "User who last modified the composition record"
+          },
+          "lastModifiedAt": {
+            "type": "string",
+            "description": "Timestamp when the composition record was last modified",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version number for optimistic locking",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the reference data",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Version of the reference data"
+        },
+        "generatedAt": {
+          "type": "string",
+          "description": "Timestamp when the reference data was generated",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the reference data"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Environment where the reference data was generated",
+          "enum": ["DEV", "TEST", "STAGING", "PRODUCTION"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "securityIdentifier": {
+      "type": "object",
+      "required": ["identifierType", "identifierValue", "source"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Database identifier"
+        },
+        "identifierType": {
+          "type": "string",
+          "description": "Type of identifier",
+          "enum": ["ISIN", "CUSIP", "SEDOL", "BLOOMBERG_ID", "REUTERS_ID", "TICKER", "OTHER"]
+        },
+        "identifierValue": {
+          "type": "string",
+          "description": "Value of the identifier",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the identifier",
+          "enum": ["REUTERS", "BLOOMBERG", "MARKIT", "ULTUMUS", "RIMES", "INTERNAL", "OTHER"]
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Priority of the identifier (lower number means higher priority)",
+          "minimum": 1
+        },
+        "isPrimary": {
+          "type": "boolean",
+          "description": "Indicates if this is the primary identifier for the security"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User who created the identifier record"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the identifier record was created",
+          "format": "date-time"
+        },
+        "lastModifiedBy": {
+          "type": "string",
+          "description": "User who last modified the identifier record"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "description": "Timestamp when the identifier record was last modified",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "description": "Version number for optimistic locking",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "counterpartyIdentifier": {
+      "type": "object",
+      "required": ["identifierType", "identifierValue", "source"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Database identifier"
+        },
+        "identifierType": {
+          "type": "string",
+          "description": "Type of identifier",
+          "enum": ["LEI", "BIC", "SWIFT", "BLOOMBERG_ID", "REUTERS_ID", "TAX_ID", "OTHER"]
+        },
+        "identifierValue": {
+          "type": "string",
+          "description": "Value of the identifier",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the identifier",
+          "enum": ["REUTERS", "BLOOMBERG", "MARKIT", "ULTUMUS", "RIMES", "INTERNAL", "OTHER"]
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Priority of the identifier (lower number means higher priority)",
+          "minimum": 1
+        },
+        "isPrimary": {
+          "type": "boolean",
+          "description": "Indicates if this is the primary identifier for the counterparty"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User who created the identifier record"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the identifier record was created",
+          "format": "date-time"
+        },
+        "lastModifiedBy": {
+          "type": "string",
+          "description": "User who last modified the identifier record"
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "description": "Timestamp when the identifier record was last modified",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "description": "Version number for optimistic locking",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
