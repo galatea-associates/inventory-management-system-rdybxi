@@ -1,0 +1,258 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - release/**
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version/SHA to deploy'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ims-staging
+  EKS_CLUSTER_NAME: ims-staging-cluster
+  KUBE_NAMESPACE: ims-staging
+  HELM_RELEASE_NAME: ims-staging
+  HELM_CHART_PATH: infrastructure/kubernetes/helm/ims
+
+jobs:
+  deploy:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.ims.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Determine version to deploy
+        id: version
+        run: echo "VERSION=${GITHUB_EVENT_NAME == 'workflow_dispatch' && '${{ github.event.inputs.version }}' || '${{ github.sha }}'}" >> $GITHUB_OUTPUT
+
+      - name: Create deployment record
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: '${{ steps.version.outputs.VERSION }}',
+              environment: 'staging',
+              auto_merge: false,
+              required_contexts: [],
+              description: 'Staging deployment initiated by ${{ github.actor }}'
+            });
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+              description: 'Deployment started'
+            });
+            core.exportVariable('DEPLOYMENT_ID', deployment.data.id);
+
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/backend
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ steps.version.outputs.VERSION }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/web
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ steps.version.outputs.VERSION }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+
+      - name: Set up Helm
+        uses: helm/kind-action@v1.5.0
+        with:
+          install_only: true
+
+      - name: Update Kubernetes deployment image tags
+        run: |
+          sed -i 's|image: .*backend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ steps.version.outputs.VERSION }}|g' ${{ env.HELM_CHART_PATH }}/values-staging.yaml && sed -i 's|image: .*frontend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ steps.version.outputs.VERSION }}|g' ${{ env.HELM_CHART_PATH }}/values-staging.yaml
+
+      - name: Deploy to Kubernetes (Canary)
+        run: helm upgrade --install ${{ env.HELM_RELEASE_NAME }}-canary ${{ env.HELM_CHART_PATH }} --namespace ${{ env.KUBE_NAMESPACE }} --create-namespace --values ${{ env.HELM_CHART_PATH }}/values-staging.yaml --set imageTag=${{ steps.version.outputs.VERSION }} --set deployment.strategy=canary --set deployment.canary.weight=20 --atomic --timeout 10m
+
+      - name: Verify canary deployment
+        run: |
+          kubectl rollout status deployment/ims-api-gateway-canary -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service-canary -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service-canary -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service-canary -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service-canary -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+
+      - name: Run smoke tests against canary
+        run: cd src/test && npm ci && npm run test:smoke:staging:canary
+
+      - name: Promote canary to full deployment
+        run: helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} --namespace ${{ env.KUBE_NAMESPACE }} --values ${{ env.HELM_CHART_PATH }}/values-staging.yaml --set imageTag=${{ steps.version.outputs.VERSION }} --atomic --timeout 10m
+
+      - name: Verify full deployment
+        run: |
+          kubectl rollout status deployment/ims-api-gateway -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+
+      - name: Update deployment status to success
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: process.env.DEPLOYMENT_ID,
+              state: 'success',
+              environment_url: 'https://staging.ims.example.com',
+              description: 'Deployment completed successfully'
+            });
+
+      - name: Update deployment status to failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: process.env.DEPLOYMENT_ID,
+              state: 'failure',
+              description: 'Deployment failed'
+            });
+
+      - name: Send deployment notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ Successfully deployed IMS to staging environment. Version: ${{ steps.version.outputs.VERSION }}. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send deployment failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ Failed to deploy IMS to staging environment. Version: ${{ steps.version.outputs.VERSION }}. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  test:
+    name: Run Comprehensive Tests
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+
+      - name: Run integration tests
+        run: cd src/test && npm ci && npm run test:integration:staging
+
+      - name: Run E2E tests
+        run: cd src/test/e2e && npm ci && npm run test:e2e:staging
+
+      - name: Run security tests
+        run: cd src/test/security && npm ci && npm run test:security:staging
+
+      - name: Verify system health
+        run: curl -f https://staging.ims.example.com/actuator/health
+
+      - name: Send test success notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ All tests passed for IMS staging deployment. Version: ${{ needs.deploy.outputs.version }}."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send test failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ Tests failed for IMS staging deployment. Version: ${{ needs.deploy.outputs.version }}. Manual intervention required."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  performance-test:
+    name: Run Performance Tests
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run Gatling performance tests
+        run: |
+          cd src/test/performance/gatling && ./gradlew gatlingRun-LocateApprovalSimulation gatlingRun-ShortSellValidationSimulation gatlingRun-PositionCalculationSimulation gatlingRun-InventoryCalculationSimulation gatlingRun-DataIngestionSimulation gatlingRun-ApiLoadSimulation
+
+      - name: Run k6 load tests
+        run: cd src/test/performance/k6 && npm ci && npm run test:load:staging
+
+      - name: Analyze performance results
+        run: cd src/test/performance && npm ci && npm run analyze:staging
+
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: src/test/performance/results
+
+      - name: Verify performance thresholds
+        run: cd src/test/performance && npm run verify:thresholds:staging
+
+      - name: Send performance test success notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ Performance tests passed for IMS staging deployment. Version: ${{ needs.deploy.outputs.version }}. All metrics within acceptable thresholds."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send performance test failure notification
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"⚠️ Performance tests failed for IMS staging deployment. Version: ${{ needs.deploy.outputs.version }}. Some metrics exceeded thresholds. See results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
