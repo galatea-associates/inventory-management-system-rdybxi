@@ -1,0 +1,227 @@
+# ==========================================================
+# Test Configuration for Calculation Service
+# This overrides application.yml settings for the test environment
+# ==========================================================
+
+spring:
+  # Database configuration for tests using H2 in-memory database
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 5
+      connection-timeout: 5000
+      max-lifetime: 1800000
+      idle-timeout: 600000
+      description: HikariCP connection pool configuration for testing
+
+  # JPA configuration for testing with auto schema creation
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      description: Automatically create and drop the database schema for each test
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        description: Format SQL in logs for better readability during testing
+        jdbc.batch_size: 10
+        order_inserts: true
+        order_updates: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  # Kafka configuration for testing with embedded broker
+  kafka:
+    description: Kafka messaging configuration for testing
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    consumer:
+      group-id: calculation-service-test
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 10
+      description: Kafka consumer configuration for testing
+    producer:
+      acks: all
+      retries: 1
+      batch-size: 16384
+      buffer-memory: 33554432
+      linger-ms: 0
+      compression-type: none
+      description: Kafka producer configuration for testing
+    topics:
+      position-event: position-events-test
+      inventory-event: inventory-events-test
+      market-data-event: market-data-events-test
+      workflow-event: workflow-events-test
+      description: Kafka topic names for test environment
+    listener:
+      concurrency: 1
+      description: Kafka listener concurrency for test environment
+
+  # Hazelcast configuration for testing
+  hazelcast:
+    description: Hazelcast distributed cache configuration for testing
+    cluster-name: ims-calculation-cluster-test
+    instance-name: calculation-service-test
+    multicast-enabled: false
+    tcp-ip-members: localhost
+    port: 5701
+    backup-count: 0
+    position-map-ttl-seconds: 300
+    inventory-map-ttl-seconds: 300
+    rule-map-ttl-seconds: 300
+    max-size-per-node: 1000
+
+  # Security configuration for testing
+  security:
+    description: Security configuration for testing
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/ims-test
+          audience: ims-api-test
+          description: JWT authentication configuration for testing
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+      allow-credentials: true
+      max-age: 3600
+      description: CORS configuration for testing
+
+  # Cache configuration for testing
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=5m
+      description: Local cache configuration for testing
+
+# Server configuration for testing
+server:
+  description: Server configuration for testing
+  port: 0
+  tomcat:
+    max-threads: 10
+    min-spare-threads: 2
+    max-connections: 100
+    connection-timeout: 5000
+    accept-count: 10
+    description: Tomcat server configuration for testing
+
+# Management endpoints configuration for testing
+management:
+  description: Spring Boot Actuator configuration for testing
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+        description: Expose all actuator endpoints in testing for verification
+  endpoint:
+    health:
+      show-details: always
+      description: Always show health details in testing
+
+# Logging configuration for testing
+logging:
+  description: Logging configuration for testing
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    description: Verbose logging levels for test environment
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    description: Simple log pattern for console output in testing
+
+# Calculation service specific configuration for testing
+calculation:
+  description: Calculation service specific configuration for testing
+  position:
+    cache-enabled: true
+    cache-ttl-seconds: 60
+    description: Position calculation configuration for testing
+  inventory:
+    cache-enabled: true
+    cache-ttl-seconds: 60
+    description: Inventory calculation configuration for testing
+  limit:
+    cache-enabled: true
+    cache-ttl-seconds: 60
+    description: Limit calculation configuration for testing
+  rule:
+    cache-enabled: true
+    cache-ttl-seconds: 60
+    description: Rule engine configuration for testing
+  performance:
+    thread-pool-size: 2
+    queue-capacity: 10
+    description: Performance tuning configuration for testing
+
+# Resilience4j circuit breaker and retry configuration for testing
+resilience4j:
+  description: Resilience4j circuit breaker configuration for testing
+  circuitbreaker:
+    instances:
+      positionCalculation:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: '5s'
+        failureRateThreshold: 50
+        description: Circuit breaker for position calculation in testing
+      inventoryCalculation:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: '5s'
+        failureRateThreshold: 50
+        description: Circuit breaker for inventory calculation in testing
+  retry:
+    instances:
+      positionCalculation:
+        maxAttempts: 2
+        waitDuration: '100ms'
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        description: Retry configuration for position calculation in testing
+      inventoryCalculation:
+        maxAttempts: 2
+        waitDuration: '100ms'
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        description: Retry configuration for inventory calculation in testing
+
+# SpringDoc OpenAPI documentation configuration for testing
+springdoc:
+  description: SpringDoc OpenAPI documentation configuration for testing
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    description: Enable Swagger UI in testing for API verification
+  api-docs:
+    path: /api-docs
+    enabled: true
+    description: Enable API docs in testing for documentation verification
+  packages-to-scan: com.ims.calculation.controller
+  paths-to-match: /api/**
+
+# Embedded Kafka configuration for testing
+embedded:
+  kafka:
+    description: Embedded Kafka configuration for testing
+    enabled: true
+    topics:
+      - position-events-test
+      - inventory-events-test
+      - market-data-events-test
+      - workflow-events-test
