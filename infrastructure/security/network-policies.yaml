@@ -1,0 +1,917 @@
+# Default deny-all ingress policy for the IMS namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: ims
+  labels:
+    app: ims
+    component: security
+    part-of: inventory-management-system
+  annotations:
+    description: "Default deny-all ingress policy for the IMS namespace"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Default deny-all egress policy for the IMS namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: ims
+  labels:
+    app: ims
+    component: security
+    part-of: inventory-management-system
+  annotations:
+    description: "Default deny-all egress policy for the IMS namespace"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+---
+# Network policy for the API Gateway service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the API Gateway service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: api-gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: istio-system
+          podSelector:
+            matchLabels:
+              app: istio-ingressgateway
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8080
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: auth-service
+      ports:
+        - port: 8084
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: data-ingestion-service
+      ports:
+        - port: 8081
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: workflow-service
+      ports:
+        - port: 8083
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: websocket-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: monitoring-service
+      ports:
+        - port: 8086
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for the Auth service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-service-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the Auth service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: auth-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8084
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8084
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for the Data Ingestion service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: data-ingestion-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the Data Ingestion service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: data-ingestion-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8081
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8081
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: timescaledb
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: messaging
+          podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - port: 9092
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 80
+          protocol: TCP
+---
+# Network policy for the Calculation service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calculation-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the Calculation service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: calculation-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8082
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: workflow-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: data-ingestion-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8082
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: cassandra
+      ports:
+        - port: 9042
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: cache
+          podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: messaging
+          podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - port: 9092
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: websocket-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for the Workflow service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: workflow-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the Workflow service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: workflow-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8083
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8083
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8083
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+          podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: messaging
+          podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - port: 9092
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: websocket-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for the WebSocket service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: websocket-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the WebSocket service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: websocket-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: istio-system
+          podSelector:
+            matchLabels:
+              app: istio-ingressgateway
+      ports:
+        - port: 8085
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8085
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: workflow-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8085
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: messaging
+          podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - port: 9092
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for the Monitoring service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-network-policy
+  namespace: ims
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for the Monitoring service"
+spec:
+  podSelector:
+    matchLabels:
+      app: ims
+      component: monitoring-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: api-gateway
+      ports:
+        - port: 8086
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8086
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: data-ingestion-service
+      ports:
+        - port: 8081
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 8082
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: workflow-service
+      ports:
+        - port: 8083
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: auth-service
+      ports:
+        - port: 8084
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ims
+              component: websocket-service
+      ports:
+        - port: 8085
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for database access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-network-policy
+  namespace: database
+  labels:
+    app: ims
+    component: database
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for database access"
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ims
+          podSelector:
+            matchLabels:
+              app: ims
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+# Network policy for Kafka message broker access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-network-policy
+  namespace: messaging
+  labels:
+    app: ims
+    component: messaging
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for Kafka message broker access"
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ims
+          podSelector:
+            matchLabels:
+              app: ims
+      ports:
+        - port: 9092
+          protocol: TCP
+---
+# Network policy for Redis cache access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-network-policy
+  namespace: cache
+  labels:
+    app: ims
+    component: cache
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for Redis cache access"
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ims
+          podSelector:
+            matchLabels:
+              app: ims
+              component: calculation-service
+      ports:
+        - port: 6379
+          protocol: TCP
+---
+# Network policy for HashiCorp Vault access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-network-policy
+  namespace: vault
+  labels:
+    app: ims
+    component: security
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for HashiCorp Vault access"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ims
+          podSelector:
+            matchLabels:
+              app: ims
+      ports:
+        - port: 8200
+          protocol: TCP
+---
+# Network policy for DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dns-network-policy
+  namespace: kube-system
+  labels:
+    app: ims
+    component: system
+    part-of: inventory-management-system
+  annotations:
+    description: "Network policy for DNS resolution"
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: kube-dns
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ims
+          podSelector:
+            matchLabels:
+              app: ims
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
