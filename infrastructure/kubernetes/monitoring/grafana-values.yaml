@@ -1,0 +1,427 @@
+# Configuration values for the Grafana Helm chart deployment in the Inventory Management System.
+# This file defines settings for Grafana server, dashboards, datasources, plugins, and other configurations
+# to enable comprehensive visualization of system metrics, performance data, and business KPIs.
+
+# Requirements Addressed:
+# - System Monitoring (Technical Specifications/2.1.5/System Features): Implements F-503 System Monitoring with comprehensive visualization capabilities for metrics
+# - Monitoring Infrastructure (Technical Specifications/6.5.1/Monitoring Infrastructure): Configures Grafana as the visualization layer for metrics collection architecture
+# - Performance Metrics Framework (Technical Specifications/6.5.2/Performance Metrics Framework): Enables visualization of system, application, database, and integration metrics
+# - Monitoring Dashboard Layouts (Technical Specifications/6.5.4/Monitoring Dashboard Layouts): Provides configuration for executive, technical operations, and business operations dashboards
+
+# Import GrafanaDashboard objects from internal JSON files
+# grafana/grafana Helm chart version: 9.5.2
+# Import system overview dashboard configuration
+# Import data ingestion dashboard configuration
+# Import calculation performance dashboard configuration
+# Import API metrics dashboard configuration
+# Import inventory metrics dashboard configuration
+
+grafana:
+  enabled: true
+  image:
+    repository: grafana/grafana
+    tag: "9.5.2"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  podLabels:
+    app.kubernetes.io/component: "monitoring"
+    app.kubernetes.io/part-of: "ims"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  adminUser: "admin"
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+  securityContext:
+    fsGroup: 472
+    runAsGroup: 472
+    runAsNonRoot: true
+    runAsUser: 472
+  nodeSelector:
+    role: "monitoring"
+  tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: "app.kubernetes.io/name"
+                  operator: "In"
+                  values: ["grafana"]
+            topologyKey: "kubernetes.io/hostname"
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 30
+    timeoutSeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+    periodSeconds: 15
+    successThreshold: 1
+    failureThreshold: 3
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3000"
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    hosts:
+      - "grafana.ims.example.com"
+    tls:
+      - secretName: "grafana-tls"
+        hosts:
+          - "grafana.ims.example.com"
+  persistence:
+    enabled: true
+    storageClassName: "standard-rwo"
+    accessModes: ["ReadWriteOnce"]
+    size: "10Gi"
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: "Prometheus"
+          type: "prometheus"
+          url: "http://prometheus-server"
+          access: "proxy"
+          isDefault: true
+          jsonData:
+            timeInterval: "15s"
+            queryTimeout: "60s"
+            httpMethod: "POST"
+        - name: "Loki"
+          type: "loki"
+          url: "http://loki-gateway"
+          access: "proxy"
+        - name: "Tempo"
+          type: "tempo"
+          url: "http://tempo-query-frontend:3100"
+          access: "proxy"
+          jsonData:
+            httpMethod: "GET"
+            serviceMap:
+              datasourceUid: "prometheus"
+            nodeGraph:
+              enabled: true
+            lokiSearch:
+              datasourceUid: "loki"
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "default"
+          orgId: 1
+          folder: ""
+          type: "file"
+          disableDeletion: false
+          editable: true
+          options:
+            path: "/var/lib/grafana/dashboards/default"
+        - name: "ims"
+          orgId: 1
+          folder: "IMS"
+          type: "file"
+          disableDeletion: false
+          editable: true
+          options:
+            path: "/var/lib/grafana/dashboards/ims"
+        - name: "system"
+          orgId: 1
+          folder: "System"
+          type: "file"
+          disableDeletion: false
+          editable: true
+          options:
+            path: "/var/lib/grafana/dashboards/system"
+  dashboards:
+    default:
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: "Prometheus"
+      node-exporter:
+        gnetId: 1860
+        revision: 21
+        datasource: "Prometheus"
+      kafka:
+        gnetId: 7589
+        revision: 5
+        datasource: "Prometheus"
+      postgresql:
+        gnetId: 9628
+        revision: 7
+        datasource: "Prometheus"
+      redis:
+        gnetId: 763
+        revision: 4
+        datasource: "Prometheus"
+      jvm:
+        gnetId: 4701
+        revision: 4
+        datasource: "Prometheus"
+      cassandra:
+        gnetId: 14842
+        revision: 1
+        datasource: "Prometheus"
+    ims:
+      system-overview:
+        file: "dashboards/system-overview.json"
+      data-ingestion:
+        file: "dashboards/data-ingestion.json"
+      calculation-performance:
+        file: "dashboards/calculation-performance.json"
+      api-metrics:
+        file: "dashboards/api-metrics.json"
+      inventory-metrics:
+        file: "dashboards/inventory-metrics.json"
+      locate-workflow:
+        file: "dashboards/locate-workflow.json"
+      short-sell-workflow:
+        file: "dashboards/short-sell-workflow.json"
+      exception-monitoring:
+        file: "dashboards/exception-monitoring.json"
+  sidecar:
+    dashboards:
+      enabled: true
+      label: "grafana_dashboard"
+      labelValue: "1"
+      searchNamespace: "ALL"
+    datasources:
+      enabled: true
+      label: "grafana_datasource"
+      labelValue: "1"
+      searchNamespace: "ALL"
+  plugins:
+    - grafana-piechart-panel
+    - grafana-worldmap-panel
+    - grafana-clock-panel
+    - grafana-polystat-panel
+    - natel-discrete-panel
+    - vonage-status-panel
+    - jdbranham-diagram-panel
+    - natel-plotly-panel
+    - michaeldmoore-multistat-panel
+  env:
+    GF_SECURITY_ALLOW_EMBEDDING: "true"
+    GF_AUTH_ANONYMOUS_ENABLED: "false"
+    GF_FEATURE_TOGGLES_ENABLE: "traceqlEditor"
+    GF_DASHBOARDS_MIN_REFRESH_INTERVAL: "5s"
+    GF_USERS_ALLOW_SIGN_UP: "false"
+    GF_USERS_AUTO_ASSIGN_ORG: "true"
+    GF_USERS_AUTO_ASSIGN_ORG_ROLE: "Editor"
+    GF_SMTP_ENABLED: "true"
+    GF_SMTP_HOST: "${SMTP_HOST}:${SMTP_PORT}"
+    GF_SMTP_USER: "${SMTP_USER}"
+    GF_SMTP_PASSWORD: "${SMTP_PASSWORD}"
+    GF_SMTP_FROM_ADDRESS: "grafana@ims.example.com"
+    GF_SMTP_FROM_NAME: "IMS Grafana"
+    GF_ALERTING_ENABLED: "true"
+    GF_UNIFIED_ALERTING_ENABLED: "true"
+    GF_ANALYTICS_REPORTING_ENABLED: "false"
+    GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    GF_LOG_LEVEL: "info"
+  grafana.ini:
+    server:
+      root_url: "https://grafana.ims.example.com"
+    auth.ldap:
+      enabled: "true"
+      config_file: "/etc/grafana/ldap.toml"
+      allow_sign_up: "true"
+    auth:
+      disable_login_form: "false"
+      oauth_auto_login: "false"
+    security:
+      cookie_secure: "true"
+      cookie_samesite: "lax"
+      disable_initial_admin_creation: "false"
+    users:
+      allow_sign_up: "false"
+      auto_assign_org: "true"
+      auto_assign_org_role: "Editor"
+    dashboards:
+      versions_to_keep: "20"
+      min_refresh_interval: "5s"
+    alerting:
+      enabled: "true"
+      execute_alerts: "true"
+      evaluation_timeout_seconds: 30
+      notification_timeout_seconds: 30
+      max_attempts: 3
+    unified_alerting:
+      enabled: "true"
+    analytics:
+      reporting_enabled: "false"
+      check_for_updates: "false"
+    metrics:
+      enabled: "true"
+      basic_auth_username: "metrics"
+      basic_auth_password: "${METRICS_PASSWORD}"
+    log:
+      mode: "console"
+      level: "info"
+    auth.proxy:
+      enabled: "false"
+    auth.jwt:
+      enabled: "false"
+    auth.generic_oauth:
+      enabled: "false"
+  ldap:
+    enabled: True
+    existingSecret: "grafana-ldap-config"
+  serviceAccount:
+    create: True
+    annotations: {}
+    name: "grafana-ims"
+  serviceMonitor:
+    enabled: True
+    interval: "15s"
+    scrapeTimeout: "10s"
+    labels:
+      app: "ims"
+      prometheus: "ims"
+  notifiers:
+    notifiers.yaml:
+      notifiers:
+        - name: "Email Alerts"
+          type: "email"
+          uid: "email-alerts"
+          org_id: 1
+          is_default: True
+          settings:
+            addresses: "alerts@ims.example.com"
+        - name: "Slack Critical"
+          type: "slack"
+          uid: "slack-critical"
+          org_id: 1
+          is_default: False
+          settings:
+            url: "${SLACK_WEBHOOK_URL}"
+            recipient: "#alerts-critical"
+            mentionChannel: "here"
+            token: "${SLACK_TOKEN}"
+            uploadImage: True
+        - name: "Slack High"
+          type: "slack"
+          uid: "slack-high"
+          org_id: 1
+          is_default: False
+          settings:
+            url: "${SLACK_WEBHOOK_URL}"
+            recipient: "#alerts-high"
+            mentionChannel: "here"
+            token: "${SLACK_TOKEN}"
+            uploadImage: True
+        - name: "PagerDuty"
+          type: "pagerduty"
+          uid: "pagerduty"
+          org_id: 1
+          is_default: False
+          settings:
+            integrationKey: "${PAGERDUTY_INTEGRATION_KEY}"
+  alerting:
+    enabled: True
+    rules:
+      system-alerts.yaml:
+        groups:
+          - name: "system"
+            rules:
+              - alert: "HighCPUUsage"
+                expr: "ims_system_cpu_utilization_percent > 80"
+                for: "5m"
+                labels:
+                  severity: "high"
+                annotations:
+                  summary: "High CPU usage detected"
+                  description: "CPU usage has been above 80% for 5 minutes"
+              - alert: "HighMemoryUsage"
+                expr: "ims_system_memory_utilization_percent > 85"
+                for: "5m"
+                labels:
+                  severity: "high"
+                annotations:
+                  summary: "High memory usage detected"
+                  description: "Memory usage has been above 85% for 5 minutes"
+              - alert: "HighDiskUsage"
+                expr: "ims_system_disk_utilization_percent > 85"
+                for: "10m"
+                labels:
+                  severity: "high"
+                annotations:
+                  summary: "High disk usage detected"
+                  description: "Disk usage has been above 85% for 10 minutes"
+      application-alerts.yaml:
+        groups:
+          - name: "application"
+            rules:
+              - alert: "HighErrorRate"
+                expr: "ims_application_error_rate_percent > 1"
+                for: "5m"
+                labels:
+                  severity: "high"
+                annotations:
+                  summary: "High error rate detected"
+                  description: "Application error rate has been above 1% for 5 minutes"
+              - alert: "SlowResponseTime"
+                expr: "ims_application_response_time_ms > 500"
+                for: "5m"
+                labels:
+                  severity: "medium"
+                annotations:
+                  summary: "Slow response time detected"
+                  description: "Application response time has been above 500ms for 5 minutes"
+      business-alerts.yaml:
+        groups:
+          - name: "business"
+            rules:
+              - alert: "SlowEventProcessing"
+                expr: "ims_business_event_processing_latency_ms > 200"
+                for: "5m"
+                labels:
+                  severity: "high"
+                annotations:
+                  summary: "Slow event processing detected"
+                  description: "Event processing latency has been above 200ms for 5 minutes"
+              - alert: "SlowShortSellValidation"
+                expr: "ims_business_short_sell_validation_seconds > 0.15"
+                for: "5m"
+                labels:
+                  severity: "critical"
+                annotations:
+                  summary: "Short sell validation SLA breach"
+                  description: "Short sell validation time has been above 150ms for 5 minutes"
+              - alert: "LowInventoryAvailability"
+                expr: "ims_inventory_availability_percent < 10"
+                for: "10m"
+                labels:
+                  severity: "medium"
+                annotations:
+                  summary: "Low inventory availability"
+                  description: "Inventory availability has been below 10% for 10 minutes"
