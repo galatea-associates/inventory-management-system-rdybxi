@@ -1,0 +1,205 @@
+# Development environment configuration for Data Ingestion Service
+spring:
+  profiles:
+    active: dev
+  
+  # Database Configuration - Development specific
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ims_ingestion_dev
+    username: ims_dev
+    password: ims_dev_password
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  
+  # JPA Configuration - Development specific  
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto update schema for dev
+    show-sql: true      # Show SQL for debugging
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Kafka Configuration - Development specific
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      properties:
+        linger.ms: 5
+    consumer:
+      group-id: data-ingestion-service-dev
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 3
+  
+  # Security Configuration - Development specific  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/ims
+          audience: ims-api-dev
+  
+  # CORS Configuration - Development specific
+  cors:
+    allowed-origins: http://localhost:3000
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+# Server Configuration - Development specific
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/ingestion
+  tomcat:
+    max-threads: 50
+    min-spare-threads: 10
+
+# Actuator Management Configuration - Development specific
+management:
+  endpoint:
+    health:
+      show-details: always
+
+# Logging Configuration - Development specific
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG  # More verbose for our own code
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG  # Show SQL
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Show SQL parameters
+  file:
+    name: logs/data-ingestion-service-dev.log
+
+# External System Integration - Development specific (mock endpoints)
+external:
+  # Reuters Integration - Development
+  reuters:
+    api-url: http://localhost:8090/mock/reuters
+    api-key: dev-reuters-key
+    username: dev-reuters-user
+    password: dev-reuters-password
+    reference-data-batch-path: /data/dev/reuters/batch
+  
+  # Bloomberg Integration - Development
+  bloomberg:
+    api-url: http://localhost:8090/mock/bloomberg
+    api-key: dev-bloomberg-key
+    username: dev-bloomberg-user
+    password: dev-bloomberg-password
+    reference-data-batch-path: /data/dev/bloomberg/batch
+  
+  # MarkIT Integration - Development
+  markit:
+    api-url: http://localhost:8090/mock/markit
+    api-key: dev-markit-key
+    username: dev-markit-user
+    password: dev-markit-password
+    reference-data-batch-path: /data/dev/markit/batch
+  
+  # Ultumus Integration - Development
+  ultumus:
+    api-url: http://localhost:8090/mock/ultumus
+    api-key: dev-ultumus-key
+    username: dev-ultumus-user
+    password: dev-ultumus-password
+    reference-data-batch-path: /data/dev/ultumus/batch
+  
+  # RIMES Integration - Development
+  rimes:
+    api-url: http://localhost:8090/mock/rimes
+    api-key: dev-rimes-key
+    username: dev-rimes-user
+    password: dev-rimes-password
+    reference-data-batch-path: /data/dev/rimes/batch
+
+# Application-specific Configuration - Development specific
+app:
+  kafka:
+    topics:
+      market-data: market-data-dev
+      market-data-input: market-data-input-dev
+    group-id: data-ingestion-service-dev
+  
+  # Market Data Configuration - Development
+  market-data:
+    real-time:
+      enabled: true
+    batch-size: 500  # Smaller batch size for development
+    processing:
+      interval: 30000  # More frequent processing
+  
+  # Reference Data Configuration - Development
+  reference-data:
+    batch-directory: /data/dev/reference-data/batch
+    conflict-resolution:
+      enabled: true
+      priority-sources: REUTERS,BLOOMBERG,MARKIT
+  
+  # Trade Data Configuration - Development
+  trade-data:
+    batch-directory: /data/dev/trade-data/batch
+    processing:
+      interval: 30000  # More frequent processing
+  
+  # Contract Data Configuration - Development
+  contract-data:
+    batch-directory: /data/dev/contract-data/batch
+    processing:
+      interval: 30000  # More frequent processing
+
+# Data Ingestion Configuration - Development specific
+ingestion:
+  batch:
+    max-batch-size: 1000  # Smaller batch size for development
+    processing-threads: 3  # Fewer threads for development
+    retry-attempts: 3
+    retry-delay-ms: 1000
+  validation:
+    enabled: true
+    strict-mode: false  # Less strict validation for development
+  scheduling:
+    reference-data-update: "0 0 1 * * SUN"  # Weekly on Sunday at 01:00 AM
+    market-data-cleanup: "0 0 0 * * *"      # Daily at midnight
+    health-check: "0 */5 * * * *"           # Every 5 minutes
+
+# Resilience4j Configuration - Development specific
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCalls:
+        slidingWindowSize: 10  # Smaller window for development
+        minimumNumberOfCalls: 5  # Fewer calls for development
+        waitDurationInOpenState: "10s"  # Shorter wait for development
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      externalServiceCalls:
+        maxAttempts: 3
+        waitDuration: "1s"
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalServiceCalls:
+        limitForPeriod: 100  # Lower limit for development
+        limitRefreshPeriod: "1s"
+        timeoutDuration: "500ms"
+
+# API Documentation Configuration - Development specific
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true  # Explicitly enabled for development
