@@ -1,0 +1,256 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ims-gateway-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: gateway
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the IMS Gateway"
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  rules:
+    - from:
+        - source:
+            ipBlocks: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+            notIpBlocks: ["10.0.0.0/24"]
+      to:
+        - operation:
+            hosts: ["*.ims.example.com", "api.ims.example.com", "api-americas.ims.example.com", "api-europe.ims.example.com", "api-apac.ims.example.com", "ws.ims.example.com", "ws-americas.ims.example.com", "ws-europe.ims.example.com", "ws-apac.ims.example.com"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: api-gateway-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the API Gateway service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: api-gateway
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the Auth service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: auth-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/api-gateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/v1/auth/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: workflow-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the Workflow service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: workflow-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/api-gateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/v1/locate/*", "/api/v1/workflow/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/calculation-service-account"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/api/v1/orders/validate"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: calculation-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the Calculation service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: calculation-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/api-gateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/v1/calculation/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/workflow-service-account"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/api/v1/calculation/inventory/*", "/api/v1/calculation/limits/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/data-ingestion-service-account"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/api/v1/calculation/trigger"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: data-ingestion-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the Data Ingestion service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: data-ingestion-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/api-gateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/v1/ingestion/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: websocket-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the WebSocket service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: websocket-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/ws/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/calculation-service-account", "cluster.local/ns/ims/sa/workflow-service-account"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/api/v1/notifications/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: monitoring-service-authz
+  namespace: ims
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+  annotations:
+    description: "Authorization policy for the Monitoring service"
+spec:
+  selector:
+    matchLabels:
+      app: ims
+      component: monitoring-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/ims/sa/api-gateway-service-account"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/api/v1/metrics/*", "/api/v1/health/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/monitoring/sa/prometheus-service-account"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/actuator/prometheus", "/actuator/health", "/actuator/info"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-authz
+  namespace: ims
+  labels:
+    app: ims
+    part-of: inventory-management-system
+  annotations:
+    description: "Default deny-all policy for the IMS namespace"
+spec:
+  action: DENY
+  rules:
+    - from:
+        - source:
+            notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account", "cluster.local/ns/ims/*", "cluster.local/ns/monitoring/sa/prometheus-service-account"]
