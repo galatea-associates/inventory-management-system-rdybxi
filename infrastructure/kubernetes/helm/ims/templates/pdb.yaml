@@ -1,0 +1,142 @@
+{{- if and .Values.podDisruptionBudget.dataIngestion.enabled .Values.deployments.dataIngestion.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.dataIngestion.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: data-ingestion-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for Data Ingestion Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.dataIngestion.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: data-ingestion-service
+      release: {{ .Release.Name }}
+{{- end }}
+
+{{- if and .Values.podDisruptionBudget.calculation.enabled .Values.deployments.calculation.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.calculation.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: calculation-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for Calculation Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.calculation.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: calculation-service
+      release: {{ .Release.Name }}
+{{- end }}
+
+{{- if and .Values.podDisruptionBudget.workflow.enabled .Values.deployments.workflow.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.workflow.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: workflow-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for Workflow Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.workflow.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: workflow-service
+      release: {{ .Release.Name }}
+{{- end }}
+
+{{- if and .Values.podDisruptionBudget.apiGateway.enabled .Values.deployments.apiGateway.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.apiGateway.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: api-gateway
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for API Gateway Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.apiGateway.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: api-gateway
+      release: {{ .Release.Name }}
+{{- end }}
+
+{{- if and .Values.podDisruptionBudget.websocket.enabled .Values.deployments.websocket.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.websocket.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: websocket-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for WebSocket Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.websocket.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: websocket-service
+      release: {{ .Release.Name }}
+{{- end }}
+
+{{- if and .Values.podDisruptionBudget.auth.enabled .Values.deployments.auth.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.deployments.auth.name }}-pdb
+  labels:
+    app: {{ template "ims.name" . }}
+    component: auth-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "PDB for Auth Service"
+    helm.sh/chart: {{ template "ims.chart" . }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.auth.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ template "ims.name" . }}
+      component: auth-service
+      release: {{ .Release.Name }}
+{{- end }}
