@@ -1,0 +1,280 @@
+# Istio DestinationRule configuration for the Inventory Management System (IMS)
+# This file defines traffic policies for services within the service mesh, including
+# load balancing, connection pool settings, outlier detection, and subset definitions.
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: api-gateway-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for API Gateway service"
+spec:
+  host: api-gateway-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: websocket-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: websocket
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for WebSocket service"
+spec:
+  host: websocket-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: session-id
+          ttl: 24h
+    connectionPool:
+      tcp:
+        maxConnections: 2000
+        connectTimeout: 5ms
+        tcpKeepalive:
+          time: 7200s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 2000
+        maxRequestsPerConnection: 0
+        maxRetries: 1
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: workflow-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: workflow
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for Workflow service with specialized short-sell subset"
+spec:
+  host: workflow-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: short-sell
+      labels:
+        version: v1
+        function: short-sell
+      trafficPolicy:
+        connectionPool:
+          tcp:
+            maxConnections: 2000
+            connectTimeout: 1ms
+          http:
+            http1MaxPendingRequests: 2000
+            http2MaxRequests: 2000
+            maxRequestsPerConnection: 10
+            maxRetries: 0
+        loadBalancer:
+          simple: LEAST_REQUEST
+        outlierDetection:
+          consecutive5xxErrors: 3
+          interval: 10s
+          baseEjectionTime: 30s
+          maxEjectionPercent: 100
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: data-ingestion-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: data-ingestion
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for Data Ingestion service"
+spec:
+  host: data-ingestion-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: calculation-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: calculation
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for Calculation service"
+spec:
+  host: calculation-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: auth-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: auth
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for Auth service"
+spec:
+  host: auth-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: monitoring-destinationrule
+  namespace: ims
+  labels:
+    app: ims
+    component: monitoring
+    part-of: inventory-management-system
+  annotations:
+    description: "Istio DestinationRule for Monitoring service"
+spec:
+  host: monitoring-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 500
+        connectTimeout: 5ms
+      http:
+        http1MaxPendingRequests: 500
+        http2MaxRequests: 500
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
