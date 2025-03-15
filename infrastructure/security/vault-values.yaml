@@ -1,0 +1,432 @@
+# HashiCorp Vault Helm chart values configuration for IMS
+# Helm version: v3
+# HashiCorp Vault version: 0.23.0
+
+global:
+  # Global Vault settings
+  enabled: true
+  tlsDisable: false
+  image:
+    repository: hashicorp/vault
+    tag: 1.12.1
+    pullPolicy: IfNotPresent
+
+# Server configuration
+server:
+  # Main Vault server configuration settings
+  image:
+    repository: hashicorp/vault
+    tag: 1.12.1
+    pullPolicy: IfNotPresent
+  
+  updateStrategyType: RollingUpdate
+  
+  # Resource allocation for Vault server pods
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 2000m
+  
+  # High availability configuration using Raft storage
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config:
+        storage:
+          raft:
+            retryJoin:
+              - leader_api_addr: https://vault-0.vault-internal:8200
+                leader_ca_cert_file: /vault/userconfig/vault-tls/ca.crt
+              - leader_api_addr: https://vault-1.vault-internal:8200
+                leader_ca_cert_file: /vault/userconfig/vault-tls/ca.crt
+              - leader_api_addr: https://vault-2.vault-internal:8200
+                leader_ca_cert_file: /vault/userconfig/vault-tls/ca.crt
+  
+  # Persistent storage for Vault data
+  dataStorage:
+    enabled: true
+    size: 50Gi
+    storageClass: premium-rwo
+    accessMode: ReadWriteOnce
+  
+  # Separate storage for audit logs
+  auditStorage:
+    enabled: true
+    size: 20Gi
+    storageClass: premium-rwo
+    accessMode: ReadWriteOnce
+  
+  # Service account for Vault pods
+  serviceAccount:
+    create: true
+    name: vault
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ims-${ENVIRONMENT}-vault-role"
+  
+  # Additional environment variables from secrets
+  extraSecretEnvironmentVars:
+    - envName: AWS_ACCESS_KEY_ID
+      secretName: vault-aws-creds
+      secretKey: access-key
+    - envName: AWS_SECRET_ACCESS_KEY
+      secretName: vault-aws-creds
+      secretKey: secret-key
+  
+  # Additional environment variables
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/userconfig/vault-tls/ca.crt
+    VAULT_TLSCERT: /vault/userconfig/vault-tls/tls.crt
+    VAULT_TLSKEY: /vault/userconfig/vault-tls/tls.key
+  
+  # Volumes for TLS certificates and configuration
+  volumes:
+    - name: vault-tls
+      secret:
+        secretName: vault-tls
+    - name: vault-config
+      configMap:
+        name: vault-config
+  
+  volumeMounts:
+    - name: vault-tls
+      mountPath: /vault/userconfig/vault-tls
+    - name: vault-config
+      mountPath: /vault/config
+  
+  # Additional labels for Vault pods
+  extraLabels:
+    app.kubernetes.io/part-of: ims
+    app.kubernetes.io/component: vault
+  
+  # Additional annotations for Vault pods
+  extraAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8200"
+    prometheus.io/path: "/v1/sys/metrics"
+  
+  # Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true&sealedok=true
+    failureThreshold: 3
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+  
+  # Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true
+    failureThreshold: 3
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+  
+  # Pod anti-affinity for high availability
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - vault
+              - key: component
+                operator: In
+                values:
+                  - server
+          topologyKey: kubernetes.io/hostname
+  
+  # Priority class for Vault pods
+  priorityClassName: high-priority
+  
+  # Additional containers in the Vault pod
+  extraContainers:
+    - name: vault-exporter
+      image: prometheuscommunity/vault-exporter:0.1.2
+      args:
+        - --vault.server=https://127.0.0.1:8200
+        - --vault.insecure=false
+        - --web.listen-address=:9410
+      env:
+        - name: VAULT_SKIP_VERIFY
+          value: "false"
+      ports:
+        - containerPort: 9410
+          name: metrics
+      resources:
+        requests:
+          memory: 64Mi
+          cpu: 50m
+        limits:
+          memory: 128Mi
+          cpu: 100m
+  
+  # Service configuration
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8200
+    targetPort: 8200
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8200"
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: vault.ims.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: vault-tls
+        hosts:
+          - vault.ims.example.com
+  
+  # Vault server configuration
+  config:
+    listener:
+      tcp:
+        address: "[::]:8200"
+        tls_cert_file: /vault/userconfig/vault-tls/tls.crt
+        tls_key_file: /vault/userconfig/vault-tls/tls.key
+        tls_client_ca_file: /vault/userconfig/vault-tls/ca.crt
+    storage:
+      raft:
+        path: /vault/data
+        node_id: "${POD_NAME}"
+    seal:
+      awskms:
+        region: "${AWS_REGION}"
+        kms_key_id: "${KMS_KEY_ID}"
+    telemetry:
+      prometheus_retention_time: "30s"
+      disable_hostname: true
+    ui: true
+    api_addr: "https://${POD_IP}:8200"
+    cluster_addr: "https://${POD_IP}:8201"
+
+# Vault Agent Injector configuration
+injector:
+  # Configuration for the Vault Agent Injector
+  enabled: true
+  replicas: 2
+  
+  # Resource allocation for Injector
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  
+  logLevel: info
+  leaderElector:
+    enabled: true
+  
+  # Metrics for Injector
+  metrics:
+    enabled: true
+  
+  # Authentication path for Kubernetes
+  authPath: auth/kubernetes
+  failurePolicy: Fail
+  
+  # Namespace selection for injection
+  namespaceSelector:
+    matchLabels:
+      vault-injection: enabled
+  
+  # Annotations for the webhook
+  webhookAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+  
+  # Annotations for the pods
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+  
+  # Environment variables for the Injector
+  extraEnvironmentVars:
+    VAULT_ADDR: https://vault.ims.example.com
+    VAULT_SKIP_VERIFY: "false"
+  
+  # Pod anti-affinity for high availability
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - vault-agent-injector
+            topologyKey: kubernetes.io/hostname
+
+# UI configuration
+ui:
+  # Configuration for the Vault UI
+  enabled: true
+  serviceType: ClusterIP
+  serviceNodePort: null
+  externalPort: 8200
+  targetPort: 8200
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8200"
+
+# CSI Provider configuration
+csi:
+  # Configuration for the Vault CSI Provider
+  enabled: true
+  image:
+    repository: hashicorp/vault-csi-provider
+    tag: 1.2.1
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  daemonSet:
+    updateStrategy:
+      type: RollingUpdate
+  extraArgs:
+    - -v=5
+  debug: false
+
+# Auth Delegator configuration
+authDelegator:
+  # Configuration for the Vault Auth Delegator
+  enabled: true
+
+# Service account configuration
+serviceAccount:
+  # Service account configuration for Vault
+  create: true
+  name: vault
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ims-${ENVIRONMENT}-vault-role"
+
+# Pod security context
+podSecurityContext:
+  # Security context for Vault pods
+  runAsNonRoot: true
+  runAsUser: 100
+  fsGroup: 1000
+
+# Security context for containers
+securityContext:
+  # Security context for Vault containers
+  capabilities:
+    add:
+      - IPC_LOCK
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# Node selector for Vault pods
+nodeSelector: {}
+
+# Tolerations for Vault pods
+tolerations: []
+
+# Region-specific configurations
+regional_configuration:
+  # Region-specific configurations for Vault
+  regions:
+    - name: Americas
+      kmsKeyId: "arn:aws:kms:us-east-1:${AWS_ACCOUNT_ID}:key/${KMS_KEY_ID_AMERICAS}"
+      hostname: vault-americas.ims.example.com
+    - name: Europe
+      kmsKeyId: "arn:aws:kms:eu-west-1:${AWS_ACCOUNT_ID}:key/${KMS_KEY_ID_EUROPE}"
+      hostname: vault-europe.ims.example.com
+    - name: Asia-Pacific
+      kmsKeyId: "arn:aws:kms:ap-northeast-1:${AWS_ACCOUNT_ID}:key/${KMS_KEY_ID_APAC}"
+      hostname: vault-apac.ims.example.com
+
+# Security considerations
+security_considerations:
+  # Security considerations for Vault deployment
+  auto_unseal: AWS KMS-based auto-unseal for secure key management
+  tls_enforcement: TLS required for all communications
+  audit_logging: Enabled with separate storage volume
+  authentication_methods: Kubernetes service account-based authentication for services, OIDC for users
+
+# Monitoring configuration
+monitoring_configuration:
+  # Monitoring configuration for Vault
+  prometheus_metrics:
+    enabled: true
+    path: /v1/sys/metrics
+    interval: 10s
+  alerts:
+    vault_sealed:
+      severity: critical
+      description: Vault instance is sealed
+    vault_raft_leader_not_found:
+      severity: critical
+      description: No leader found in Vault Raft cluster
+    vault_high_error_rate:
+      severity: warning
+      description: High error rate for Vault operations
+      threshold: 5%
+
+# Backup configuration
+backup_configuration:
+  # Backup configuration for Vault
+  snapshot_interval: 24h
+  retention_period: 30d
+  storage_location: s3://ims-vault-backups-${AWS_ACCOUNT_ID}-${AWS_REGION}/${ENVIRONMENT}
+
+# Initialization configuration
+initialization:
+  # Initialization configuration for Vault
+  auto_init: true
+  key_shares: 5
+  key_threshold: 3
+  pgp_keys: keybase:user1,keybase:user2,keybase:user3,keybase:user4,keybase:user5
+
+# External Secrets Operator integration
+externalSecretsConfig:
+  # Configuration for External Secrets Operator integration with Vault
+  secretStore:
+    vault:
+      server: https://vault.ims.example.com
+      path: secret
+      version: v2
+      auth:
+        kubernetes:
+          mountPath: kubernetes
+          role: external-secrets
+          serviceAccountRef:
+            name: external-secrets
+      caBundle: "${CA_BUNDLE}"
+  serviceAccountName: external-secrets
+  namespaceSelector:
+    matchLabels:
+      external-secrets-allowed: "true"
