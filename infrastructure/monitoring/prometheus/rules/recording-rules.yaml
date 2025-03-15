@@ -1,0 +1,389 @@
+# Prometheus recording rules for the Inventory Management System (IMS)
+# Version: 1.0.0
+# 
+# These recording rules pre-compute commonly used and complex metrics to reduce 
+# the query load on Prometheus and improve dashboard performance.
+# 
+# The rules support monitoring of system health, performance metrics, and business KPIs
+# while enabling SLA tracking and efficient alerting.
+
+groups:
+  - name: system_metrics
+    interval: 30s
+    rules:
+      # Overall system health status (0 for down, 1 for up)
+      - record: ims_system_health_status
+        expr: min(up{job=~"ims-.*"}) by (instance)
+        labels:
+          category: system
+      
+      # System availability percentage over 30 days
+      - record: ims_system_availability_percent
+        expr: avg_over_time(ims_system_health_status[30d]) * 100
+        labels:
+          category: system
+      
+      # Service-level health status
+      - record: ims_service_health_status
+        expr: up{job=~"ims-.*"}
+        labels:
+          category: system
+      
+      # Dependency health status
+      - record: ims_dependency_health_status
+        expr: up{job=~"(kafka|postgresql|cassandra|redis|elasticsearch|hazelcast).*"}
+        labels:
+          category: system
+      
+      # System CPU utilization percentage
+      - record: ims_system_cpu_utilization_percent
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        labels:
+          category: system
+      
+      # System memory utilization percentage
+      - record: ims_system_memory_utilization_percent
+        expr: 100 * (1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes))
+        labels:
+          category: system
+      
+      # System disk utilization percentage
+      - record: ims_system_disk_utilization_percent
+        expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}))
+        labels:
+          category: system
+      
+      # System network utilization percentage
+      - record: ims_system_network_utilization_percent
+        expr: rate(node_network_transmit_bytes_total[5m]) / node_network_speed_bytes * 100
+        labels:
+          category: system
+      
+      # Node-level CPU utilization percentage
+      - record: ims_node_cpu_utilization_percent
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        labels:
+          category: system
+      
+      # Node-level memory utilization percentage
+      - record: ims_node_memory_utilization_percent
+        expr: 100 * (1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes))
+        labels:
+          category: system
+      
+      # Node-level disk utilization percentage
+      - record: ims_node_disk_utilization_percent
+        expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}))
+        labels:
+          category: system
+      
+      # Node-level network utilization percentage
+      - record: ims_node_network_utilization_percent
+        expr: rate(node_network_transmit_bytes_total[5m]) / node_network_speed_bytes * 100
+        labels:
+          category: system
+      
+      # Pod CPU utilization percentage
+      - record: ims_pod_cpu_utilization_percent
+        expr: sum(rate(container_cpu_usage_seconds_total{container!="", pod!=""}[5m])) by (pod) / sum(container_spec_cpu_quota{container!="", pod!=""} / container_spec_cpu_period{container!="", pod!=""}) by (pod) * 100
+        labels:
+          category: system
+      
+      # Pod memory utilization percentage
+      - record: ims_pod_memory_utilization_percent
+        expr: sum(container_memory_working_set_bytes{container!="", pod!=""}) by (pod) / sum(container_spec_memory_limit_bytes{container!="", pod!=""}) by (pod) * 100
+        labels:
+          category: system
+      
+      # Pod restart rate
+      - record: ims_pod_restart_rate
+        expr: changes(kube_pod_container_status_restarts_total[1h])
+        labels:
+          category: system
+      
+      # JVM garbage collection pause time
+      - record: ims_jvm_gc_pause_time_ms
+        expr: rate(jvm_gc_pause_seconds_sum{job=~"ims-.*"}[5m]) / rate(jvm_gc_pause_seconds_count{job=~"ims-.*"}[5m]) * 1000
+        labels:
+          category: system
+      
+      # Count of active alerts by severity
+      - record: ims_alerts_active_count
+        expr: count(ALERTS{alertstate="firing"}) by (severity)
+        labels:
+          category: system
+      
+      # Count of active alerts by category
+      - record: ims_alerts_active_by_category_count
+        expr: count(ALERTS{alertstate="firing"}) by (category)
+        labels:
+          category: system
+
+  - name: application_metrics
+    interval: 30s
+    rules:
+      # Application error rate percentage
+      - record: ims_application_error_rate_percent
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~"ims-.*"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~"ims-.*"}[5m])) * 100
+        labels:
+          category: application
+      
+      # Application response time (95th percentile)
+      - record: ims_application_response_time_ms
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"ims-.*"}[5m])) by (le, uri)) * 1000
+        labels:
+          category: application
+      
+      # Application error rate by service
+      - record: ims_application_error_rate_by_service_percent
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~"ims-.*"}[5m])) by (job) / sum(rate(http_server_requests_seconds_count{job=~"ims-.*"}[5m])) by (job) * 100
+        labels:
+          category: application
+      
+      # Application response time by service (95th percentile)
+      - record: ims_application_response_time_by_service_ms
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"ims-.*"}[5m])) by (le, job)) * 1000
+        labels:
+          category: application
+      
+      # Application response time by endpoint (95th percentile)
+      - record: ims_application_response_time_by_endpoint_ms
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"ims-.*"}[5m])) by (le, uri)) * 1000
+        labels:
+          category: application
+      
+      # External API error rate percentage
+      - record: ims_external_api_error_rate_percent
+        expr: sum(rate(ims_external_api_request_errors_total[5m])) by (api) / sum(rate(ims_external_api_requests_total[5m])) by (api) * 100
+        labels:
+          category: application
+      
+      # External API response time (95th percentile)
+      - record: ims_external_api_response_time_ms
+        expr: histogram_quantile(0.95, sum(rate(ims_external_api_request_duration_seconds_bucket[5m])) by (le, api)) * 1000
+        labels:
+          category: application
+      
+      # Active WebSocket connections
+      - record: ims_websocket_connections_active
+        expr: sum(ims_websocket_connections_active)
+        labels:
+          category: application
+      
+      # Authentication login failure rate
+      - record: ims_auth_login_failure_rate_percent
+        expr: sum(rate(ims_auth_login_failures_total[5m])) / sum(rate(ims_auth_login_attempts_total[5m])) * 100
+        labels:
+          category: application
+
+  - name: business_metrics
+    interval: 30s
+    rules:
+      # Business events processed per second
+      - record: ims_business_events_per_second
+        expr: sum(rate(ims_business_events_processed_total[5m]))
+        labels:
+          category: business
+      
+      # Business event processing latency (99th percentile)
+      - record: ims_business_event_processing_latency_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_business_event_processing_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+      
+      # Calculation error rate
+      - record: ims_calculation_error_rate_percent
+        expr: sum(rate(ims_calculation_errors_total[5m])) / sum(rate(ims_calculations_total[5m])) * 100
+        labels:
+          category: business
+      
+      # Calculation engine health status
+      - record: ims_calculation_engine_health_status
+        expr: up{job="ims-calculation-service"}
+        labels:
+          category: business
+      
+      # Position calculation latency (99th percentile)
+      - record: ims_position_calculation_latency_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_position_calculation_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+      
+      # Inventory calculation latency (99th percentile)
+      - record: ims_inventory_calculation_latency_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_inventory_calculation_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+      
+      # Short sell validation time (99th percentile) - critical for SLA
+      - record: ims_business_short_sell_validation_time_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_business_short_sell_validation_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+      
+      # Locate approval time (95th percentile)
+      - record: ims_business_locate_approval_time_ms
+        expr: histogram_quantile(0.95, sum(rate(ims_business_locate_approval_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+      
+      # Position calculation events per second
+      - record: ims_position_calculation_events_per_second
+        expr: sum(rate(ims_position_calculations_total[5m]))
+        labels:
+          category: business
+      
+      # Inventory calculation events per second
+      - record: ims_inventory_calculation_events_per_second
+        expr: sum(rate(ims_inventory_calculations_total[5m]))
+        labels:
+          category: business
+      
+      # Limit calculation events per second
+      - record: ims_limit_calculation_events_per_second
+        expr: sum(rate(ims_limit_calculations_total[5m]))
+        labels:
+          category: business
+      
+      # Rule engine evaluations per second
+      - record: ims_rule_engine_evaluations_per_second
+        expr: sum(rate(ims_rule_engine_evaluations_total[5m]))
+        labels:
+          category: business
+      
+      # Rule engine evaluation time (95th percentile)
+      - record: ims_rule_engine_evaluation_time_ms
+        expr: histogram_quantile(0.95, sum(rate(ims_rule_engine_evaluation_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: business
+
+  - name: database_metrics
+    interval: 30s
+    rules:
+      # Database query time (95th percentile)
+      - record: ims_database_query_time_ms
+        expr: histogram_quantile(0.95, sum(rate(ims_database_query_seconds_bucket[5m])) by (le)) * 1000
+        labels:
+          category: database
+      
+      # Database connection pool utilization
+      - record: ims_database_connection_pool_utilization_percent
+        expr: sum(hikaricp_connections_active) by (pool_name) / sum(hikaricp_connections_max) by (pool_name) * 100
+        labels:
+          category: database
+      
+      # Database connection wait time
+      - record: ims_database_connection_wait_time_ms
+        expr: rate(hikaricp_connection_timeout_total[5m]) / rate(hikaricp_connection_acquired_total[5m]) * 1000
+        labels:
+          category: database
+      
+      # Database cache hit ratio
+      - record: ims_database_cache_hit_ratio_percent
+        expr: sum(rate(ims_database_cache_hits_total[5m])) / (sum(rate(ims_database_cache_hits_total[5m])) + sum(rate(ims_database_cache_misses_total[5m]))) * 100
+        labels:
+          category: database
+      
+      # Hazelcast cache hit ratio
+      - record: ims_hazelcast_cache_hit_ratio_percent
+        expr: sum(rate(ims_hazelcast_cache_hits_total[5m])) / (sum(rate(ims_hazelcast_cache_hits_total[5m])) + sum(rate(ims_hazelcast_cache_misses_total[5m]))) * 100
+        labels:
+          category: database
+          cache_type: hazelcast
+      
+      # Redis cache hit ratio
+      - record: ims_redis_cache_hit_ratio_percent
+        expr: sum(rate(ims_redis_cache_hits_total[5m])) / (sum(rate(ims_redis_cache_hits_total[5m])) + sum(rate(ims_redis_cache_misses_total[5m]))) * 100
+        labels:
+          category: database
+          cache_type: redis
+
+  - name: integration_metrics
+    interval: 30s
+    rules:
+      # Kafka consumer lag
+      - record: ims_kafka_consumer_lag
+        expr: sum(kafka_consumergroup_lag) by (consumergroup, topic)
+        labels:
+          category: integration
+          integration_type: kafka
+      
+      # Kafka message rate
+      - record: ims_kafka_message_rate
+        expr: sum(rate(kafka_topic_partition_current_offset[5m])) by (topic)
+        labels:
+          category: integration
+          integration_type: kafka
+      
+      # Data feed age (time since last update)
+      - record: ims_data_feed_age_seconds
+        expr: time() - ims_data_feed_last_received_timestamp
+        labels:
+          category: integration
+          integration_type: data_feed
+      
+      # Data feed ingestion rate
+      - record: ims_data_feed_ingestion_rate
+        expr: rate(ims_business_events_processed_total{job="ims-data-ingestion-service"}[5m])
+        labels:
+          category: integration
+          integration_type: data_feed
+      
+      # Business data ingestion delay
+      - record: ims_business_data_ingestion_delay_seconds
+        expr: histogram_quantile(0.95, sum(rate(ims_business_data_ingestion_delay_seconds_bucket[5m])) by (le, feed))
+        labels:
+          category: integration
+          integration_type: data_feed
+
+  - name: sla_metrics
+    interval: 1m
+    rules:
+      # System availability SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (1 - (count_over_time(ims_system_health_status == 0[24h]) / count_over_time(ims_system_health_status[24h])))
+        labels:
+          category: sla
+          sla: system_availability
+      
+      # Event processing latency SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_business_event_processing_latency_ms < 200[24h]) / count_over_time(ims_business_event_processing_latency_ms[24h]))
+        labels:
+          category: sla
+          sla: event_processing_latency
+      
+      # Short sell approval time SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_business_short_sell_validation_time_ms < 150[24h]) / count_over_time(ims_business_short_sell_validation_time_ms[24h]))
+        labels:
+          category: sla
+          sla: short_sell_approval_time
+      
+      # UI dashboard load time SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_application_response_time_ms{uri="/api/v1/dashboard"} < 3000[24h]) / count_over_time(ims_application_response_time_ms{uri="/api/v1/dashboard"}[24h]))
+        labels:
+          category: sla
+          sla: ui_dashboard_load_time
+      
+      # Position calculation latency SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_position_calculation_latency_ms < 200[24h]) / count_over_time(ims_position_calculation_latency_ms[24h]))
+        labels:
+          category: sla
+          sla: position_calculation_latency
+      
+      # Inventory calculation latency SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_inventory_calculation_latency_ms < 200[24h]) / count_over_time(ims_inventory_calculation_latency_ms[24h]))
+        labels:
+          category: sla
+          sla: inventory_calculation_latency
+      
+      # Calculation throughput SLA compliance
+      - record: ims_sla_compliance_percent
+        expr: 100 * (count_over_time(ims_business_events_per_second >= 300000[24h]) / count_over_time(ims_business_events_per_second[24h]))
+        labels:
+          category: sla
+          sla: calculation_throughput
