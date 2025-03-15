@@ -1,0 +1,288 @@
+# Kafka Failure Chaos Test Configuration
+# Version: 1.0.0
+#
+# This configuration defines a series of chaos engineering experiments targeting Kafka
+# components of the Inventory Management System. The purpose is to test system resilience
+# when faced with Kafka service disruptions, including broker failures, partition unavailability,
+# message delays, and replication issues.
+#
+# These chaos tests ensure the system maintains its required 99.999% uptime and continues
+# processing events (300,000+ events per second) even during Kafka infrastructure failures.
+
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-kafka-chaos
+  namespace: chaos-testing
+spec:
+  # Target application information
+  appinfo:
+    appns: ims                                      # Target namespace
+    applabel: app.kubernetes.io/part-of=ims         # Label selector for IMS components
+    appkind: deployment                             # Resource type
+  
+  # Service account with permissions to execute chaos
+  chaosServiceAccount: chaos-service-account
+  
+  # Enable monitoring during chaos tests
+  monitoring: true
+  
+  # Clean up job pods after completion
+  jobCleanUpPolicy: delete
+  
+  # Skip annotation check
+  annotationCheck: "false"
+  
+  # Engine state (active/stop)
+  engineState: active
+  
+  # Auxiliary application info (if any)
+  auxiliaryAppInfo: ""
+  
+  # Define chaos experiments to execute
+  experiments:
+    # First broker pod failure - targeting broker 1
+    - name: kafka-broker-pod-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                          # 5 minutes of chaos
+            - name: KAFKA_NAMESPACE
+              value: "ims"                          # Namespace where Kafka is deployed
+            - name: KAFKA_LABEL
+              value: "app=kafka"                    # Label selector for Kafka pods
+            - name: KAFKA_KIND
+              value: "statefulset"                  # Kafka deployment type
+            - name: KAFKA_BROKER
+              value: "1"                            # Targeting broker 1
+            - name: KAFKA_LIVENESS_CHECK
+              value: "true"                         # Enable liveness check
+            - name: KAFKA_LIVENESS_STREAM
+              value: "kstream"                      # Stream for liveness verification
+            - name: KAFKA_LIVENESS_IMAGE
+              value: "litmuschaos/kafka-client:latest"  # Client image for checks
+            - name: KAFKA_REPLICATION_FACTOR
+              value: "3"                            # Expected replication factor
+            - name: KAFKA_SERVICE
+              value: "kafka-headless"               # Kafka service name
+            - name: KAFKA_PORT
+              value: "9092"                         # Kafka port
+            - name: KAFKA_CONSUMER_TIMEOUT
+              value: "30000"                        # Consumer timeout in ms
+    
+    # Second broker pod failure - targeting broker 2
+    - name: kafka-broker-pod-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"                          # 5 minutes of chaos
+            - name: KAFKA_NAMESPACE
+              value: "ims"
+            - name: KAFKA_LABEL
+              value: "app=kafka"
+            - name: KAFKA_KIND
+              value: "statefulset"
+            - name: KAFKA_BROKER
+              value: "2"                            # Targeting broker 2
+            - name: KAFKA_LIVENESS_CHECK
+              value: "true"
+            - name: KAFKA_LIVENESS_STREAM
+              value: "kstream"
+            - name: KAFKA_LIVENESS_IMAGE
+              value: "litmuschaos/kafka-client:latest"
+            - name: KAFKA_REPLICATION_FACTOR
+              value: "3"
+            - name: KAFKA_SERVICE
+              value: "kafka-headless"
+            - name: KAFKA_PORT
+              value: "9092"
+            - name: KAFKA_CONSUMER_TIMEOUT
+              value: "30000"
+    
+    # Kafka partition loss experiment - targets critical topics
+    - name: kafka-partition-loss
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                          # 4 minutes of chaos
+            - name: KAFKA_NAMESPACE
+              value: "ims"
+            - name: KAFKA_LABEL
+              value: "app=kafka"
+            - name: KAFKA_KIND
+              value: "statefulset"
+            - name: KAFKA_TOPIC
+              value: "position-events,inventory-events,locate-events"  # Critical topics
+            - name: KAFKA_PARTITION
+              value: "random"                       # Target random partitions
+            - name: KAFKA_LIVENESS_CHECK
+              value: "true"
+            - name: KAFKA_LIVENESS_STREAM
+              value: "kstream"
+            - name: KAFKA_LIVENESS_IMAGE
+              value: "litmuschaos/kafka-client:latest"
+            - name: KAFKA_SERVICE
+              value: "kafka-headless"
+            - name: KAFKA_PORT
+              value: "9092"
+    
+    # Message delay experiment - simulates network latency for market data
+    - name: kafka-message-delay
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                          # 4 minutes of chaos
+            - name: KAFKA_NAMESPACE
+              value: "ims"
+            - name: KAFKA_LABEL
+              value: "app=kafka"
+            - name: KAFKA_KIND
+              value: "statefulset"
+            - name: KAFKA_TOPIC
+              value: "trade-events,market-data-events"  # Affected topics
+            - name: DELAY_DURATION
+              value: "5000"                         # 5 second delay
+            - name: MESSAGES_AFFECTED_PERCENTAGE
+              value: "50"                           # 50% of messages affected
+            - name: KAFKA_SERVICE
+              value: "kafka-headless"
+            - name: KAFKA_PORT
+              value: "9092"
+    
+    # Zookeeper pod failure - tests Kafka cluster management
+    - name: zookeeper-pod-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"                          # 3 minutes of chaos
+            - name: ZOOKEEPER_NAMESPACE
+              value: "ims"
+            - name: ZOOKEEPER_LABEL
+              value: "app=zookeeper"                # Label selector for Zookeeper
+            - name: ZOOKEEPER_KIND
+              value: "statefulset"
+            - name: ZOOKEEPER_NODE
+              value: "1"                            # Target first node
+            - name: ZOOKEEPER_SERVICE
+              value: "zookeeper-headless"           # Zookeeper service name
+            - name: ZOOKEEPER_PORT
+              value: "2181"                         # Zookeeper port
+            - name: CONTAINER_RUNTIME
+              value: "containerd"                   # Container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"  # Socket path
+    
+    # Replication factor reduction - tests data durability
+    - name: kafka-replication-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                          # 4 minutes of chaos
+            - name: KAFKA_NAMESPACE
+              value: "ims"
+            - name: KAFKA_LABEL
+              value: "app=kafka"
+            - name: KAFKA_KIND
+              value: "statefulset"
+            - name: KAFKA_TOPIC
+              value: "position-events,inventory-events,locate-events"  # Critical topics
+            - name: REPLICATION_FACTOR_REDUCTION
+              value: "1"                            # Reduce replication by 1
+            - name: KAFKA_SERVICE
+              value: "kafka-headless"
+            - name: KAFKA_PORT
+              value: "9092"
+    
+    # Consumer failure - tests consumer group rebalancing
+    - name: kafka-consumer-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"                          # 4 minutes of chaos
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service"  # Target services
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"                           # 50% of pods affected
+            - name: KAFKA_CONSUMER_GROUP
+              value: "calculation-group,workflow-group"  # Target consumer groups
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+# Test Scenarios Documentation
+#
+# 1. kafka-broker-1-failure:
+#    - Description: Tests system resilience when Kafka broker 1 fails
+#    - Duration: 5 minutes
+#    - Target Components: kafka
+#    - Expected Behavior: Message processing should continue through Kafka's replication and failover mechanisms
+#
+# 2. kafka-broker-2-failure:
+#    - Description: Tests system resilience when Kafka broker 2 fails
+#    - Duration: 5 minutes
+#    - Target Components: kafka
+#    - Expected Behavior: Message processing should continue through Kafka's replication and failover mechanisms
+#
+# 3. kafka-partition-loss:
+#    - Description: Tests system resilience when Kafka partitions become unavailable for critical topics
+#    - Duration: 4 minutes
+#    - Target Components: kafka, position-events, inventory-events, locate-events
+#    - Expected Behavior: Services should handle partition unavailability through topic redundancy and retry mechanisms
+#
+# 4. kafka-message-delay:
+#    - Description: Tests system resilience when Kafka messages are delayed for trade and market data events
+#    - Duration: 4 minutes
+#    - Target Components: kafka, trade-events, market-data-events
+#    - Expected Behavior: Services should handle message delays through timeout handling and maintain data consistency
+#
+# 5. zookeeper-pod-failure:
+#    - Description: Tests system resilience when a ZooKeeper node fails
+#    - Duration: 3 minutes
+#    - Target Components: zookeeper
+#    - Expected Behavior: Kafka cluster should maintain operation through ZooKeeper quorum and automatic failover
+#
+# 6. kafka-replication-failure:
+#    - Description: Tests system resilience when Kafka replication factor is reduced for critical topics
+#    - Duration: 4 minutes
+#    - Target Components: kafka, position-events, inventory-events, locate-events
+#    - Expected Behavior: System should maintain data durability despite reduced replication factor
+#
+# 7. kafka-consumer-failure:
+#    - Description: Tests system resilience when Kafka consumers in calculation and workflow services fail
+#    - Duration: 4 minutes
+#    - Target Components: calculation-service, workflow-service
+#    - Expected Behavior: Message processing should continue through consumer group rebalancing and offset management
+
+# Success Criteria:
+#
+# 1. No data loss or corruption during Kafka disruptions
+#    - Measurement: Message count reconciliation before and after chaos test
+#
+# 2. Short sell validation maintains 150ms SLA during normal conditions and degrades gracefully during disruptions
+#    - Measurement: Response time metrics during chaos test execution
+#
+# 3. Locate approval workflow continues to function with degraded performance
+#    - Measurement: Successful locate processing during Kafka failures
+#
+# 4. System recovers automatically after Kafka failures are resolved
+#    - Measurement: Recovery time metrics after chaos test completion
+#
+# 5. Message ordering is maintained for critical event streams
+#    - Measurement: Event sequence validation after recovery
+#
+# 6. At-least-once delivery guarantee is maintained despite Kafka failures
+#    - Measurement: Message delivery confirmation and deduplication metrics
+#
+# 7. Consumer groups rebalance correctly after consumer failures
+#    - Measurement: Consumer group state and partition assignment metrics
+#
+# 8. Position and inventory calculations remain accurate despite message delays
+#    - Measurement: Calculation validation after chaos test completion
