@@ -1,0 +1,199 @@
+---
+# Data Ingestion Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-data-ingestion-service
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for Data Ingestion Service handling reference data, market data, trade data, and contract data"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8081"
+spec:
+  selector:
+    app: ims
+    component: data-ingestion-service
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+---
+# Calculation Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-calculation-service
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for Calculation Service handling position, inventory, and limit calculations"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8082"
+spec:
+  selector:
+    app: ims
+    component: calculation-service
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+    - name: hazelcast
+      port: 5701
+      targetPort: 5701
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+---
+# Workflow Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-workflow-service
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for Workflow Service handling locate approval and short sell approval workflows"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8083"
+spec:
+  selector:
+    app: ims
+    component: workflow-service
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+---
+# API Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-api-gateway
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for API Gateway handling routing, authentication, and rate limiting"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8080"
+spec:
+  selector:
+    app: ims
+    component: api-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+---
+# WebSocket Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-websocket-service
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for WebSocket Service handling real-time data streaming"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8085"
+spec:
+  selector:
+    app: ims
+    component: websocket-service
+  ports:
+    - name: http
+      port: 8085
+      targetPort: 8085
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+---
+# Monitoring Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-monitoring-service
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for Monitoring Service handling system health checks and metrics"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8086"
+spec:
+  selector:
+    app: ims
+    component: monitoring-service
+  ports:
+    - name: http
+      port: 8086
+      targetPort: 8086
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+---
+# Auth Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-auth-service
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Service for Authentication Service handling user management and token issuance"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8084"
+spec:
+  selector:
+    app: ims
+    component: auth-service
+  ports:
+    - name: http
+      port: 8084
+      targetPort: 8084
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
