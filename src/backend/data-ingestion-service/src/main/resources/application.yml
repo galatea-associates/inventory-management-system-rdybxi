@@ -1,0 +1,274 @@
+# =============================================================================
+# Data Ingestion Service Configuration
+# =============================================================================
+# Main configuration file for the Inventory Management System data ingestion service
+# This service handles ingest of reference data, market data, trade data, and contracts
+
+# Spring Application Configuration
+spring:
+  application:
+    name: data-ingestion-service
+  profiles:
+    default: dev
+    
+  # Database Configuration
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/ims_ingestion}
+    username: ${DATASOURCE_USERNAME:ims_user}
+    password: ${DATASOURCE_PASSWORD:ims_password}
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: IngestionHikariCP
+      
+  # JPA Configuration  
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+        
+  # Kafka Configuration for high-throughput message processing
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 5
+      batch-size: 16384
+      buffer-memory: 33554432
+      compression-type: snappy
+      properties:
+        linger.ms: 5
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:data-ingestion-service}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.ims.common.event,com.ims.ingestion.model
+        max.poll.records: 500
+        fetch.min.bytes: 1024
+        fetch.max.wait.ms: 500
+        enable.auto.commit: false
+    listener:
+      concurrency: 5
+      ack-mode: MANUAL_IMMEDIATE
+      missing-topics-fatal: false
+    topics:
+      reference-data: ${KAFKA_TOPIC_REFERENCE_DATA:reference-data}
+      market-data: ${KAFKA_TOPIC_MARKET_DATA:market-data}
+      trade-data: ${KAFKA_TOPIC_TRADE_DATA:trade-data}
+      contract-data: ${KAFKA_TOPIC_CONTRACT_DATA:contract-data}
+      market-data-input: ${KAFKA_TOPIC_MARKET_DATA_INPUT:market-data-input}
+      
+  # Security Configuration  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.ims.com}
+          audience: ${JWT_AUDIENCE:ims-api}
+          
+  # CORS Configuration
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:Authorization,Content-Type,X-Requested-With,Accept}
+    allow-credentials: true
+    max-age: 3600
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/ingestion
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+  tomcat:
+    max-threads: 100
+    min-spare-threads: 20
+    max-connections: 10000
+    connection-timeout: 5000
+
+# Actuator Management Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/data-ingestion-service.log
+    max-size: 100MB
+    max-history: 30
+
+# External System Integration Configuration
+external:
+  # Reuters Integration - Version 2023.1
+  reuters:
+    api-url: ${REUTERS_API_URL:https://api.reuters.com/data/v1}
+    api-key: ${REUTERS_API_KEY:default-key}
+    username: ${REUTERS_USERNAME:default-username}
+    password: ${REUTERS_PASSWORD:default-password}
+    reference-data-batch-path: ${REUTERS_BATCH_PATH:/data/reuters/batch}
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 20
+    
+  # Bloomberg Integration - Version 3.14.5
+  bloomberg:
+    api-url: ${BLOOMBERG_API_URL:https://api.bloomberg.com/data/v1}
+    api-key: ${BLOOMBERG_API_KEY:default-key}
+    username: ${BLOOMBERG_USERNAME:default-username}
+    password: ${BLOOMBERG_PASSWORD:default-password}
+    reference-data-batch-path: ${BLOOMBERG_BATCH_PATH:/data/bloomberg/batch}
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 20
+    
+  # MarkIT Integration - Version 2.8.1
+  markit:
+    api-url: ${MARKIT_API_URL:https://api.markit.com/data/v1}
+    api-key: ${MARKIT_API_KEY:default-key}
+    username: ${MARKIT_USERNAME:default-username}
+    password: ${MARKIT_PASSWORD:default-password}
+    reference-data-batch-path: ${MARKIT_BATCH_PATH:/data/markit/batch}
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 10
+    
+  # Ultumus Integration - Version 1.5.2
+  ultumus:
+    api-url: ${ULTUMUS_API_URL:https://api.ultumus.com/data/v1}
+    api-key: ${ULTUMUS_API_KEY:default-key}
+    username: ${ULTUMUS_USERNAME:default-username}
+    password: ${ULTUMUS_PASSWORD:default-password}
+    reference-data-batch-path: ${ULTUMUS_BATCH_PATH:/data/ultumus/batch}
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 10
+    
+  # RIMES Integration - Version 2.3.0
+  rimes:
+    api-url: ${RIMES_API_URL:https://api.rimes.com/data/v1}
+    api-key: ${RIMES_API_KEY:default-key}
+    username: ${RIMES_USERNAME:default-username}
+    password: ${RIMES_PASSWORD:default-password}
+    reference-data-batch-path: ${RIMES_BATCH_PATH:/data/rimes/batch}
+    connection-timeout: 5000
+    read-timeout: 30000
+    max-connections: 10
+
+# Application-specific Configuration
+app:
+  kafka:
+    topics:
+      market-data: ${APP_KAFKA_TOPIC_MARKET_DATA:market-data}
+      market-data-input: ${APP_KAFKA_TOPIC_MARKET_DATA_INPUT:market-data-input}
+    group-id: ${APP_KAFKA_GROUP_ID:data-ingestion-service}
+    
+  # Market Data Configuration
+  market-data:
+    real-time:
+      enabled: true
+    batch-size: 1000
+    processing:
+      interval: 60000
+      
+  # Reference Data Configuration
+  reference-data:
+    batch-directory: ${REFERENCE_DATA_BATCH_DIR:/data/reference-data/batch}
+    conflict-resolution:
+      enabled: true
+      priority-sources: REUTERS,BLOOMBERG,MARKIT
+      
+  # Trade Data Configuration
+  trade-data:
+    batch-directory: ${TRADE_DATA_BATCH_DIR:/data/trade-data/batch}
+    processing:
+      interval: 60000
+      
+  # Contract Data Configuration
+  contract-data:
+    batch-directory: ${CONTRACT_DATA_BATCH_DIR:/data/contract-data/batch}
+    processing:
+      interval: 60000
+
+# Data Ingestion Configuration
+ingestion:
+  batch:
+    max-batch-size: 5000
+    processing-threads: 5
+    retry-attempts: 3
+    retry-delay-ms: 1000
+  validation:
+    enabled: true
+    strict-mode: false
+  scheduling:
+    reference-data-update: "0 0 1 * * SUN"  # Weekly on Sunday at 01:00 AM
+    market-data-cleanup: "0 0 0 * * *"      # Daily at midnight
+    health-check: "0 */5 * * * *"           # Every 5 minutes
+
+# Resilience4j Configuration for circuit breaking, retries, and rate limiting
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCalls:
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 20s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      externalServiceCalls:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalServiceCalls:
+        limitForPeriod: 500
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+
+# API Documentation Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
