@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'com.palantir.docker' version '0.35.0'
+}
+
+group = 'com.ims.auth'
+version = '0.1.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://plugins.gradle.org/m2/' }
+}
+
+dependencies {
+    implementation project(':common-lib')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.0.2'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server:6.0.2'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'commons-codec:commons-codec:1.15'
+    implementation 'com.google.zxing:zxing-core:3.5.1'
+    implementation 'com.google.zxing:zxing-javase:3.5.1'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'com.h2database:h2'
+}
+
+bootJar {
+    mainClassName = 'com.ims.auth.AuthServiceApplication'
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Built-By': System.properties['user.name'],
+            'Built-Date': new Date(),
+            'Built-JDK': System.properties['java.version']
+        )
+    }
+}
+
+docker {
+    name "ims/auth-service:${project.version}"
+    dockerfile file('src/main/docker/Dockerfile')
+    files bootJar.archiveFile
+    buildArgs([
+        'JAR_FILE': "${bootJar.archiveFileName.get()}"
+    ])
+    labels([
+        'maintainer': 'IMS DevOps Team'
+    ])
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    systemProperty 'spring.profiles.active', 'test'
+}
