@@ -1,0 +1,89 @@
+---
+# ServiceMonitor for Kafka brokers
+# This configuration allows Prometheus to discover and scrape metrics from Kafka brokers
+# to monitor performance, throughput, and overall health
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-kafka
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: messaging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: jmx-exporter
+      interval: 15s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Keep only Kafka-related metrics and JVM metrics to reduce cardinality
+        - sourceLabels: ["__name__"]
+          regex: kafka_.*|jvm_.*|process_.*|system_.*
+          action: keep
+
+---
+# ServiceMonitor for Kafka exporter
+# Collects additional Kafka metrics not available through JMX
+# Includes consumer group lag, topic and partition metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-kafka-exporter
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: messaging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka-exporter
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Filter to include only relevant Kafka exporter metrics
+        - sourceLabels: ["__name__"]
+          regex: kafka_exporter_.*|kafka_consumergroup_.*|kafka_topic_.*|kafka_partition_.*
+          action: keep
+
+---
+# ServiceMonitor for Zookeeper
+# Monitors the Zookeeper ensemble that supports Kafka
+# Essential for ensuring the coordination service is healthy
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ims-zookeeper
+  namespace: monitoring
+  labels:
+    app: ims
+    prometheus: ims
+    component: messaging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: zookeeper
+  namespaceSelector:
+    matchNames:
+      - ims
+  endpoints:
+    - port: metrics
+      interval: 30s  # Less frequent than Kafka monitoring as Zookeeper changes less frequently
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Filter for Zookeeper metrics and related JVM metrics
+        - sourceLabels: ["__name__"]
+          regex: zookeeper_.*|jvm_.*|process_.*|system_.*
+          action: keep
