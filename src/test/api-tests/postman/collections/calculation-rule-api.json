@@ -1,0 +1,452 @@
+{
+  "info": {
+    "name": "Calculation Rule API Tests",
+    "description": "API tests for the Calculation Rule endpoints of the Inventory Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Active Rules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{calculationUrl}}/rules",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData)).to.be.true;",
+              "});",
+              "",
+              "pm.test(\"Rules have required properties\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        pm.expect(jsonData[0]).to.have.property('name');",
+              "        pm.expect(jsonData[0]).to.have.property('description');",
+              "        pm.expect(jsonData[0]).to.have.property('ruleType');",
+              "        pm.expect(jsonData[0]).to.have.property('market');",
+              "        pm.expect(jsonData[0]).to.have.property('status');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Rules By Type And Market",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{calculationUrl}}/rules/type/INCLUSION/market/GLOBAL",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules",
+            "type",
+            "INCLUSION",
+            "market",
+            "GLOBAL"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData)).to.be.true;",
+              "});",
+              "",
+              "pm.test(\"Rules have correct type and market\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        pm.expect(jsonData[0].ruleType).to.equal('INCLUSION');",
+              "        pm.expect(jsonData[0].market).to.equal('GLOBAL');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Rule By Name And Market",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{calculationUrl}}/rules/name/Global FL/market/GLOBAL",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules",
+            "name",
+            "Global FL",
+            "market",
+            "GLOBAL"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Rule has correct name and market\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.equal('Global FL');",
+              "    pm.expect(jsonData.market).to.equal('GLOBAL');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Rule",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Test Rule\",\n    \"description\": \"Test rule for API testing\",\n    \"ruleType\": \"INCLUSION\",\n    \"market\": \"GLOBAL\",\n    \"priority\": 100,\n    \"effectiveDate\": \"2023-06-15\",\n    \"expiryDate\": \"2024-06-15\",\n    \"status\": \"ACTIVE\",\n    \"conditions\": [\n        {\n            \"attribute\": \"securityType\",\n            \"operator\": \"EQUALS\",\n            \"value\": \"EQUITY\",\n            \"logicalOperator\": \"AND\"\n        }\n    ],\n    \"actions\": [\n        {\n            \"actionType\": \"INCLUDE\",\n            \"parameters\": {\n                \"reason\": \"Test inclusion\"\n            }\n        }\n    ],\n    \"parameters\": {\n        \"testParam\": \"testValue\"\n    }\n}"
+        },
+        "url": {
+          "raw": "{{calculationUrl}}/rules",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Rule is created with correct data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.name).to.equal('Test Rule');",
+              "    pm.expect(jsonData.ruleType).to.equal('INCLUSION');",
+              "    pm.expect(jsonData.market).to.equal('GLOBAL');",
+              "    pm.expect(jsonData.status).to.equal('ACTIVE');",
+              "    ",
+              "    // Store rule ID for later use",
+              "    pm.environment.set('testRuleId', jsonData.id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Rule",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"id\": \"{{testRuleId}}\",\n    \"name\": \"Test Rule Updated\",\n    \"description\": \"Updated test rule for API testing\",\n    \"ruleType\": \"INCLUSION\",\n    \"market\": \"GLOBAL\",\n    \"priority\": 200,\n    \"effectiveDate\": \"2023-06-15\",\n    \"expiryDate\": \"2024-06-15\",\n    \"status\": \"ACTIVE\",\n    \"conditions\": [\n        {\n            \"attribute\": \"securityType\",\n            \"operator\": \"EQUALS\",\n            \"value\": \"EQUITY\",\n            \"logicalOperator\": \"AND\"\n        }\n    ],\n    \"actions\": [\n        {\n            \"actionType\": \"INCLUDE\",\n            \"parameters\": {\n                \"reason\": \"Test inclusion updated\"\n            }\n        }\n    ],\n    \"parameters\": {\n        \"testParam\": \"testValueUpdated\"\n    }\n}"
+        },
+        "url": {
+          "raw": "{{calculationUrl}}/rules",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Rule is updated with correct data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(pm.environment.get('testRuleId'));",
+              "    pm.expect(jsonData.name).to.equal('Test Rule Updated');",
+              "    pm.expect(jsonData.description).to.equal('Updated test rule for API testing');",
+              "    pm.expect(jsonData.priority).to.equal(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clear Rule Cache",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{calculationUrl}}/rules/clear-cache",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules",
+            "clear-cache"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Error - Missing Required Fields",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"description\": \"Invalid rule missing required fields\"\n}"
+        },
+        "url": {
+          "raw": "{{calculationUrl}}/rules",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response contains validation errors\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('errors');",
+              "    pm.expect(Object.keys(jsonData.errors).length).to.be.greaterThan(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Not Found Error",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{calculationUrl}}/rules/name/NonExistentRule/market/GLOBAL",
+          "host": [
+            "{{calculationUrl}}"
+          ],
+          "path": [
+            "rules",
+            "name",
+            "NonExistentRule",
+            "market",
+            "GLOBAL"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script for the entire collection",
+          "// Can be used to set up authentication or common variables"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Post-request script for the entire collection",
+          "// Can be used for common assertions or cleanup"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "collectionVersion",
+      "value": "1.0.0",
+      "type": "string"
+    }
+  ]
+}
