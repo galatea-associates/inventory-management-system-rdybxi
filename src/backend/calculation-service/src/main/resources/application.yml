@@ -1,0 +1,229 @@
+# ============================================
+# Spring Boot Configuration for Calculation Service
+# ============================================
+
+spring:
+  application:
+    name: calculation-service
+  
+  # Active profile configuration - defaults to dev if not specified
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ims_calculation
+    username: ims_user
+    password: ims_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+      pool-name: CalculationHikariPool
+  
+  # JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+  
+  # Kafka configuration for event processing
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: calculation-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      isolation-level: read_committed
+      max-poll-records: 500
+      fetch-min-bytes: 1024
+      fetch-max-wait-ms: 500
+    producer:
+      acks: all
+      retries: 10
+      batch-size: 16384
+      buffer-memory: 33554432
+      linger-ms: 5
+      compression-type: snappy
+    topics:
+      position-event: position-events
+      inventory-event: inventory-events
+      market-data-event: market-data-events
+      workflow-event: workflow-events
+    listener:
+      concurrency: 5
+      ack-mode: MANUAL_IMMEDIATE
+  
+  # Hazelcast distributed cache configuration
+  hazelcast:
+    cluster-name: ims-calculation-cluster
+    instance-name: calculation-service
+    multicast-enabled: true
+    tcp-ip-members: localhost
+    port: 5701
+    backup-count: 1
+    position-map-ttl-seconds: 3600
+    inventory-map-ttl-seconds: 1800
+    rule-map-ttl-seconds: 7200
+    max-size-per-node: 10000
+  
+  # Security configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.example.com/
+          audience: ims-api
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+      allow-credentials: true
+      max-age: 3600
+  
+  # Cache configuration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=1h
+  
+  # Service discovery
+  cloud:
+    discovery:
+      enabled: true
+  
+  # Jackson JSON configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    date-format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+
+# Server configuration
+server:
+  port: 8082
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+    max-connections: 10000
+    connection-timeout: 20000
+    accept-count: 100
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 2048
+
+# Management endpoints (actuator)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/calculation-service.log
+    max-size: 10MB
+    max-history: 10
+
+# Calculation service specific configuration
+calculation:
+  position:
+    cache-enabled: true
+    cache-ttl-seconds: 3600
+  inventory:
+    cache-enabled: true
+    cache-ttl-seconds: 1800
+  limit:
+    cache-enabled: true
+    cache-ttl-seconds: 1800
+  rule:
+    cache-enabled: true
+    cache-ttl-seconds: 7200
+  performance:
+    thread-pool-size: 20
+    queue-capacity: 500
+
+# Resilience4j circuit breaker and retry configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      positionCalculation:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+      inventoryCalculation:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+  retry:
+    instances:
+      positionCalculation:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      inventoryCalculation:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+# SpringDoc OpenAPI documentation configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /api-docs
+    enabled: true
+  packages-to-scan: com.ims.calculation.controller
+  paths-to-match: /api/**
