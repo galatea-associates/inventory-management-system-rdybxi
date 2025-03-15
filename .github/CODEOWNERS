@@ -1,0 +1,48 @@
+# When someone opens a pull request that modifies code owned by a team or person
+# they will automatically be requested for review
+
+# Default owners for everything in the repo
+* @ims-admin
+
+# Backend services
+/src/backend/common-lib/ @ims-backend-core
+/src/backend/data-ingestion-service/ @ims-data-team @ims-backend-core
+/src/backend/calculation-service/ @ims-calculation-team @ims-backend-core
+/src/backend/workflow-service/ @ims-workflow-team @ims-backend-core
+/src/backend/api-gateway/ @ims-api-team @ims-backend-core
+/src/backend/websocket-service/ @ims-api-team @ims-backend-core
+/src/backend/monitoring-service/ @ims-devops @ims-backend-core
+/src/backend/auth-service/ @ims-security-team @ims-backend-core
+
+# Frontend code
+/src/web/ @ims-frontend-team
+
+# Test code
+/src/test/ @ims-qa-team
+/src/test/performance/ @ims-performance-team @ims-qa-team
+/src/test/security/ @ims-security-team @ims-qa-team
+
+# Infrastructure code
+/infrastructure/ @ims-devops
+/infrastructure/security/ @ims-security-team @ims-devops
+/infrastructure/database/ @ims-data-team @ims-devops
+
+# CI/CD configuration
+/.github/ @ims-devops
+
+# Documentation
+/README.md @ims-docs
+/docs/ @ims-docs
+
+# Critical configuration files
+/src/backend/kubernetes/ @ims-devops @ims-backend-core
+/src/backend/docker-compose.yml @ims-devops @ims-backend-core
+/src/web/docker-compose.yml @ims-devops @ims-frontend-team
+
+# Security-sensitive areas
+/src/backend/*/src/main/java/com/ims/*/config/SecurityConfig.java @ims-security-team
+/src/backend/auth-service/src/main/java/com/ims/auth/config/ @ims-security-team
+
+# Performance-critical components
+/src/backend/calculation-service/src/main/java/com/ims/calculation/engine/ @ims-performance-team @ims-calculation-team
+/src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/adapter/ @ims-performance-team @ims-data-team
