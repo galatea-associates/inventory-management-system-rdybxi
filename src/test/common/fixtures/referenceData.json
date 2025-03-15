@@ -1,0 +1,868 @@
+{
+  "securities": [
+    {
+      "id": 1,
+      "internalId": "SEC-EQ-001",
+      "securityType": "EQUITY",
+      "issuer": "Apple Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "issueDate": "1980-12-12",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "AAPL",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 2,
+      "internalId": "SEC-EQ-002",
+      "securityType": "EQUITY",
+      "issuer": "Microsoft Corporation",
+      "description": "Common Stock",
+      "currency": "USD",
+      "issueDate": "1986-03-13",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "MSFT",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 3,
+      "internalId": "SEC-EQ-003",
+      "securityType": "EQUITY",
+      "issuer": "Tesla, Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "issueDate": "2010-06-29",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "TSLA",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 4,
+      "internalId": "SEC-EQ-004",
+      "securityType": "EQUITY",
+      "issuer": "Amazon.com, Inc.",
+      "description": "Common Stock",
+      "currency": "USD",
+      "issueDate": "1997-05-15",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "AMZN",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 5,
+      "internalId": "SEC-EQ-005",
+      "securityType": "EQUITY",
+      "issuer": "Alphabet Inc.",
+      "description": "Class A Common Stock",
+      "currency": "USD",
+      "issueDate": "2004-08-19",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NASDAQ",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "GOOGL",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 6,
+      "internalId": "SEC-BD-001",
+      "securityType": "BOND",
+      "issuer": "US Treasury",
+      "description": "10-Year Treasury Note",
+      "currency": "USD",
+      "issueDate": "2022-05-15",
+      "maturityDate": "2032-05-15",
+      "market": "US",
+      "exchange": "OTC",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "CUSIP",
+      "primaryIdentifierValue": "912828ZL8",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 7,
+      "internalId": "SEC-ETF-001",
+      "securityType": "ETF",
+      "issuer": "SPDR",
+      "description": "S&P 500 ETF Trust",
+      "currency": "USD",
+      "issueDate": "1993-01-22",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": "NYSE",
+      "status": "ACTIVE",
+      "isBasketProduct": true,
+      "basketType": "ETF",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "SPY",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 8,
+      "internalId": "SEC-IDX-001",
+      "securityType": "INDEX",
+      "issuer": "S&P Dow Jones Indices",
+      "description": "S&P 500 Index",
+      "currency": "USD",
+      "issueDate": "1957-03-04",
+      "maturityDate": null,
+      "market": "US",
+      "exchange": null,
+      "status": "ACTIVE",
+      "isBasketProduct": true,
+      "basketType": "INDEX",
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "SPX",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 9,
+      "internalId": "SEC-EQ-006",
+      "securityType": "EQUITY",
+      "issuer": "Toyota Motor Corporation",
+      "description": "Common Stock",
+      "currency": "JPY",
+      "issueDate": "1949-05-01",
+      "maturityDate": null,
+      "market": "JP",
+      "exchange": "TSE",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "7203",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 10,
+      "internalId": "SEC-EQ-007",
+      "securityType": "EQUITY",
+      "issuer": "Taiwan Semiconductor Manufacturing Company",
+      "description": "Common Stock",
+      "currency": "TWD",
+      "issueDate": "1994-09-05",
+      "maturityDate": null,
+      "market": "TW",
+      "exchange": "TWSE",
+      "status": "ACTIVE",
+      "isBasketProduct": false,
+      "basketType": null,
+      "primaryIdentifierType": "TICKER",
+      "primaryIdentifierValue": "2330",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    }
+  ],
+  "securityIdentifiers": [
+    {
+      "id": 101,
+      "identifierType": "TICKER",
+      "identifierValue": "AAPL",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-001"
+      }
+    },
+    {
+      "id": 102,
+      "identifierType": "ISIN",
+      "identifierValue": "US0378331005",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-001"
+      }
+    },
+    {
+      "id": 103,
+      "identifierType": "CUSIP",
+      "identifierValue": "037833100",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-001"
+      }
+    },
+    {
+      "id": 104,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "AAPL US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-001"
+      }
+    },
+    {
+      "id": 201,
+      "identifierType": "TICKER",
+      "identifierValue": "MSFT",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-002"
+      }
+    },
+    {
+      "id": 202,
+      "identifierType": "ISIN",
+      "identifierValue": "US5949181045",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-002"
+      }
+    },
+    {
+      "id": 203,
+      "identifierType": "CUSIP",
+      "identifierValue": "594918104",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-002"
+      }
+    },
+    {
+      "id": 204,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "MSFT US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-002"
+      }
+    },
+    {
+      "id": 301,
+      "identifierType": "TICKER",
+      "identifierValue": "TSLA",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-003"
+      }
+    },
+    {
+      "id": 302,
+      "identifierType": "ISIN",
+      "identifierValue": "US88160R1014",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-003"
+      }
+    },
+    {
+      "id": 303,
+      "identifierType": "CUSIP",
+      "identifierValue": "88160R101",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-003"
+      }
+    },
+    {
+      "id": 304,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "TSLA US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-003"
+      }
+    },
+    {
+      "id": 401,
+      "identifierType": "TICKER",
+      "identifierValue": "AMZN",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-004"
+      }
+    },
+    {
+      "id": 402,
+      "identifierType": "ISIN",
+      "identifierValue": "US0231351067",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-004"
+      }
+    },
+    {
+      "id": 403,
+      "identifierType": "CUSIP",
+      "identifierValue": "023135106",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-004"
+      }
+    },
+    {
+      "id": 404,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "AMZN US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-004"
+      }
+    },
+    {
+      "id": 501,
+      "identifierType": "TICKER",
+      "identifierValue": "GOOGL",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-005"
+      }
+    },
+    {
+      "id": 502,
+      "identifierType": "ISIN",
+      "identifierValue": "US02079K3059",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-005"
+      }
+    },
+    {
+      "id": 503,
+      "identifierType": "CUSIP",
+      "identifierValue": "02079K305",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-005"
+      }
+    },
+    {
+      "id": 504,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "GOOGL US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-005"
+      }
+    },
+    {
+      "id": 601,
+      "identifierType": "CUSIP",
+      "identifierValue": "912828ZL8",
+      "source": "BLOOMBERG",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-BD-001"
+      }
+    },
+    {
+      "id": 602,
+      "identifierType": "ISIN",
+      "identifierValue": "US912828ZL82",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-BD-001"
+      }
+    },
+    {
+      "id": 603,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "T 2.875 05/15/32 Govt",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-BD-001"
+      }
+    },
+    {
+      "id": 701,
+      "identifierType": "TICKER",
+      "identifierValue": "SPY",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-ETF-001"
+      }
+    },
+    {
+      "id": 702,
+      "identifierType": "ISIN",
+      "identifierValue": "US78462F1030",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-ETF-001"
+      }
+    },
+    {
+      "id": 703,
+      "identifierType": "CUSIP",
+      "identifierValue": "78462F103",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-ETF-001"
+      }
+    },
+    {
+      "id": 704,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "SPY US Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-ETF-001"
+      }
+    },
+    {
+      "id": 801,
+      "identifierType": "TICKER",
+      "identifierValue": "SPX",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-IDX-001"
+      }
+    },
+    {
+      "id": 802,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "SPX Index",
+      "source": "BLOOMBERG",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-IDX-001"
+      }
+    },
+    {
+      "id": 803,
+      "identifierType": "REUTERS_ID",
+      "identifierValue": ".SPX",
+      "source": "REUTERS",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-IDX-001"
+      }
+    },
+    {
+      "id": 901,
+      "identifierType": "TICKER",
+      "identifierValue": "7203",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-006"
+      }
+    },
+    {
+      "id": 902,
+      "identifierType": "ISIN",
+      "identifierValue": "JP3633400001",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-006"
+      }
+    },
+    {
+      "id": 903,
+      "identifierType": "SEDOL",
+      "identifierValue": "6900643",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-006"
+      }
+    },
+    {
+      "id": 904,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "7203 JP Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-006"
+      }
+    },
+    {
+      "id": 1001,
+      "identifierType": "TICKER",
+      "identifierValue": "2330",
+      "source": "EXCHANGE",
+      "priority": 1,
+      "isPrimary": true,
+      "security": {
+        "internalId": "SEC-EQ-007"
+      }
+    },
+    {
+      "id": 1002,
+      "identifierType": "ISIN",
+      "identifierValue": "TW0002330008",
+      "source": "REUTERS",
+      "priority": 2,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-007"
+      }
+    },
+    {
+      "id": 1003,
+      "identifierType": "SEDOL",
+      "identifierValue": "6889106",
+      "source": "BLOOMBERG",
+      "priority": 3,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-007"
+      }
+    },
+    {
+      "id": 1004,
+      "identifierType": "BLOOMBERG_ID",
+      "identifierValue": "2330 TT Equity",
+      "source": "BLOOMBERG",
+      "priority": 4,
+      "isPrimary": false,
+      "security": {
+        "internalId": "SEC-EQ-007"
+      }
+    }
+  ],
+  "indexCompositions": [
+    {
+      "id": 7001,
+      "indexSecurity": {
+        "internalId": "SEC-ETF-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-001"
+      },
+      "weight": 0.0623,
+      "compositionType": "ETF_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "ULTUMUS",
+      "isActive": true
+    },
+    {
+      "id": 7002,
+      "indexSecurity": {
+        "internalId": "SEC-ETF-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-002"
+      },
+      "weight": 0.0581,
+      "compositionType": "ETF_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "ULTUMUS",
+      "isActive": true
+    },
+    {
+      "id": 7003,
+      "indexSecurity": {
+        "internalId": "SEC-ETF-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-003"
+      },
+      "weight": 0.0192,
+      "compositionType": "ETF_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "ULTUMUS",
+      "isActive": true
+    },
+    {
+      "id": 7004,
+      "indexSecurity": {
+        "internalId": "SEC-ETF-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-004"
+      },
+      "weight": 0.0276,
+      "compositionType": "ETF_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "ULTUMUS",
+      "isActive": true
+    },
+    {
+      "id": 7005,
+      "indexSecurity": {
+        "internalId": "SEC-ETF-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-005"
+      },
+      "weight": 0.0341,
+      "compositionType": "ETF_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "ULTUMUS",
+      "isActive": true
+    },
+    {
+      "id": 8001,
+      "indexSecurity": {
+        "internalId": "SEC-IDX-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-001"
+      },
+      "weight": 0.0623,
+      "compositionType": "INDEX_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "RIMES",
+      "isActive": true
+    },
+    {
+      "id": 8002,
+      "indexSecurity": {
+        "internalId": "SEC-IDX-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-002"
+      },
+      "weight": 0.0581,
+      "compositionType": "INDEX_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "RIMES",
+      "isActive": true
+    },
+    {
+      "id": 8003,
+      "indexSecurity": {
+        "internalId": "SEC-IDX-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-003"
+      },
+      "weight": 0.0192,
+      "compositionType": "INDEX_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "RIMES",
+      "isActive": true
+    },
+    {
+      "id": 8004,
+      "indexSecurity": {
+        "internalId": "SEC-IDX-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-004"
+      },
+      "weight": 0.0276,
+      "compositionType": "INDEX_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "RIMES",
+      "isActive": true
+    },
+    {
+      "id": 8005,
+      "indexSecurity": {
+        "internalId": "SEC-IDX-001"
+      },
+      "constituentSecurity": {
+        "internalId": "SEC-EQ-005"
+      },
+      "weight": 0.0341,
+      "compositionType": "INDEX_CONSTITUENT",
+      "effectiveDate": "2023-01-01",
+      "expiryDate": null,
+      "source": "RIMES",
+      "isActive": true
+    }
+  ],
+  "aggregationUnits": [
+    {
+      "id": 1,
+      "aggregationUnitId": "AU-US-001",
+      "name": "US Equity Trading",
+      "type": "TRADING",
+      "market": "US",
+      "officerId": "OFF-001",
+      "status": "ACTIVE",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 2,
+      "aggregationUnitId": "AU-US-002",
+      "name": "US Fixed Income Trading",
+      "type": "TRADING",
+      "market": "US",
+      "officerId": "OFF-002",
+      "status": "ACTIVE",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 3,
+      "aggregationUnitId": "AU-JP-001",
+      "name": "Japan Equity Trading",
+      "type": "TRADING",
+      "market": "JP",
+      "officerId": "OFF-003",
+      "status": "ACTIVE",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 4,
+      "aggregationUnitId": "AU-TW-001",
+      "name": "Taiwan Equity Trading",
+      "type": "TRADING",
+      "market": "TW",
+      "officerId": "OFF-004",
+      "status": "ACTIVE",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    },
+    {
+      "id": 5,
+      "aggregationUnitId": "AU-GL-001",
+      "name": "Global ETF Trading",
+      "type": "TRADING",
+      "market": "GLOBAL",
+      "officerId": "OFF-005",
+      "status": "ACTIVE",
+      "createdBy": "system",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "lastModifiedBy": "system",
+      "lastModifiedAt": "2023-01-01T00:00:00Z",
+      "version": 1
+    }
+  ]
+}
