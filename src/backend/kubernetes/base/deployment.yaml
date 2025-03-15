@@ -1,0 +1,674 @@
+---
+# Data Ingestion Service Deployment
+# Handles processing of reference data, market data, trade data, and contract data
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-data-ingestion-service
+  labels:
+    app: ims
+    component: data-ingestion-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Data Ingestion Service for processing reference data, market data, trade data, and contract data"
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ims
+      component: data-ingestion-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: data-ingestion-service
+    spec:
+      containers:
+      - name: data-ingestion-service
+        image: ims-registry/data-ingestion-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8081
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-data-ingestion-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-data-ingestion-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ims-data-ingestion-data
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - data-ingestion-service
+              topologyKey: kubernetes.io/hostname
+---
+# Calculation Service Deployment
+# Handles position calculation, inventory calculation, and limit calculations
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-calculation-service
+  labels:
+    app: ims
+    component: calculation-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Calculation Service for position, inventory, and limit calculations"
+    version: "1.0.0"
+spec:
+  replicas: 3  # Higher replica count for performance-critical service
+  selector:
+    matchLabels:
+      app: ims
+      component: calculation-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: calculation-service
+    spec:
+      containers:
+      - name: calculation-service
+        image: ims-registry/calculation-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        - name: hazelcast
+          containerPort: 5701
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "1"     # Higher CPU request for calculation-intensive workload
+            memory: 2Gi  # Higher memory request for in-memory calculations
+          limits:
+            cpu: "4"     # Higher CPU limit for calculation-intensive workload
+            memory: 8Gi  # Higher memory limit for in-memory data grid
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-calculation-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-calculation-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8082
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8082
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ims-calculation-data
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - calculation-service
+              topologyKey: kubernetes.io/hostname
+---
+# Workflow Service Deployment
+# Handles locate approval and short sell approval workflows
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-workflow-service
+  labels:
+    app: ims
+    component: workflow-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Workflow Service for locate approval and short sell approval workflows"
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ims
+      component: workflow-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: workflow-service
+    spec:
+      containers:
+      - name: workflow-service
+        image: ims-registry/workflow-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8083
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "1"    # Higher CPU request for workflow processing
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-workflow-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-workflow-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ims-workflow-data
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - workflow-service
+              topologyKey: kubernetes.io/hostname
+---
+# API Gateway Deployment
+# Provides routing, authentication, and rate limiting for API requests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-api-gateway
+  labels:
+    app: ims
+    component: api-gateway
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "API Gateway for routing, authentication, and rate limiting"
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ims
+      component: api-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: ims-registry/api-gateway:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-api-gateway-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-api-gateway-secrets
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - api-gateway
+              topologyKey: kubernetes.io/hostname
+---
+# WebSocket Service Deployment
+# Provides real-time data streaming
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-websocket-service
+  labels:
+    app: ims
+    component: websocket-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "WebSocket Service for real-time data streaming"
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ims
+      component: websocket-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: websocket-service
+    spec:
+      containers:
+      - name: websocket-service
+        image: ims-registry/websocket-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8085
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-websocket-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-websocket-secrets
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8085
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8085
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - websocket-service
+              topologyKey: kubernetes.io/hostname
+---
+# Monitoring Service Deployment
+# Provides system health checks and metrics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-monitoring-service
+  labels:
+    app: ims
+    component: monitoring-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Monitoring Service for system health checks and metrics"
+    version: "1.0.0"
+spec:
+  replicas: 1  # Single replica as this is a supporting service
+  selector:
+    matchLabels:
+      app: ims
+      component: monitoring-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: monitoring-service
+    spec:
+      containers:
+      - name: monitoring-service
+        image: ims-registry/monitoring-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8086
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-monitoring-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-monitoring-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8086
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ims-monitoring-data
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+---
+# Auth Service Deployment
+# Handles user authentication and token issuance
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-auth-service
+  labels:
+    app: ims
+    component: auth-service
+    part-of: inventory-management-system
+    managed-by: kustomize
+  annotations:
+    description: "Authentication Service for user management and token issuance"
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ims
+      component: auth-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ims
+        component: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: ims-registry/auth-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8084
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        envFrom:
+        - configMapRef:
+            name: ims-common-config
+        - configMapRef:
+            name: ims-auth-config
+        - secretRef:
+            name: ims-common-secrets
+        - secretRef:
+            name: ims-auth-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8084
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ims-auth-data
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - auth-service
+              topologyKey: kubernetes.io/hostname
