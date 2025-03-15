@@ -1,0 +1,44 @@
+# Number of days of inactivity before an issue becomes stale
+daysUntilStale: 60
+# Number of days of inactivity before a stale issue is closed
+daysUntilClose: 14
+# Issues with these labels will never be considered stale
+exemptLabels:
+  - pinned
+  - security
+  - critical
+  - bug
+  - enhancement
+  - in-progress
+  - blocked
+# Label to use when marking an issue as stale
+staleLabel: stale
+# Comment to post when marking an issue as stale
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs within 14 days.
+  Thank you for your contributions to the Inventory Management System.
+# Comment to post when closing a stale issue
+closeComment: >
+  This issue has been automatically closed due to inactivity. Please feel free to
+  reopen it if you believe it still requires attention.
+# Exempt issues in projects from being marked as stale
+exemptProjects: true
+# Exempt issues in milestones from being marked as stale
+exemptMilestones: true
+# Whether to exempt issues with an assignee from being marked as stale
+exemptAssignees: false
+# Only mark issues with specific labels as stale (empty array means all issues can be marked)
+onlyLabels: []
+# Limit the number of actions per run to avoid hitting rate limits
+limitPerRun: 30
+# Exempt issues created before a specific timestamp from being marked as stale
+exemptIssueCreatedBefore: '2023-01-01T00:00:00Z'
+# Set different stale/close timing for issues and pull requests
+operations:
+  issues:
+    daysUntilStale: 60
+    daysUntilClose: 14
+  pullRequests:
+    daysUntilStale: 30
+    daysUntilClose: 14
