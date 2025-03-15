@@ -1,0 +1,589 @@
+groups:
+  - name: system_alerts
+    rules:
+      - alert: SystemDown
+        expr: ims_system_health_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: system
+        annotations:
+          summary: "IMS system is down"
+          description: "The IMS system has been detected as down for more than 1 minute."
+          runbook_url: "https://wiki.example.com/ims/runbooks/system-down"
+      
+      - alert: SystemDegraded
+        expr: ims_system_health_status == 1
+        for: 5m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "IMS system is degraded"
+          description: "The IMS system has been in a degraded state for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/system-degraded"
+      
+      - alert: SystemAvailabilityBelowSLA
+        expr: ims_system_availability_percent < 99.999
+        for: 30m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "IMS system availability below SLA"
+          description: "The IMS system availability is {{ $value }}%, which is below the 99.999% SLA requirement."
+          runbook_url: "https://wiki.example.com/ims/runbooks/availability-sla"
+      
+      - alert: ServiceDown
+        expr: ims_service_health_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: system
+          service: "{{$labels.service}}"
+        annotations:
+          summary: "IMS service {{ $labels.service }} is down"
+          description: "The IMS service {{ $labels.service }} has been down for more than 2 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/service-down"
+      
+      - alert: DependencyDown
+        expr: ims_dependency_health_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: system
+          dependency: "{{$labels.dependency}}"
+          type: "{{$labels.type}}"
+        annotations:
+          summary: "IMS dependency {{ $labels.dependency }} is down"
+          description: "The IMS dependency {{ $labels.dependency }} of type {{ $labels.type }} has been down for more than 2 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/dependency-down"
+      
+      - alert: HighSystemCPUUtilization
+        expr: ims_system_cpu_utilization_percent > 85
+        for: 10m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "High system CPU utilization"
+          description: "The IMS system CPU utilization is {{ $value }}%, which is above the 85% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-cpu"
+      
+      - alert: HighSystemMemoryUtilization
+        expr: ims_system_memory_utilization_percent > 85
+        for: 10m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "High system memory utilization"
+          description: "The IMS system memory utilization is {{ $value }}%, which is above the 85% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-memory"
+      
+      - alert: HighSystemDiskUtilization
+        expr: ims_system_disk_utilization_percent > 85
+        for: 15m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "High system disk utilization"
+          description: "The IMS system disk utilization is {{ $value }}%, which is above the 85% threshold for more than 15 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-disk"
+      
+      - alert: HighSystemNetworkUtilization
+        expr: ims_system_network_utilization_percent > 80
+        for: 10m
+        labels:
+          severity: high
+          category: system
+        annotations:
+          summary: "High system network utilization"
+          description: "The IMS system network utilization is {{ $value }}%, which is above the 80% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-network"
+
+  - name: application_alerts
+    rules:
+      - alert: HighApplicationErrorRate
+        expr: ims_application_error_rate_percent > 1
+        for: 5m
+        labels:
+          severity: high
+          category: application
+        annotations:
+          summary: "High application error rate"
+          description: "The IMS application error rate is {{ $value }}%, which is above the 1% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-error-rate"
+      
+      - alert: HighApplicationResponseTime
+        expr: ims_application_response_time_ms > 1000
+        for: 5m
+        labels:
+          severity: high
+          category: application
+        annotations:
+          summary: "High application response time"
+          description: "The IMS application response time is {{ $value }}ms, which is above the 1000ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-response-time"
+      
+      - alert: HighServiceErrorRate
+        expr: ims_application_error_rate_by_service_percent > 1
+        for: 5m
+        labels:
+          severity: high
+          category: application
+          service: "{{$labels.service}}"
+        annotations:
+          summary: "High error rate for service {{ $labels.service }}"
+          description: "The error rate for service {{ $labels.service }} is {{ $value }}%, which is above the 1% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/service-error-rate"
+      
+      - alert: HighServiceResponseTime
+        expr: ims_application_response_time_by_service_ms > 1000
+        for: 5m
+        labels:
+          severity: high
+          category: application
+          service: "{{$labels.service}}"
+        annotations:
+          summary: "High response time for service {{ $labels.service }}"
+          description: "The response time for service {{ $labels.service }} is {{ $value }}ms, which is above the 1000ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/service-response-time"
+      
+      - alert: HighEndpointErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~".*ims.*"}[5m])) by (uri) / sum(rate(http_server_requests_seconds_count{job=~".*ims.*"}[5m])) by (uri) * 100 > 5
+        for: 5m
+        labels:
+          severity: high
+          category: application
+        annotations:
+          summary: "High error rate for endpoint {{ $labels.uri }}"
+          description: "The error rate for endpoint {{ $labels.uri }} is {{ $value }}%, which is above the 5% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/endpoint-error-rate"
+      
+      - alert: HighEndpointResponseTime
+        expr: ims_application_response_time_by_endpoint_ms > 2000
+        for: 5m
+        labels:
+          severity: high
+          category: application
+        annotations:
+          summary: "High response time for endpoint {{ $labels.uri }}"
+          description: "The response time for endpoint {{ $labels.uri }} is {{ $value }}ms, which is above the 2000ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/endpoint-response-time"
+
+  - name: business_alerts
+    rules:
+      - alert: LowEventProcessingRate
+        expr: ims_business_events_per_second < 300000
+        for: 5m
+        labels:
+          severity: critical
+          category: business
+        annotations:
+          summary: "Low event processing rate"
+          description: "The IMS event processing rate is {{ $value }} events/sec, which is below the 300,000 events/sec requirement for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/low-event-rate"
+      
+      - alert: HighEventProcessingLatency
+        expr: ims_business_event_processing_latency_ms > 200
+        for: 5m
+        labels:
+          severity: critical
+          category: business
+        annotations:
+          summary: "High event processing latency"
+          description: "The IMS event processing latency is {{ $value }}ms, which is above the 200ms SLA requirement for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/high-event-latency"
+      
+      - alert: HighCalculationErrorRate
+        expr: ims_calculation_error_rate_percent > 0.5
+        for: 5m
+        labels:
+          severity: high
+          category: business
+        annotations:
+          summary: "High calculation error rate"
+          description: "The IMS calculation error rate is {{ $value }}%, which is above the 0.5% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/calculation-errors"
+      
+      - alert: CalculationEngineUnhealthy
+        expr: ims_calculation_engine_health_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: business
+        annotations:
+          summary: "Calculation engine is unhealthy"
+          description: "The IMS calculation engine has been detected as unhealthy for more than 2 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/calculation-engine"
+      
+      - alert: HighPositionCalculationLatency
+        expr: ims_position_calculation_latency_ms > 200
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          calculation_type: "position"
+        annotations:
+          summary: "High position calculation latency"
+          description: "The IMS position calculation latency is {{ $value }}ms, which is above the 200ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/position-calculation"
+      
+      - alert: HighInventoryCalculationLatency
+        expr: ims_inventory_calculation_latency_ms > 200
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          calculation_type: "inventory"
+        annotations:
+          summary: "High inventory calculation latency"
+          description: "The IMS inventory calculation latency is {{ $value }}ms, which is above the 200ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/inventory-calculation"
+      
+      - alert: HighShortSellValidationTime
+        expr: ims_business_short_sell_validation_time_ms > 150
+        for: 5m
+        labels:
+          severity: critical
+          category: business
+          workflow: "short_sell"
+        annotations:
+          summary: "High short sell validation time"
+          description: "The IMS short sell validation time is {{ $value }}ms, which is above the 150ms SLA requirement for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/short-sell-validation"
+      
+      - alert: HighLocateApprovalTime
+        expr: ims_business_locate_approval_time_ms > 2000
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          workflow: "locate"
+        annotations:
+          summary: "High locate approval time"
+          description: "The IMS locate approval time is {{ $value }}ms, which is above the 2000ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/locate-approval"
+
+  - name: database_alerts
+    rules:
+      - alert: HighDatabaseQueryTime
+        expr: ims_database_query_time_ms > 500
+        for: 5m
+        labels:
+          severity: high
+          category: database
+        annotations:
+          summary: "High database query time"
+          description: "The IMS database query time is {{ $value }}ms, which is above the 500ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/database-query-time"
+      
+      - alert: HighDatabaseConnectionPoolUtilization
+        expr: ims_database_connection_pool_utilization_percent > 80
+        for: 5m
+        labels:
+          severity: high
+          category: database
+          pool_name: "{{$labels.pool_name}}"
+        annotations:
+          summary: "High database connection pool utilization"
+          description: "The IMS database connection pool {{ $labels.pool_name }} utilization is {{ $value }}%, which is above the 80% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/connection-pool"
+      
+      - alert: HighDatabaseConnectionWaitTime
+        expr: ims_database_connection_wait_time_ms > 100
+        for: 5m
+        labels:
+          severity: high
+          category: database
+          pool_name: "{{$labels.pool_name}}"
+        annotations:
+          summary: "High database connection wait time"
+          description: "The IMS database connection wait time for pool {{ $labels.pool_name }} is {{ $value }}ms, which is above the 100ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/connection-wait-time"
+      
+      - alert: LowDatabaseCacheHitRatio
+        expr: ims_database_cache_hit_ratio_percent < 90
+        for: 15m
+        labels:
+          severity: medium
+          category: database
+        annotations:
+          summary: "Low database cache hit ratio"
+          description: "The IMS database cache hit ratio is {{ $value }}%, which is below the 90% threshold for more than 15 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/cache-hit-ratio"
+      
+      - alert: LowHazelcastCacheHitRatio
+        expr: ims_hazelcast_cache_hit_ratio_percent < 95
+        for: 15m
+        labels:
+          severity: medium
+          category: database
+          cache_type: "hazelcast"
+        annotations:
+          summary: "Low Hazelcast cache hit ratio"
+          description: "The IMS Hazelcast cache hit ratio is {{ $value }}%, which is below the 95% threshold for more than 15 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/hazelcast-cache"
+      
+      - alert: LowRedisCacheHitRatio
+        expr: ims_redis_cache_hit_ratio_percent < 95
+        for: 15m
+        labels:
+          severity: medium
+          category: database
+          cache_type: "redis"
+        annotations:
+          summary: "Low Redis cache hit ratio"
+          description: "The IMS Redis cache hit ratio is {{ $value }}%, which is below the 95% threshold for more than 15 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/redis-cache"
+
+  - name: infrastructure_alerts
+    rules:
+      - alert: HighNodeCPUUtilization
+        expr: ims_node_cpu_utilization_percent > 85
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+        annotations:
+          summary: "High node CPU utilization"
+          description: "The IMS node CPU utilization is {{ $value }}%, which is above the 85% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/node-cpu"
+      
+      - alert: HighNodeMemoryUtilization
+        expr: ims_node_memory_utilization_percent > 85
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+        annotations:
+          summary: "High node memory utilization"
+          description: "The IMS node memory utilization is {{ $value }}%, which is above the 85% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/node-memory"
+      
+      - alert: HighNodeDiskUtilization
+        expr: ims_node_disk_utilization_percent > 85
+        for: 15m
+        labels:
+          severity: high
+          category: infrastructure
+        annotations:
+          summary: "High node disk utilization"
+          description: "The IMS node disk utilization is {{ $value }}%, which is above the 85% threshold for more than 15 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/node-disk"
+      
+      - alert: HighNodeNetworkUtilization
+        expr: ims_node_network_utilization_percent > 80
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+        annotations:
+          summary: "High node network utilization"
+          description: "The IMS node network utilization is {{ $value }}%, which is above the 80% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/node-network"
+      
+      - alert: HighPodCPUUtilization
+        expr: ims_pod_cpu_utilization_percent > 90
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+          pod: "{{$labels.pod}}"
+        annotations:
+          summary: "High pod CPU utilization"
+          description: "The IMS pod {{ $labels.pod }} CPU utilization is {{ $value }}%, which is above the 90% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/pod-cpu"
+      
+      - alert: HighPodMemoryUtilization
+        expr: ims_pod_memory_utilization_percent > 90
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+          pod: "{{$labels.pod}}"
+        annotations:
+          summary: "High pod memory utilization"
+          description: "The IMS pod {{ $labels.pod }} memory utilization is {{ $value }}%, which is above the 90% threshold for more than 10 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/pod-memory"
+      
+      - alert: FrequentPodRestarts
+        expr: ims_pod_restart_rate > 3
+        for: 15m
+        labels:
+          severity: high
+          category: infrastructure
+          pod: "{{$labels.pod}}"
+        annotations:
+          summary: "Frequent pod restarts"
+          description: "The IMS pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/pod-restarts"
+
+  - name: integration_alerts
+    rules:
+      - alert: HighKafkaConsumerLag
+        expr: ims_kafka_consumer_lag > 10000
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          integration_type: "kafka"
+          consumergroup: "{{$labels.consumergroup}}"
+          topic: "{{$labels.topic}}"
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "The IMS Kafka consumer group {{ $labels.consumergroup }} for topic {{ $labels.topic }} has a lag of {{ $value }} messages for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/kafka-lag"
+      
+      - alert: LowKafkaMessageRate
+        expr: ims_kafka_message_rate < 1000
+        for: 5m
+        labels:
+          severity: medium
+          category: integration
+          integration_type: "kafka"
+          topic: "{{$labels.topic}}"
+        annotations:
+          summary: "Low Kafka message rate"
+          description: "The IMS Kafka topic {{ $labels.topic }} has a message rate of {{ $value }} messages/sec, which is below the 1000 messages/sec threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/kafka-rate"
+      
+      - alert: HighExternalAPIErrorRate
+        expr: ims_external_api_error_rate_percent > 5
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          integration_type: "api"
+          api: "{{$labels.api}}"
+        annotations:
+          summary: "High external API error rate"
+          description: "The IMS external API {{ $labels.api }} has an error rate of {{ $value }}%, which is above the 5% threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/api-errors"
+      
+      - alert: HighExternalAPIResponseTime
+        expr: ims_external_api_response_time_ms > 1000
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          integration_type: "api"
+          api: "{{$labels.api}}"
+        annotations:
+          summary: "High external API response time"
+          description: "The IMS external API {{ $labels.api }} has a response time of {{ $value }}ms, which is above the 1000ms threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/api-response-time"
+      
+      - alert: DataFeedDelayed
+        expr: ims_data_feed_age_seconds > 300
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          integration_type: "data_feed"
+          feed: "{{$labels.feed}}"
+        annotations:
+          summary: "Data feed delayed"
+          description: "The IMS data feed {{ $labels.feed }} is {{ $value }} seconds old, which is above the 300 seconds threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/data-feed-delay"
+      
+      - alert: LowDataFeedIngestionRate
+        expr: ims_data_feed_ingestion_rate < 100
+        for: 5m
+        labels:
+          severity: medium
+          category: integration
+          integration_type: "data_feed"
+          feed: "{{$labels.feed}}"
+        annotations:
+          summary: "Low data feed ingestion rate"
+          description: "The IMS data feed {{ $labels.feed }} has an ingestion rate of {{ $value }} records/sec, which is below the 100 records/sec threshold for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/ims/runbooks/data-feed-rate"
+
+  - name: sla_alerts
+    rules:
+      - alert: SystemAvailabilitySLABreach
+        expr: ims_sla_compliance_percent{sla="system_availability"} < 99.9
+        for: 1h
+        labels:
+          severity: critical
+          category: sla
+          sla: "system_availability"
+        annotations:
+          summary: "System availability SLA breach"
+          description: "The IMS system availability SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-availability"
+      
+      - alert: EventProcessingLatencySLABreach
+        expr: ims_sla_compliance_percent{sla="event_processing_latency"} < 99.9
+        for: 1h
+        labels:
+          severity: critical
+          category: sla
+          sla: "event_processing_latency"
+        annotations:
+          summary: "Event processing latency SLA breach"
+          description: "The IMS event processing latency SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-event-latency"
+      
+      - alert: ShortSellApprovalTimeSLABreach
+        expr: ims_sla_compliance_percent{sla="short_sell_approval_time"} < 99.9
+        for: 1h
+        labels:
+          severity: critical
+          category: sla
+          sla: "short_sell_approval_time"
+        annotations:
+          summary: "Short sell approval time SLA breach"
+          description: "The IMS short sell approval time SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-short-sell"
+      
+      - alert: UIDashboardLoadTimeSLABreach
+        expr: ims_sla_compliance_percent{sla="ui_dashboard_load_time"} < 99.9
+        for: 1h
+        labels:
+          severity: high
+          category: sla
+          sla: "ui_dashboard_load_time"
+        annotations:
+          summary: "UI dashboard load time SLA breach"
+          description: "The IMS UI dashboard load time SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-ui-load-time"
+      
+      - alert: PositionCalculationLatencySLABreach
+        expr: ims_sla_compliance_percent{sla="position_calculation_latency"} < 99.9
+        for: 1h
+        labels:
+          severity: high
+          category: sla
+          sla: "position_calculation_latency"
+        annotations:
+          summary: "Position calculation latency SLA breach"
+          description: "The IMS position calculation latency SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-position-calculation"
+      
+      - alert: InventoryCalculationLatencySLABreach
+        expr: ims_sla_compliance_percent{sla="inventory_calculation_latency"} < 99.9
+        for: 1h
+        labels:
+          severity: high
+          category: sla
+          sla: "inventory_calculation_latency"
+        annotations:
+          summary: "Inventory calculation latency SLA breach"
+          description: "The IMS inventory calculation latency SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-inventory-calculation"
+      
+      - alert: CalculationThroughputSLABreach
+        expr: ims_sla_compliance_percent{sla="calculation_throughput"} < 99.9
+        for: 1h
+        labels:
+          severity: critical
+          category: sla
+          sla: "calculation_throughput"
+        annotations:
+          summary: "Calculation throughput SLA breach"
+          description: "The IMS calculation throughput SLA compliance is {{ $value }}%, which is below the 99.9% threshold for more than 1 hour."
+          runbook_url: "https://wiki.example.com/ims/runbooks/sla-calculation-throughput"
