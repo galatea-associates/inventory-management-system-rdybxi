@@ -1,0 +1,548 @@
+package com.ims.domain.counterparty;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Represents a counterparty in the Inventory Management System.
+ * A counterparty can be a client, broker, or internal entity that the bank interacts with.
+ * 
+ * This class serves as the core domain entity for managing counterparty information required
+ * for inventory aggregation and risk management across global markets.
+ */
+public class Counterparty {
+    private Long id;
+    private String counterpartyId;
+    private String name;
+    private String shortName;
+    private CounterpartyType type;
+    private CounterpartyCategory category;
+    private CounterpartyStatus status;
+    private KycStatus kycStatus;
+    private RiskRating riskRating;
+    private String country;
+    private Region region;
+    private String primaryIdentifierType;
+    private String primaryIdentifierValue;
+    private String createdBy;
+    private Instant createdAt;
+    private String lastModifiedBy;
+    private Instant lastModifiedAt;
+    private Integer version;
+    private List<CounterpartyIdentifier> identifiers = new ArrayList<>();
+
+    /**
+     * Default constructor.
+     */
+    public Counterparty() {
+    }
+
+    /**
+     * Constructs a counterparty with the specified parameters.
+     *
+     * @param id the unique identifier
+     * @param counterpartyId the business identifier
+     * @param name the full name
+     * @param shortName the abbreviated name
+     * @param type the type
+     * @param category the category
+     * @param status the status
+     * @param kycStatus the KYC status
+     * @param riskRating the risk rating
+     * @param country the country code
+     * @param region the region
+     * @param primaryIdentifierType the primary identifier type
+     * @param primaryIdentifierValue the primary identifier value
+     * @param createdBy who created this record
+     * @param createdAt when this record was created
+     * @param lastModifiedBy who last modified this record
+     * @param lastModifiedAt when this record was last modified
+     * @param version the version number
+     */
+    public Counterparty(Long id, String counterpartyId, String name, String shortName, CounterpartyType type,
+                        CounterpartyCategory category, CounterpartyStatus status, KycStatus kycStatus,
+                        RiskRating riskRating, String country, Region region, String primaryIdentifierType,
+                        String primaryIdentifierValue, String createdBy, Instant createdAt, String lastModifiedBy,
+                        Instant lastModifiedAt, Integer version) {
+        this.id = id;
+        this.counterpartyId = counterpartyId;
+        this.name = name;
+        this.shortName = shortName;
+        this.type = type;
+        this.category = category;
+        this.status = status;
+        this.kycStatus = kycStatus;
+        this.riskRating = riskRating;
+        this.country = country;
+        this.region = region;
+        this.primaryIdentifierType = primaryIdentifierType;
+        this.primaryIdentifierValue = primaryIdentifierValue;
+        this.createdBy = createdBy;
+        this.createdAt = createdAt;
+        this.lastModifiedBy = lastModifiedBy;
+        this.lastModifiedAt = lastModifiedAt;
+        this.version = version;
+    }
+
+    /**
+     * Gets the unique identifier.
+     *
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * Sets the unique identifier.
+     *
+     * @param id the id
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    /**
+     * Gets the business identifier.
+     *
+     * @return the counterparty ID
+     */
+    public String getCounterpartyId() {
+        return counterpartyId;
+    }
+
+    /**
+     * Sets the business identifier.
+     *
+     * @param counterpartyId the counterparty ID
+     */
+    public void setCounterpartyId(String counterpartyId) {
+        this.counterpartyId = counterpartyId;
+    }
+
+    /**
+     * Gets the full name.
+     *
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the full name.
+     *
+     * @param name the name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Gets the abbreviated name.
+     *
+     * @return the short name
+     */
+    public String getShortName() {
+        return shortName;
+    }
+
+    /**
+     * Sets the abbreviated name.
+     *
+     * @param shortName the short name
+     */
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
+    }
+
+    /**
+     * Gets the type.
+     *
+     * @return the type
+     */
+    public CounterpartyType getType() {
+        return type;
+    }
+
+    /**
+     * Sets the type.
+     *
+     * @param type the type
+     */
+    public void setType(CounterpartyType type) {
+        this.type = type;
+    }
+
+    /**
+     * Gets the category.
+     *
+     * @return the category
+     */
+    public CounterpartyCategory getCategory() {
+        return category;
+    }
+
+    /**
+     * Sets the category.
+     *
+     * @param category the category
+     */
+    public void setCategory(CounterpartyCategory category) {
+        this.category = category;
+    }
+
+    /**
+     * Gets the status.
+     *
+     * @return the status
+     */
+    public CounterpartyStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the status.
+     *
+     * @param status the status
+     */
+    public void setStatus(CounterpartyStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * Gets the KYC status.
+     *
+     * @return the KYC status
+     */
+    public KycStatus getKycStatus() {
+        return kycStatus;
+    }
+
+    /**
+     * Sets the KYC status.
+     *
+     * @param kycStatus the KYC status
+     */
+    public void setKycStatus(KycStatus kycStatus) {
+        this.kycStatus = kycStatus;
+    }
+
+    /**
+     * Gets the risk rating.
+     *
+     * @return the risk rating
+     */
+    public RiskRating getRiskRating() {
+        return riskRating;
+    }
+
+    /**
+     * Sets the risk rating.
+     *
+     * @param riskRating the risk rating
+     */
+    public void setRiskRating(RiskRating riskRating) {
+        this.riskRating = riskRating;
+    }
+
+    /**
+     * Gets the country code.
+     *
+     * @return the country code
+     */
+    public String getCountry() {
+        return country;
+    }
+
+    /**
+     * Sets the country code.
+     *
+     * @param country the country code
+     */
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    /**
+     * Gets the region.
+     *
+     * @return the region
+     */
+    public Region getRegion() {
+        return region;
+    }
+
+    /**
+     * Sets the region.
+     *
+     * @param region the region
+     */
+    public void setRegion(Region region) {
+        this.region = region;
+    }
+
+    /**
+     * Gets the primary identifier type.
+     *
+     * @return the primary identifier type
+     */
+    public String getPrimaryIdentifierType() {
+        return primaryIdentifierType;
+    }
+
+    /**
+     * Sets the primary identifier type.
+     *
+     * @param primaryIdentifierType the primary identifier type
+     */
+    public void setPrimaryIdentifierType(String primaryIdentifierType) {
+        this.primaryIdentifierType = primaryIdentifierType;
+    }
+
+    /**
+     * Gets the primary identifier value.
+     *
+     * @return the primary identifier value
+     */
+    public String getPrimaryIdentifierValue() {
+        return primaryIdentifierValue;
+    }
+
+    /**
+     * Sets the primary identifier value.
+     *
+     * @param primaryIdentifierValue the primary identifier value
+     */
+    public void setPrimaryIdentifierValue(String primaryIdentifierValue) {
+        this.primaryIdentifierValue = primaryIdentifierValue;
+    }
+
+    /**
+     * Gets who created this record.
+     *
+     * @return who created this record
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * Sets who created this record.
+     *
+     * @param createdBy who created this record
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * Gets when this record was created.
+     *
+     * @return when this record was created
+     */
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets when this record was created.
+     *
+     * @param createdAt when this record was created
+     */
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * Gets who last modified this record.
+     *
+     * @return who last modified this record
+     */
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    /**
+     * Sets who last modified this record.
+     *
+     * @param lastModifiedBy who last modified this record
+     */
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    /**
+     * Gets when this record was last modified.
+     *
+     * @return when this record was last modified
+     */
+    public Instant getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    /**
+     * Sets when this record was last modified.
+     *
+     * @param lastModifiedAt when this record was last modified
+     */
+    public void setLastModifiedAt(Instant lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
+    }
+
+    /**
+     * Gets the version number for optimistic locking.
+     *
+     * @return the version
+     */
+    public Integer getVersion() {
+        return version;
+    }
+
+    /**
+     * Sets the version number for optimistic locking.
+     *
+     * @param version the version
+     */
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    /**
+     * Gets the identifiers associated with this counterparty.
+     *
+     * @return the identifiers
+     */
+    public List<CounterpartyIdentifier> getIdentifiers() {
+        return identifiers;
+    }
+
+    /**
+     * Sets the identifiers associated with this counterparty.
+     *
+     * @param identifiers the identifiers
+     */
+    public void setIdentifiers(List<CounterpartyIdentifier> identifiers) {
+        this.identifiers = identifiers != null ? identifiers : new ArrayList<>();
+    }
+
+    /**
+     * Adds an identifier to this counterparty.
+     *
+     * @param identifier the identifier to add
+     */
+    public void addIdentifier(CounterpartyIdentifier identifier) {
+        if (identifier != null) {
+            identifiers.add(identifier);
+        }
+    }
+
+    /**
+     * Removes an identifier from this counterparty.
+     *
+     * @param identifier the identifier to remove
+     * @return true if the identifier was removed, false otherwise
+     */
+    public boolean removeIdentifier(CounterpartyIdentifier identifier) {
+        return identifiers.remove(identifier);
+    }
+
+    /**
+     * Determines if this counterparty is eligible for trading.
+     * A counterparty is eligible for trading if it is active and has approved KYC status.
+     *
+     * @return true if eligible for trading, false otherwise
+     */
+    public boolean isEligibleForTrading() {
+        return status == CounterpartyStatus.ACTIVE && 
+               kycStatus == KycStatus.APPROVED;
+    }
+
+    /**
+     * Determines if this counterparty requires enhanced due diligence.
+     * This is based on the risk rating of the counterparty and potentially other factors.
+     *
+     * @return true if enhanced due diligence is required, false otherwise
+     */
+    public boolean requiresEnhancedDueDiligence() {
+        return riskRating == RiskRating.HIGH || 
+               (type == CounterpartyType.CLIENT && category == CounterpartyCategory.HEDGE_FUND);
+    }
+
+    /**
+     * Find an identifier by type.
+     *
+     * @param type the identifier type to find
+     * @return the identifier if found, null otherwise
+     */
+    public CounterpartyIdentifier findIdentifierByType(String type) {
+        if (type == null) {
+            return null;
+        }
+        
+        for (CounterpartyIdentifier identifier : identifiers) {
+            if (type.equals(identifier.getIdentifierType())) {
+                return identifier;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Validates that the counterparty data is consistent and follows business rules.
+     * @throws IllegalStateException if any business rule is violated
+     */
+    public void validate() {
+        // Validate primary identifier consistency
+        boolean hasPrimaryIdentifier = false;
+        for (CounterpartyIdentifier identifier : identifiers) {
+            if (Boolean.TRUE.equals(identifier.getIsPrimary())) {
+                if (hasPrimaryIdentifier) {
+                    throw new IllegalStateException("Counterparty cannot have multiple primary identifiers");
+                }
+                
+                hasPrimaryIdentifier = true;
+                
+                if (identifier.getPriority() != 1) {
+                    throw new IllegalStateException("Primary identifier must have priority 1");
+                }
+                
+                if (!identifier.getIdentifierType().equals(primaryIdentifierType) || 
+                    !identifier.getIdentifierValue().equals(primaryIdentifierValue)) {
+                    throw new IllegalStateException("Primary identifier must match the counterparty's primary identifier type and value");
+                }
+            }
+        }
+        
+        if (!hasPrimaryIdentifier && !identifiers.isEmpty()) {
+            throw new IllegalStateException("Counterparty must have a primary identifier");
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Counterparty that = (Counterparty) o;
+        return Objects.equals(id, that.id) && 
+               Objects.equals(counterpartyId, that.counterpartyId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, counterpartyId);
+    }
+
+    @Override
+    public String toString() {
+        return "Counterparty{" +
+                "id=" + id +
+                ", counterpartyId='" + counterpartyId + '\'' +
+                ", name='" + name + '\'' +
+                ", type=" + type +
+                ", status=" + status +
+                '}';
+    }
+}
