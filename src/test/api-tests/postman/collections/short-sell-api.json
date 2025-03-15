@@ -1,0 +1,965 @@
+{
+  "info": {
+    "name": "Short Sell API Tests",
+    "description": "API tests for the Short Sell endpoints of the Inventory Management System. This collection contains requests for testing short sell order validation against client and aggregation unit limits.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Order Validation Management",
+      "description": "Tests for order validation management endpoints",
+      "item": [
+        {
+          "name": "Validate Short Sell Order",
+          "description": "Test validating a short sell order against client and aggregation unit limits",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-00001\",\n  \"orderType\": \"SHORT_SELL\",\n  \"security\": {\n    \"internalId\": \"{{testSecurityId}}\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"{{testCounterpartyId}}\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"{{testAggregationUnitId}}\"\n  },\n  \"quantity\": {{testQuantity}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains order validation data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationId).to.exist;",
+                  "    pm.expect(jsonData.orderId).to.equal(\"ORD-00001\");",
+                  "    pm.expect(jsonData.orderType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData.security).to.exist;",
+                  "    pm.expect(jsonData.client).to.exist;",
+                  "    pm.expect(jsonData.aggregationUnit).to.exist;",
+                  "    pm.expect(jsonData.quantity).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.validationTimestamp).to.exist;",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "    ",
+                  "    // Save validation ID for later use",
+                  "    pm.collectionVariables.set(\"validationId\", jsonData.validationId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Long Sell Order",
+          "description": "Test validating a long sell order against client and aggregation unit limits",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-00002\",\n  \"orderType\": \"LONG_SELL\",\n  \"security\": {\n    \"internalId\": \"{{testSecurityId}}\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"{{testCounterpartyId}}\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"{{testAggregationUnitId}}\"\n  },\n  \"quantity\": {{testQuantity}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains order validation data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationId).to.exist;",
+                  "    pm.expect(jsonData.orderId).to.equal(\"ORD-00002\");",
+                  "    pm.expect(jsonData.orderType).to.equal(\"LONG_SELL\");",
+                  "    pm.expect(jsonData.security).to.exist;",
+                  "    pm.expect(jsonData.client).to.exist;",
+                  "    pm.expect(jsonData.aggregationUnit).to.exist;",
+                  "    pm.expect(jsonData.quantity).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.validationTimestamp).to.exist;",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Order By ID",
+          "description": "Test validating an order by its ID",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate/{{testOrderId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "securityId",
+                "value": "{{testSecurityId}}"
+              },
+              {
+                "key": "clientId",
+                "value": "{{testCounterpartyId}}"
+              },
+              {
+                "key": "aggregationUnitId",
+                "value": "{{testAggregationUnitId}}"
+              },
+              {
+                "key": "orderType",
+                "value": "SHORT_SELL"
+              },
+              {
+                "key": "quantity",
+                "value": "{{testQuantity}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains order validation data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationId).to.exist;",
+                  "    pm.expect(jsonData.orderId).to.equal(pm.variables.get(\"testOrderId\"));",
+                  "    pm.expect(jsonData.orderType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData.security).to.exist;",
+                  "    pm.expect(jsonData.client).to.exist;",
+                  "    pm.expect(jsonData.aggregationUnit).to.exist;",
+                  "    pm.expect(jsonData.quantity).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.validationTimestamp).to.exist;",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order Validation Status",
+          "description": "Test retrieving the validation status for a specific order",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/status/{{testOrderId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation status data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.orderId).to.equal(pm.variables.get(\"testOrderId\"));",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.approved).to.be.a('boolean');",
+                  "    pm.expect(jsonData.rejected).to.be.a('boolean');",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "    ",
+                  "    // If rejected, check for rejection reason",
+                  "    if (jsonData.rejected) {",
+                  "        pm.expect(jsonData.rejectionReason).to.exist;",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Approved Orders",
+          "description": "Test retrieving all approved order validations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/approved",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Validation items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].validationId).to.exist;",
+                  "        pm.expect(jsonData[0].orderId).to.exist;",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].client).to.exist;",
+                  "        pm.expect(jsonData[0].status).to.equal(\"APPROVED\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Rejected Orders",
+          "description": "Test retrieving all rejected order validations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/rejected",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Validation items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].validationId).to.exist;",
+                  "        pm.expect(jsonData[0].orderId).to.exist;",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].client).to.exist;",
+                  "        pm.expect(jsonData[0].status).to.equal(\"REJECTED\");",
+                  "        pm.expect(jsonData[0].rejectionReason).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Short Sell Approval Workflow",
+      "description": "Tests for short sell approval workflow endpoints",
+      "item": [
+        {
+          "name": "Create and Validate Short Sell Order",
+          "description": "Test creating and validating a short sell order in one request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-SS-TEST-001\",\n  \"orderType\": \"SHORT_SELL\",\n  \"security\": {\n    \"internalId\": \"SEC-EQ-001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP-00001\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU-00001\"\n  },\n  \"quantity\": 5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains order validation data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationId).to.exist;",
+                  "    pm.expect(jsonData.orderId).to.equal(\"ORD-SS-TEST-001\");",
+                  "    pm.expect(jsonData.orderType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData.security.internalId).to.equal(\"SEC-EQ-001\");",
+                  "    pm.expect(jsonData.client.counterpartyId).to.equal(\"CP-00001\");",
+                  "    pm.expect(jsonData.aggregationUnit.aggregationUnitId).to.equal(\"AU-00001\");",
+                  "    pm.expect(jsonData.quantity).to.equal(5000);",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.validationTimestamp).to.exist;",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "    ",
+                  "    // Save workflow test order ID for later use",
+                  "    pm.collectionVariables.set(\"workflowOrderId\", jsonData.orderId);",
+                  "    pm.collectionVariables.set(\"workflowValidationId\", jsonData.validationId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create and Validate Long Sell Order",
+          "description": "Test creating and validating a long sell order in one request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-LS-TEST-001\",\n  \"orderType\": \"LONG_SELL\",\n  \"security\": {\n    \"internalId\": \"SEC-EQ-002\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP-00002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU-00001\"\n  },\n  \"quantity\": 2500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains order validation data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationId).to.exist;",
+                  "    pm.expect(jsonData.orderId).to.equal(\"ORD-LS-TEST-001\");",
+                  "    pm.expect(jsonData.orderType).to.equal(\"LONG_SELL\");",
+                  "    pm.expect(jsonData.security.internalId).to.equal(\"SEC-EQ-002\");",
+                  "    pm.expect(jsonData.client.counterpartyId).to.equal(\"CP-00002\");",
+                  "    pm.expect(jsonData.aggregationUnit.aggregationUnitId).to.equal(\"AU-00001\");",
+                  "    pm.expect(jsonData.quantity).to.equal(2500);",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.validationTimestamp).to.exist;",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Validation Status",
+          "description": "Test checking the validation status of a previously validated order",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/status/{{workflowOrderId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation status data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.orderId).to.equal(pm.collectionVariables.get(\"workflowOrderId\"));",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.approved).to.be.a('boolean');",
+                  "    pm.expect(jsonData.rejected).to.be.a('boolean');",
+                  "    pm.expect(jsonData.processingTime).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Multiple Orders",
+          "description": "Test validating multiple orders in batch",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate-batch",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"orderId\": \"ORD-BATCH-001\",\n    \"orderType\": \"SHORT_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-001\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00001\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 1000\n  },\n  {\n    \"orderId\": \"ORD-BATCH-002\",\n    \"orderType\": \"LONG_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-002\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00002\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 2000\n  },\n  {\n    \"orderId\": \"ORD-BATCH-003\",\n    \"orderType\": \"SHORT_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-003\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00003\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 3000\n  }\n]"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array of validation results\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.equal(3);",
+                  "});",
+                  "",
+                  "pm.test(\"Each validation result has expected properties\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    // Check first order",
+                  "    pm.expect(jsonData[0].validationId).to.exist;",
+                  "    pm.expect(jsonData[0].orderId).to.equal(\"ORD-BATCH-001\");",
+                  "    pm.expect(jsonData[0].orderType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData[0].status).to.exist;",
+                  "    pm.expect(jsonData[0].processingTime).to.exist;",
+                  "    ",
+                  "    // Check second order",
+                  "    pm.expect(jsonData[1].validationId).to.exist;",
+                  "    pm.expect(jsonData[1].orderId).to.equal(\"ORD-BATCH-002\");",
+                  "    pm.expect(jsonData[1].orderType).to.equal(\"LONG_SELL\");",
+                  "    pm.expect(jsonData[1].status).to.exist;",
+                  "    pm.expect(jsonData[1].processingTime).to.exist;",
+                  "    ",
+                  "    // Check third order",
+                  "    pm.expect(jsonData[2].validationId).to.exist;",
+                  "    pm.expect(jsonData[2].orderId).to.equal(\"ORD-BATCH-003\");",
+                  "    pm.expect(jsonData[2].orderType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData[2].status).to.exist;",
+                  "    pm.expect(jsonData[2].processingTime).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Tests for error handling in the Short Sell API",
+      "item": [
+        {
+          "name": "Invalid Order Validation",
+          "description": "Test validating an invalid order (missing required fields)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"SEC-EQ-001\"\n  },\n  \"quantity\": -5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order Not Found",
+          "description": "Test retrieving validation status for a non-existent order",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/status/non-existent-id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"not found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Order Type",
+          "description": "Test validating an order with an invalid order type",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate/ORD-INVALID-001",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "securityId",
+                "value": "SEC-EQ-001"
+              },
+              {
+                "key": "clientId",
+                "value": "CP-00001"
+              },
+              {
+                "key": "aggregationUnitId",
+                "value": "AU-00001"
+              },
+              {
+                "key": "orderType",
+                "value": "INVALID_TYPE"
+              },
+              {
+                "key": "quantity",
+                "value": "5000"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"Invalid order type\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative Quantity",
+          "description": "Test validating an order with a negative quantity",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate/ORD-INVALID-002",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "securityId",
+                "value": "SEC-EQ-001"
+              },
+              {
+                "key": "clientId",
+                "value": "CP-00001"
+              },
+              {
+                "key": "aggregationUnitId",
+                "value": "AU-00001"
+              },
+              {
+                "key": "orderType",
+                "value": "SHORT_SELL"
+              },
+              {
+                "key": "quantity",
+                "value": "-5000"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"Quantity must be greater than zero\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Access",
+          "description": "Test accessing the API without authentication",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/status/{{testOrderId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Performance Tests",
+      "description": "Tests specifically focused on performance requirements",
+      "item": [
+        {
+          "name": "Short Sell Validation Performance",
+          "description": "Test short sell validation performance to ensure it meets the 150ms SLA",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-PERF-001\",\n  \"orderType\": \"SHORT_SELL\",\n  \"security\": {\n    \"internalId\": \"SEC-EQ-001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP-00001\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU-00001\"\n  },\n  \"quantity\": 5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 150ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(150);",
+                  "});",
+                  "",
+                  "pm.test(\"Processing time is less than 150ms\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.processingTime).to.be.below(150);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Long Sell Validation Performance",
+          "description": "Test long sell validation performance to ensure it meets the 150ms SLA",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-PERF-002\",\n  \"orderType\": \"LONG_SELL\",\n  \"security\": {\n    \"internalId\": \"SEC-EQ-002\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP-00002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU-00001\"\n  },\n  \"quantity\": 2500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 150ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(150);",
+                  "});",
+                  "",
+                  "pm.test(\"Processing time is less than 150ms\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.processingTime).to.be.below(150);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Batch Validation Performance",
+          "description": "Test batch validation performance to ensure it meets the 150ms per order SLA",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/validate-batch",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"orderId\": \"ORD-PERF-BATCH-001\",\n    \"orderType\": \"SHORT_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-001\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00001\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 1000\n  },\n  {\n    \"orderId\": \"ORD-PERF-BATCH-002\",\n    \"orderType\": \"LONG_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-002\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00002\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 2000\n  },\n  {\n    \"orderId\": \"ORD-PERF-BATCH-003\",\n    \"orderType\": \"SHORT_SELL\",\n    \"security\": {\n      \"internalId\": \"SEC-EQ-003\"\n    },\n    \"client\": {\n      \"counterpartyId\": \"CP-00003\"\n    },\n    \"aggregationUnit\": {\n      \"aggregationUnitId\": \"AU-00001\"\n    },\n    \"quantity\": 3000\n  }\n]"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 450ms (150ms per order)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(450);",
+                  "});",
+                  "",
+                  "pm.test(\"Individual processing times are less than 150ms\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[0].processingTime).to.be.below(150);",
+                  "    pm.expect(jsonData[1].processingTime).to.be.below(150);",
+                  "    pm.expect(jsonData[2].processingTime).to.be.below(150);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Status Check Performance",
+          "description": "Test status check performance to ensure it meets the 150ms SLA",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/short-sell/status/{{workflowOrderId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 150ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(150);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "validationId",
+      "value": ""
+    },
+    {
+      "key": "workflowOrderId",
+      "value": ""
+    },
+    {
+      "key": "workflowValidationId",
+      "value": ""
+    }
+  ]
+}
