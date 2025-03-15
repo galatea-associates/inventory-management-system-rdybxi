@@ -1,0 +1,118 @@
+spring:
+  application:
+    name: websocket-service
+  profiles:
+    default: dev
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:websocket-service}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.ims.common.event
+        max.poll.records: 500
+        fetch.min.bytes: 1024
+        fetch.max.wait.ms: 500
+        enable.auto.commit: false
+    listener:
+      concurrency: 5
+      ack-mode: MANUAL_IMMEDIATE
+      missing-topics-fatal: false
+    position-topic: ${KAFKA_TOPIC_POSITION:position-events}
+    inventory-topic: ${KAFKA_TOPIC_INVENTORY:inventory-events}
+    locate-topic: ${KAFKA_TOPIC_LOCATE:locate-events}
+    alert-topic: ${KAFKA_TOPIC_ALERT:alert-events}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.ims.com}
+          audience: ${JWT_AUDIENCE:ims-api}
+  websocket:
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,https://ims.example.com}
+    send-timeout-ms: 15000
+    send-buffer-size-limit: 524288
+    message-buffer-size-limit: 65536
+
+server:
+  port: 8085
+  servlet:
+    context-path: /api/v1/websocket
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+    max-connections: 10000
+    connection-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.springframework.web.socket: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/websocket-service.log
+    max-size: 100MB
+    max-history: 30
+
+app:
+  websocket:
+    client-inactivity-timeout: 300000
+    max-sessions-per-user: 5
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+    heartbeat-interval: 25000
+  security:
+    required-roles:
+      positions: ROLE_POSITION_VIEW
+      inventory: ROLE_INVENTORY_VIEW
+      locates: ROLE_LOCATE_VIEW
+      alerts: ROLE_ALERT_VIEW
+  performance:
+    thread-pool-size: 20
+    queue-capacity: 500
+    message-batch-size: 100
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      websocketConnections:
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  ratelimiter:
+    instances:
+      websocketConnections:
+        limitForPeriod: 1000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
