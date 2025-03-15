@@ -1,0 +1,205 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-staging.ims.internal:5432/ims_workflow_staging
+    username: ${DB_USERNAME:ims_staging}
+    password: ${DB_PASSWORD:ims_staging_password}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 15000
+      idle-timeout: 300000
+      max-lifetime: 900000
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka-staging.ims.internal:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:workflow-service-staging}
+      auto-offset-reset: earliest
+      properties:
+        max.poll.records: 500
+        fetch.min.bytes: 1024
+        fetch.max.wait.ms: 300
+    producer:
+      acks: all
+      retries: 10
+      batch-size: 16384
+      buffer-memory: 33554432
+      compression-type: snappy
+      properties:
+        linger.ms: 5
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+    listener:
+      concurrency: 8
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth-staging.ims.internal/}
+          audience: ${JWT_AUDIENCE:ims-api-staging}
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:https://app-staging.ims.internal}
+
+server:
+  port: ${SERVER_PORT:8083}
+  tomcat:
+    max-threads: 150
+    min-spare-threads: 30
+    max-connections: 15000
+    connection-timeout: 5000
+    accept-count: 300
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: staging
+
+logging:
+  level:
+    root: INFO
+    com.ims: ${LOG_LEVEL:INFO}
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.camunda: INFO
+  file:
+    name: ${LOG_FILE:/var/log/ims/workflow-service-staging.log}
+    max-size: 200MB
+    max-history: 30
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n'
+
+camunda:
+  bpm:
+    admin-user:
+      id: ${CAMUNDA_ADMIN_USER:admin}
+      password: ${CAMUNDA_ADMIN_PASSWORD:staging_admin_password}
+    job-execution:
+      core-pool-size: 8
+      max-pool-size: 15
+      queue-capacity: 150
+    metrics:
+      enabled: true
+      db-reporter-activate: true
+    webapp:
+      application-path: /camunda
+      csrf:
+        enabled: true
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 2000
+        readTimeout: 2000
+        loggerLevel: basic
+      calculation-service:
+        url: ${CALCULATION_SERVICE_URL:http://calculation-service-staging.ims.internal:8082}
+  okhttp:
+    enabled: true
+
+workflow:
+  locate:
+    auto-approval:
+      enabled: true
+      max-quantity: 10000
+      min-inventory-ratio: 2.0
+      expiry-hours: 24
+    manual-review:
+      timeout-minutes: 60
+      notification-enabled: true
+    performance:
+      thread-pool-size: 15
+      queue-capacity: 150
+  short-sell:
+    validation:
+      timeout-ms: 150
+      cache-ttl-seconds: 300
+      batch-size: 100
+    performance:
+      thread-pool-size: 25
+      queue-capacity: 250
+  scheduling:
+    cleanup-expired-locates: 0 0 * * * *
+    process-pending-validations: 0 */3 * * * *
+    health-check: 0 */5 * * * *
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      locateWorkflow:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 15
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 5s
+      shortSellWorkflow:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 15
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 5s
+  retry:
+    instances:
+      locateWorkflow:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      shortSellWorkflow:
+        maxAttempts: 3
+        waitDuration: 100ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      locateWorkflow:
+        limitForPeriod: 500
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+      shortSellWorkflow:
+        limitForPeriod: 1000
+        limitRefreshPeriod: 1s
+        timeoutDuration: 150ms
+  bulkhead:
+    instances:
+      locateWorkflow:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 500ms
+      shortSellWorkflow:
+        maxConcurrentCalls: 100
+        maxWaitDuration: 150ms
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+    path: /api-docs
