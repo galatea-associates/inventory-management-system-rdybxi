@@ -1,0 +1,433 @@
+# Security Penetration Testing Configuration for Authentication Endpoints
+# Inventory Management System (IMS)
+# Version: 1.0.0
+
+# Global variables - environment-specific settings loaded from environment variables
+base_url: ${BASE_URL}
+api_endpoint: /api/v1/auth
+web_endpoint: /login
+test_username: ${TEST_USERNAME}
+test_password: ${TEST_PASSWORD}
+admin_username: ${ADMIN_USERNAME}
+admin_password: ${ADMIN_PASSWORD}
+invalid_username: nonexistent_user
+invalid_password: WrongPassword123!
+
+# Test configuration
+auth_security_tests:
+  name: auth_security_tests
+  description: Security penetration tests for authentication endpoints and functionality
+
+  # Target system configuration
+  target:
+    url: ${BASE_URL}
+    context_name: IMS Auth Context
+    include_paths:
+      - ^${BASE_URL}/api/v1/auth/.*$
+      - ^${BASE_URL}/login$
+      - ^${BASE_URL}/forgot-password$
+      - ^${BASE_URL}/reset-password$
+      - ^${BASE_URL}/mfa-verify$
+    exclude_paths:
+      - ^${BASE_URL}/api/v1/auth/health$
+      - ^${BASE_URL}/assets/.*$
+      - ^${BASE_URL}/static/.*$
+
+  # Authentication configuration
+  authentication:
+    api:
+      method: oauth2
+      login_url: ${BASE_URL}/api/v1/auth/login
+      username_parameter: username
+      password_parameter: password
+      token_endpoint: ${BASE_URL}/api/v1/auth/token
+      client_id: ${CLIENT_ID}
+      client_secret: ${CLIENT_SECRET}
+    web:
+      method: form_based
+      login_url: ${BASE_URL}/login
+      username_field: username
+      password_field: password
+      login_button: "button[type='submit']"
+      verification_url: ${BASE_URL}/dashboard
+      logged_in_indicator: Welcome, ${TEST_USERNAME}
+      logged_out_indicator: Login - IMS
+
+  # Test scenarios
+  test_scenarios:
+    # Authentication API Tests
+    - name: Authentication API Tests
+      description: Tests for authentication API security
+      test_cases:
+        - name: Login - Valid Credentials
+          description: Test successful login with valid credentials
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Valid credentials
+          expected_result: 200 OK with valid tokens
+        
+        - name: Login - Invalid Credentials
+          description: Test login failure with invalid credentials
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Invalid username/password
+          expected_result: 401 Unauthorized without sensitive information disclosure
+        
+        - name: Login - SQL Injection
+          description: Test login with SQL injection attempts
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: SQL injection payloads in username/password
+          expected_result: 401 Unauthorized without SQL errors
+        
+        - name: Login - XSS Attempt
+          description: Test login with XSS payloads
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: XSS payloads in username/password
+          expected_result: 401 Unauthorized without reflected XSS
+        
+        - name: Login - Brute Force Protection
+          description: Test protection against brute force attacks
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Multiple login attempts with invalid credentials
+          expected_result: Account lockout or rate limiting after threshold
+        
+        - name: Login - Empty Credentials
+          description: Test login with empty credentials
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Empty username/password
+          expected_result: 400 Bad Request with validation error
+
+    # Token Security Tests
+    - name: Token Security Tests
+      description: Tests for token security and handling
+      test_cases:
+        - name: Token Validation
+          description: Test token validation endpoint
+          target_endpoints:
+            - /api/v1/auth/validate-token
+          attack_vector: Valid and invalid tokens
+          expected_result: Correct validation results for each token type
+        
+        - name: Token Refresh
+          description: Test token refresh functionality
+          target_endpoints:
+            - /api/v1/auth/refresh
+          attack_vector: Valid and invalid refresh tokens
+          expected_result: New access token for valid refresh token, error for invalid
+        
+        - name: Token Revocation
+          description: Test token revocation on logout
+          target_endpoints:
+            - /api/v1/auth/logout
+          attack_vector: Valid and invalid access tokens
+          expected_result: Successful revocation for valid token, error for invalid
+        
+        - name: JWT Tampering
+          description: Test protection against JWT tampering
+          target_endpoints:
+            - /api/v1/auth/validate-token
+          attack_vector: Modified JWT tokens (header, payload, signature)
+          expected_result: Token validation fails for tampered tokens
+        
+        - name: JWT Algorithm Confusion
+          description: Test protection against algorithm confusion attacks
+          target_endpoints:
+            - /api/v1/auth/validate-token
+          attack_vector: "JWT with algorithm changed to 'none' or from RS256 to HS256"
+          expected_result: Token validation fails for algorithm confusion attempts
+
+    # Password Management Tests
+    - name: Password Management Tests
+      description: Tests for password management security
+      test_cases:
+        - name: Password Change - Valid Flow
+          description: Test password change with valid current password
+          target_endpoints:
+            - /api/v1/auth/change-password
+          attack_vector: Valid current password, strong new password
+          expected_result: 200 OK with success message
+        
+        - name: Password Change - Invalid Current Password
+          description: Test password change with invalid current password
+          target_endpoints:
+            - /api/v1/auth/change-password
+          attack_vector: Invalid current password, strong new password
+          expected_result: 401 Unauthorized with error message
+        
+        - name: Password Change - Weak Password
+          description: Test password change with weak new password
+          target_endpoints:
+            - /api/v1/auth/change-password
+          attack_vector: Valid current password, weak new password
+          expected_result: 400 Bad Request with password strength error
+        
+        - name: Password Reset Request
+          description: Test password reset request functionality
+          target_endpoints:
+            - /api/v1/auth/request-password-reset
+          attack_vector: Valid and invalid email addresses
+          expected_result: 200 OK for all requests (no user enumeration)
+        
+        - name: Password Reset - Token Validation
+          description: Test password reset token validation
+          target_endpoints:
+            - /api/v1/auth/reset-password
+          attack_vector: Valid and invalid reset tokens
+          expected_result: Success for valid token, error for invalid
+        
+        - name: Password Reset - Token Expiration
+          description: Test password reset token expiration
+          target_endpoints:
+            - /api/v1/auth/reset-password
+          attack_vector: Expired reset token
+          expected_result: 400 Bad Request with token expiration error
+
+    # Multi-Factor Authentication Tests
+    - name: Multi-Factor Authentication Tests
+      description: Tests for MFA security
+      test_cases:
+        - name: MFA Enablement
+          description: Test MFA enablement functionality
+          target_endpoints:
+            - /api/v1/auth/enable-mfa
+          attack_vector: Authenticated request
+          expected_result: 200 OK with MFA secret
+        
+        - name: MFA Verification
+          description: Test MFA verification functionality
+          target_endpoints:
+            - /api/v1/auth/verify-mfa
+          attack_vector: Valid and invalid MFA codes
+          expected_result: Success for valid code, error for invalid
+        
+        - name: MFA Brute Force Protection
+          description: Test protection against MFA code brute forcing
+          target_endpoints:
+            - /api/v1/auth/verify-mfa
+          attack_vector: Multiple verification attempts with invalid codes
+          expected_result: Rate limiting or temporary lockout after threshold
+        
+        - name: MFA Bypass Attempt
+          description: Test protection against MFA bypass
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Login without MFA code when MFA is enabled
+          expected_result: MFA required flag without granting access
+        
+        - name: MFA Disablement
+          description: Test MFA disablement functionality
+          target_endpoints:
+            - /api/v1/auth/disable-mfa
+          attack_vector: Request without valid MFA code
+          expected_result: 401 Unauthorized, MFA verification required
+
+    # User Registration Tests
+    - name: User Registration Tests
+      description: Tests for user registration security
+      test_cases:
+        - name: Registration - Valid Data
+          description: Test user registration with valid data
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: Valid registration data
+          expected_result: 201 Created with success message
+        
+        - name: Registration - Duplicate Username
+          description: Test user registration with duplicate username
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: Registration with existing username
+          expected_result: 400 Bad Request with duplicate username error
+        
+        - name: Registration - Weak Password
+          description: Test user registration with weak password
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: Registration with weak password
+          expected_result: 400 Bad Request with password strength error
+        
+        - name: Registration - XSS in User Data
+          description: Test user registration with XSS payloads
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: XSS payloads in registration fields
+          expected_result: 400 Bad Request or sanitized input
+        
+        - name: Registration - SQL Injection
+          description: Test user registration with SQL injection
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: SQL injection payloads in registration fields
+          expected_result: 400 Bad Request without SQL errors
+
+    # Authentication UI Tests
+    - name: Authentication UI Tests
+      description: Tests for authentication UI security
+      test_cases:
+        - name: Login Form Security
+          description: Test login form for security vulnerabilities
+          target_pages:
+            - /login
+          attack_vector: XSS payloads in login form
+          expected_result: No XSS vulnerability detected
+        
+        - name: Password Reset Form Security
+          description: Test password reset form for security vulnerabilities
+          target_pages:
+            - /forgot-password
+            - /reset-password
+          attack_vector: XSS payloads, CSRF attempts
+          expected_result: No XSS vulnerability, CSRF protection present
+        
+        - name: MFA Form Security
+          description: Test MFA form for security vulnerabilities
+          target_pages:
+            - /mfa-verify
+          attack_vector: XSS payloads, bypass attempts
+          expected_result: No XSS vulnerability, no bypass possible
+        
+        - name: Credential Storage
+          description: Test for insecure credential storage in browser
+          target_pages:
+            - /login
+          attack_vector: Check localStorage, sessionStorage, cookies
+          expected_result: No plaintext credentials stored in browser
+        
+        - name: Remember Me Security
+          description: Test remember me functionality security
+          target_pages:
+            - /login
+          attack_vector: Analyze remember me cookie/token
+          expected_result: Secure, encrypted remember me implementation
+
+    # Security Headers Tests
+    - name: Security Headers Tests
+      description: Tests for security headers in authentication endpoints
+      test_cases:
+        - name: Content Security Policy
+          description: Test for proper CSP implementation
+          target_endpoints:
+            - /api/v1/auth/login
+            - /api/v1/auth/user-info
+          attack_vector: Analyze CSP headers
+          expected_result: Strong CSP policy preventing XSS
+        
+        - name: X-Frame-Options
+          description: Test for clickjacking protection
+          target_endpoints:
+            - /api/v1/auth/login
+            - /api/v1/auth/user-info
+          attack_vector: Analyze X-Frame-Options header
+          expected_result: X-Frame-Options set to DENY or SAMEORIGIN
+        
+        - name: HSTS Implementation
+          description: Test for HTTP Strict Transport Security
+          target_endpoints:
+            - /api/v1/auth/login
+            - /api/v1/auth/user-info
+          attack_vector: Analyze HSTS header
+          expected_result: Strong HSTS policy with includeSubDomains
+        
+        - name: Cookie Security
+          description: Test for secure cookie configuration
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Analyze cookie attributes
+          expected_result: Secure, HttpOnly, SameSite attributes set
+
+    # Rate Limiting Tests
+    - name: Rate Limiting Tests
+      description: Tests for rate limiting on authentication endpoints
+      test_cases:
+        - name: Login Rate Limiting
+          description: Test rate limiting on login endpoint
+          target_endpoints:
+            - /api/v1/auth/login
+          attack_vector: Rapid login attempts
+          expected_result: 429 Too Many Requests after threshold
+        
+        - name: Password Reset Rate Limiting
+          description: Test rate limiting on password reset endpoint
+          target_endpoints:
+            - /api/v1/auth/request-password-reset
+          attack_vector: Rapid password reset requests
+          expected_result: 429 Too Many Requests after threshold
+        
+        - name: MFA Verification Rate Limiting
+          description: Test rate limiting on MFA verification endpoint
+          target_endpoints:
+            - /api/v1/auth/verify-mfa
+          attack_vector: Rapid MFA verification attempts
+          expected_result: 429 Too Many Requests after threshold
+        
+        - name: Registration Rate Limiting
+          description: Test rate limiting on registration endpoint
+          target_endpoints:
+            - /api/v1/auth/register
+          attack_vector: Rapid registration attempts
+          expected_result: 429 Too Many Requests after threshold
+
+  # Execution configuration
+  execution:
+    max_scan_duration: 180
+    thread_count: 5
+    delay_in_ms: 200
+    max_rule_duration: 60
+    max_results: 1000
+
+  # Reporting configuration  
+  reporting:
+    output_format:
+      - HTML
+      - JSON
+      - XML
+    report_directory: target/security-reports
+    report_filename: auth-security-report
+    include_passing_tests: false
+    fail_on_severity: HIGH
+
+  # CI/CD integration
+  ci_cd_integration:
+    github_actions: .github/workflows/security-scan.yml
+    jenkins: infrastructure/ci/jenkins/Jenkinsfile
+
+# Functions for running tests and generating reports
+def run_auth_tests(environment):
+  """
+  Executes the authentication security test suite
+  
+  Args:
+    environment (str): Target environment to test (dev, staging, prod)
+    
+  Returns:
+    object: Test results including vulnerabilities found
+  """
+  # Load test configuration for specified environment
+  # Initialize ZAP proxy and testing environment
+  # Execute API authentication test scenarios
+  # Execute UI authentication test scenarios
+  # Collect and analyze test results
+  # Generate security test report
+  pass
+
+def generate_report(test_results, output_format):
+  """
+  Generates a comprehensive security test report
+  
+  Args:
+    test_results (object): Results of the security tests
+    output_format (str): Format for the report output
+    
+  Returns:
+    str: Path to generated report file
+  """
+  # Format test results according to specified output format
+  # Include vulnerability details and severity ratings
+  # Add remediation recommendations
+  # Save report to output directory
+  # Return path to generated report file
+  pass
