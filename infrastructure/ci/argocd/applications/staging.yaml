@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ims-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    environment: staging
+    app: ims
+    part-of: inventory-management-system
+  annotations:
+    description: Inventory Management System Staging Environment
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/organization/inventory-management-system.git
+    targetRevision: release
+    path: infrastructure/kubernetes/helm/ims
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-staging.yaml
+      parameters:
+        - name: global.environment
+          value: staging
+        - name: global.logLevel
+          value: INFO
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ims-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/metrics/0/resource/target/averageUtilization
