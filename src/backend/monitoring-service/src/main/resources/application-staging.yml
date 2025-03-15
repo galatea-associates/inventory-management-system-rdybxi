@@ -1,0 +1,305 @@
+# Spring Framework Configuration
+spring:
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://ims-postgres-staging:5432/ims_monitoring_staging
+    username: ${DB_USERNAME:ims_staging}
+    password: ${DB_PASSWORD:ims_staging_password}
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      connection-timeout: 15000
+      idle-timeout: 300000
+      max-lifetime: 600000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+  
+  # Database Migration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:ims-kafka-staging:9092}
+    consumer:
+      group-id: ims-monitoring-service-staging
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: com.ims.*
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+    topics:
+      system-events: ims.system.events.staging
+      alerts: ims.monitoring.alerts.staging
+      metrics: ims.monitoring.metrics.staging
+      health-events: ims.monitoring.health.staging
+  
+  # Redis Configuration
+  redis:
+    host: ${REDIS_HOST:ims-redis-staging}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 1500
+    database: 0
+    ssl: false
+  
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_SERVER_URL:http://auth-service:8080}/auth/realms/ims
+          jwk-set-uri: ${AUTH_SERVER_URL:http://auth-service:8080}/auth/realms/ims/protocol/openid-connect/certs
+
+# Server Configuration
+server:
+  port: 8085
+  servlet:
+    context-path: /monitoring
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+    max-connections: 10000
+    connection-timeout: 5000
+    accept-count: 100
+  http2:
+    enabled: true
+
+# Management Endpoints Configuration
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: true
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace,ping
+        readiness:
+          include: readinessState,db,kafka,redis
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: [50, 100, 200, 500]
+    tags:
+      application: ${spring.application.name}
+      environment: staging
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.apache.kafka: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n'
+  file:
+    name: /var/log/ims/monitoring-service-staging.log
+    max-size: 200MB
+    max-history: 30
+    total-size-cap: 5GB
+
+# Monitoring Configuration
+monitoring:
+  # Metrics Collection Configuration
+  metrics:
+    system:
+      collection-rate: 15000
+      retention-days: 60
+    application:
+      collection-rate: 15000
+      retention-days: 60
+    business:
+      collection-rate: 30000
+      retention-days: 180
+    database:
+      collection-rate: 30000
+      retention-days: 60
+    integration:
+      collection-rate: 30000
+      retention-days: 60
+    threshold-check-rate: 60000
+  
+  # Health Checks Configuration
+  health:
+    check-rate: 30000
+    service-timeout: 5000
+    dependency-timeout: 5000
+  
+  # Alerts Configuration
+  alerts:
+    processing-rate: 60000
+    metric-check-rate: 60000
+    health-check-rate: 60000
+    retention:
+      active-days: 30
+      resolved-days: 60
+      archived-days: 365
+    notification:
+      channels:
+        email:
+          enabled: true
+          recipients: ${ALERT_EMAIL_RECIPIENTS:staging-team@example.com}
+          critical-recipients: ${ALERT_CRITICAL_EMAIL_RECIPIENTS:staging-oncall@example.com}
+        slack:
+          enabled: true
+          webhook-url: ${SLACK_WEBHOOK_URL:https://hooks.slack.com/services/staging/webhook/url}
+          channel: ${SLACK_CHANNEL:#monitoring-alerts-staging}
+        pagerduty:
+          enabled: true
+          service-key: ${PAGERDUTY_SERVICE_KEY:staging-service-key}
+  
+  # Services to Monitor
+  services:
+    - id: data-ingestion-service
+      name: Data Ingestion Service
+      url: http://data-ingestion-service:8080/actuator/health
+      critical: true
+    - id: calculation-service
+      name: Calculation Service
+      url: http://calculation-service:8080/actuator/health
+      critical: true
+    - id: workflow-service
+      name: Workflow Service
+      url: http://workflow-service:8080/actuator/health
+      critical: true
+    - id: api-gateway
+      name: API Gateway
+      url: http://api-gateway:8080/actuator/health
+      critical: true
+    - id: websocket-service
+      name: WebSocket Service
+      url: http://websocket-service:8080/actuator/health
+      critical: true
+    - id: auth-service
+      name: Authentication Service
+      url: http://auth-service:8080/actuator/health
+      critical: true
+  
+  # Dependencies to Monitor
+  dependencies:
+    databases:
+      - name: PostgreSQL
+        url: jdbc:postgresql://ims-postgres-staging:5432/ims_monitoring_staging
+        username: ${DB_USERNAME:ims_staging}
+        password: ${DB_PASSWORD:ims_staging_password}
+        driver-class-name: org.postgresql.Driver
+        query: SELECT 1
+    message-brokers:
+      - name: Kafka
+        bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:ims-kafka-staging:9092}
+    caches:
+      - name: Redis
+        host: ${REDIS_HOST:ims-redis-staging}
+        port: ${REDIS_PORT:6379}
+    external-services:
+      - name: Auth Server
+        url: ${AUTH_SERVER_URL:http://auth-service:8080}/auth/realms/ims/.well-known/openid-configuration
+        timeout: 5000
+  
+  # Monitoring Thresholds
+  thresholds:
+    system:
+      cpu.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      memory.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      disk.usage:
+        warning: 75
+        critical: 85
+        duration: 300
+    application:
+      response.time:
+        warning: 400
+        critical: 800
+        duration: 300
+      error.rate:
+        warning: 1
+        critical: 3
+        duration: 300
+      request.rate:
+        warning: 5000
+        critical: 10000
+        duration: 300
+    business:
+      event.processing.latency:
+        warning: 120
+        critical: 180
+        duration: 300
+      calculation.time:
+        warning: 120
+        critical: 180
+        duration: 300
+      locate.approval.time:
+        warning: 1500
+        critical: 3000
+        duration: 300
+      short.sell.validation.time:
+        warning: 100
+        critical: 140
+        duration: 300
+    database:
+      connection.usage:
+        warning: 70
+        critical: 85
+        duration: 300
+      query.time:
+        warning: 100
+        critical: 300
+        duration: 300
+    integration:
+      api.response.time:
+        warning: 400
+        critical: 800
+        duration: 300
+      api.error.rate:
+        warning: 1
+        critical: 3
+        duration: 300
+
+# API Documentation Configuration
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
