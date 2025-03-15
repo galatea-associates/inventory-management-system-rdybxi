@@ -1,0 +1,229 @@
+{
+  "name": "ims-test",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest --testPathIgnorePatterns=integration e2e performance contract",
+    "test:integration": "jest --config=./integration/jest.config.ts",
+    "test:e2e": "jest --config=./e2e/jest.config.ts",
+    "test:performance": "jest --config=./performance/jest.config.ts",
+    "test:contract": "jest --config=./contract/jest.config.ts",
+    "test:ci": "jest --ci --coverage",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+    "k6:run": "cd performance/k6 && k6 run scenarios/apiLoad.js",
+    "k6:locate": "cd performance/k6 && k6 run scenarios/locateApproval.js",
+    "k6:shortsell": "cd performance/k6 && k6 run scenarios/shortSellValidation.js",
+    "k6:position": "cd performance/k6 && k6 run scenarios/positionCalculation.js",
+    "k6:inventory": "cd performance/k6 && k6 run scenarios/inventoryCalculation.js",
+    "k6:ingestion": "cd performance/k6 && k6 run scenarios/dataIngestion.js",
+    "gatling:run": "cd performance/gatling && ./mvnw gatling:test",
+    "jmeter:run": "cd performance/jmeter && ./scripts/run-tests.sh",
+    "postman:run": "newman run api-tests/postman/collections/reference-data-api.json -e api-tests/postman/environments/development.json",
+    "cypress:open": "cd e2e && cypress open",
+    "cypress:run": "cd e2e && cypress run",
+    "playwright:open": "cd e2e/playwright && npx playwright test --ui",
+    "playwright:run": "cd e2e/playwright && npx playwright test",
+    "zap:api": "cd security/zap && ./zap-api-scan.sh",
+    "zap:web": "cd security/zap && ./zap-web-scan.sh",
+    "dependency-check": "cd security/owasp-dependency-check && ./run.sh",
+    "load:normal": "cd load && node scenarios/normal-load.js",
+    "load:peak": "cd load && node scenarios/peak-load.js",
+    "load:stress": "cd load && node scenarios/stress-test.js",
+    "load:endurance": "cd load && node scenarios/endurance-test.js",
+    "load:spike": "cd load && node scenarios/spike-test.js",
+    "validate:data": "ts-node data-verification/scripts/validate-reference-data.ts"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.0.2",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "axios": "^1.4.0",
+    "axios-mock-adapter": "^1.21.5",
+    "chalk": "^5.2.0",
+    "commander": "^10.0.1",
+    "cors": "^2.8.5",
+    "d3": "^7.8.4",
+    "date-fns": "^2.30.0",
+    "dayjs": "^1.11.9",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.1.1",
+    "graphql": "^16.6.0",
+    "graphql-request": "^6.1.0",
+    "graphql-tag": "^2.12.6",
+    "jwt-decode": "^3.1.2",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@cypress/code-coverage": "^3.10.0",
+    "@cypress/webpack-preprocessor": "^5.17.1",
+    "@jest/test-sequencer": "^29.5.0",
+    "@jest/types": "^29.5.0",
+    "@pact-foundation/pact": "^11.0.2",
+    "@playwright/test": "^1.32.0",
+    "@testing-library/cypress": "^9.0.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/d3": "^7.4.0",
+    "@types/jest": "^29.5.1",
+    "@types/lodash": "^4.14.194",
+    "@types/node": "^18.16.3",
+    "@types/uuid": "^9.0.1",
+    "@types/ws": "^8.5.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "cypress": "^12.14.0",
+    "cypress-axe": "^1.4.0",
+    "cypress-real-events": "^1.7.6",
+    "dockerode": "^3.3.5",
+    "eslint": "^8.42.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-cypress": "^2.13.3",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jest": "^27.2.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "execa": "^7.1.1",
+    "jest": "^29.6.1",
+    "jest-environment-jsdom": "^29.5.0",
+    "jest-extended": "^3.2.4",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-html-reporter": "^3.10.0",
+    "jest-junit": "^16.0.0",
+    "jest-mock-extended": "^3.0.4",
+    "k6": "^0.0.0",
+    "kafkajs": "^2.2.4",
+    "mockdate": "^3.0.5",
+    "msw": "^1.2.1",
+    "newman": "^5.3.2",
+    "nock": "^13.3.1",
+    "playwright": "^1.33.0",
+    "prettier": "^2.8.8",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>"
+    ],
+    "testMatch": [
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/integration/",
+      "/e2e/",
+      "/performance/",
+      "/contract/"
+    ],
+    "setupFilesAfterEnv": [
+      "./common/setupTests.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "./tsconfig.json"
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/../$1",
+      "^@test/(.*)$": "<rootDir>/$1",
+      "^@common/(.*)$": "<rootDir>/common/$1",
+      "^@fixtures/(.*)$": "<rootDir>/common/fixtures/$1",
+      "^@mocks/(.*)$": "<rootDir>/common/mocks/$1"
+    },
+    "collectCoverage": true,
+    "coverageDirectory": "<rootDir>/coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html",
+      "json"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/common/fixtures/",
+      "/common/mocks/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 85,
+        "lines": 85,
+        "statements": 85
+      }
+    },
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "<rootDir>/reports",
+          "outputName": "junit.xml"
+        }
+      ],
+      [
+        "jest-html-reporter",
+        {
+          "outputPath": "<rootDir>/reports/html/index.html"
+        }
+      ]
+    ],
+    "verbose": true,
+    "clearMocks": true,
+    "restoreMocks": true,
+    "resetMocks": true
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:jest/recommended",
+      "prettier"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint",
+      "jest",
+      "prettier"
+    ],
+    "root": true,
+    "env": {
+      "node": true,
+      "jest": true
+    },
+    "rules": {
+      "prettier/prettier": "error",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "jest/no-disabled-tests": "warn",
+      "jest/no-focused-tests": "error"
+    }
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "printWidth": 100,
+    "trailingComma": "es5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
