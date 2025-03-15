@@ -1,0 +1,575 @@
+# Web Security Test Configuration for Inventory Management System
+# Version: 1.0
+# This configuration defines penetration testing scenarios for the IMS web interface
+# focusing on client-side vulnerabilities, UI security controls, and user interaction security.
+
+# Global configuration using environment variables
+base_url: ${BASE_URL}
+test_username: ${TEST_USERNAME}
+test_password: ${TEST_PASSWORD}
+admin_username: ${ADMIN_USERNAME}
+admin_password: ${ADMIN_PASSWORD}
+trader_username: ${TRADER_USERNAME}
+trader_password: ${TRADER_PASSWORD}
+operations_username: ${OPERATIONS_USERNAME}
+operations_password: ${OPERATIONS_PASSWORD}
+invalid_username: nonexistent_user
+invalid_password: WrongPassword123!
+
+# Test configuration section defines the overall test setup
+name: web_security_tests
+description: Security penetration tests for web interface of the Inventory Management System
+
+# Target configuration defines the scope of the tests
+target:
+  url: ${BASE_URL}
+  context_name: IMS Web Context
+  include_paths:
+    - ^${BASE_URL}/dashboard$
+    - ^${BASE_URL}/positions$
+    - ^${BASE_URL}/inventory$
+    - ^${BASE_URL}/locates$
+    - ^${BASE_URL}/exceptions$
+    - ^${BASE_URL}/rules$
+    - ^${BASE_URL}/settings$
+    - ^${BASE_URL}/login$
+    - ^${BASE_URL}/forgot-password$
+    - ^${BASE_URL}/reset-password$
+  exclude_paths:
+    - ^${BASE_URL}/api/.*$
+    - ^${BASE_URL}/assets/.*$
+    - ^${BASE_URL}/static/.*$
+    - ^${BASE_URL}/logout$
+
+# Authentication configuration defines how to authenticate with the application
+authentication:
+  method: form_based
+  login_url: ${BASE_URL}/login
+  username_field: username
+  password_field: password
+  login_button: "button[type='submit']"
+  verification_url: ${BASE_URL}/dashboard
+  logged_in_indicator: Welcome,
+  logged_out_indicator: Login - IMS
+
+# Test scenarios section defines all the security test categories and their test cases
+test_scenarios:
+  # Client-Side Injection Tests
+  - name: Client-Side Injection Tests
+    description: Tests for XSS and other client-side injection vulnerabilities
+    test_cases:
+      - name: Reflected XSS - Search Fields
+        description: Test for reflected XSS in search fields
+        target_pages:
+          - /positions
+          - /inventory
+          - /locates
+        attack_vector: XSS payloads in search parameters
+        expected_result: No XSS vulnerability, proper input sanitization
+      
+      - name: Stored XSS - Form Inputs
+        description: Test for stored XSS in form inputs
+        target_pages:
+          - /locates
+          - /rules
+        attack_vector: XSS payloads in form fields
+        expected_result: No XSS vulnerability, proper input sanitization
+      
+      - name: DOM-based XSS
+        description: Test for DOM-based XSS vulnerabilities
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: XSS payloads in URL fragments and localStorage
+        expected_result: No XSS vulnerability, proper DOM sanitization
+      
+      - name: HTML Injection
+        description: Test for HTML injection vulnerabilities
+        target_pages:
+          - /settings
+          - /rules
+        attack_vector: HTML tags in input fields
+        expected_result: HTML tags are escaped or sanitized
+      
+      - name: JavaScript Injection
+        description: Test for JavaScript injection vulnerabilities
+        target_pages:
+          - /positions
+          - /inventory
+          - /locates
+        attack_vector: JavaScript code in input fields
+        expected_result: JavaScript code is escaped or sanitized
+
+  # Authentication and Session Tests
+  - name: Authentication and Session Tests
+    description: Tests for authentication and session management security
+    test_cases:
+      - name: Login Form Security
+        description: Test login form for security vulnerabilities
+        target_pages:
+          - /login
+        attack_vector: XSS payloads, CSRF attempts
+        expected_result: No XSS vulnerability, CSRF protection present
+      
+      - name: Password Reset Form Security
+        description: Test password reset form for security vulnerabilities
+        target_pages:
+          - /forgot-password
+          - /reset-password
+        attack_vector: XSS payloads, CSRF attempts
+        expected_result: No XSS vulnerability, CSRF protection present
+      
+      - name: Session Timeout
+        description: Test session timeout functionality
+        target_pages:
+          - /dashboard
+        attack_vector: Wait for session timeout period
+        expected_result: Session expires after timeout period, redirect to login
+      
+      - name: Session Fixation
+        description: Test protection against session fixation
+        target_pages:
+          - /login
+        attack_vector: Attempt to reuse pre-authentication session ID
+        expected_result: Session ID changes after authentication
+      
+      - name: Concurrent Session Control
+        description: Test handling of concurrent sessions
+        target_pages:
+          - /dashboard
+        attack_vector: Login from multiple browsers/devices
+        expected_result: Proper handling of concurrent sessions based on policy
+
+  # Authorization Tests
+  - name: Authorization Tests
+    description: Tests for proper authorization controls in the UI
+    test_cases:
+      - name: Role-Based Access - Trader
+        description: Test access controls for trader role
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Login as trader and attempt to access all pages
+        expected_result: Access only to authorized pages for trader role
+      
+      - name: Role-Based Access - Operations
+        description: Test access controls for operations role
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Login as operations and attempt to access all pages
+        expected_result: Access only to authorized pages for operations role
+      
+      - name: Role-Based Access - Admin
+        description: Test access controls for admin role
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Login as admin and attempt to access all pages
+        expected_result: Access to all pages for admin role
+      
+      - name: UI Element Authorization
+        description: Test that UI elements are properly controlled by permissions
+        target_pages:
+          - /locates
+          - /rules
+        attack_vector: Login with different roles and check UI element visibility
+        expected_result: UI elements only visible to authorized roles
+      
+      - name: Direct URL Access
+        description: Test direct URL access to restricted pages
+        target_pages:
+          - /settings/admin
+          - /rules/edit
+        attack_vector: Attempt to access restricted URLs directly
+        expected_result: Redirect to login or access denied page
+
+  # Client-Side Data Protection Tests
+  - name: Client-Side Data Protection Tests
+    description: Tests for proper protection of sensitive data in the browser
+    test_cases:
+      - name: Sensitive Data in HTML
+        description: Test for sensitive data exposure in HTML source
+        target_pages:
+          - /positions
+          - /inventory
+          - /locates
+        attack_vector: Examine HTML source for sensitive data
+        expected_result: No sensitive data in HTML source
+      
+      - name: Sensitive Data in JavaScript
+        description: Test for sensitive data exposure in JavaScript
+        target_pages:
+          - /positions
+          - /inventory
+          - /locates
+        attack_vector: Examine JavaScript variables and objects
+        expected_result: No sensitive data in JavaScript variables
+      
+      - name: Browser Storage Security
+        description: Test security of data stored in browser storage
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Examine localStorage, sessionStorage, cookies
+        expected_result: No sensitive data in browser storage, secure cookie flags
+      
+      - name: Data Masking
+        description: Test proper masking of sensitive financial data
+        target_pages:
+          - /positions
+          - /inventory
+        attack_vector: Check display of financial values
+        expected_result: Sensitive financial data is properly masked
+      
+      - name: Clipboard Protection
+        description: Test protection against clipboard hijacking
+        target_pages:
+          - /positions
+          - /inventory
+        attack_vector: Attempt to access clipboard data
+        expected_result: No unauthorized clipboard access
+
+  # Security Header Tests
+  - name: Security Header Tests
+    description: Tests for proper security headers in web pages
+    test_cases:
+      - name: Content Security Policy
+        description: Test for proper CSP implementation
+        target_pages:
+          - /dashboard
+          - /login
+          - /positions
+        attack_vector: Analyze CSP headers and attempt to bypass
+        expected_result: Strong CSP policy preventing XSS and other attacks
+      
+      - name: X-Frame-Options
+        description: Test for clickjacking protection
+        target_pages:
+          - /dashboard
+          - /login
+          - /positions
+        attack_vector: Attempt to load page in iframe
+        expected_result: Page cannot be loaded in iframe (X-Frame-Options)
+      
+      - name: X-XSS-Protection
+        description: Test for XSS protection header
+        target_pages:
+          - /dashboard
+          - /login
+          - /positions
+        attack_vector: Analyze X-XSS-Protection header
+        expected_result: X-XSS-Protection header properly configured
+      
+      - name: X-Content-Type-Options
+        description: Test for MIME sniffing protection
+        target_pages:
+          - /dashboard
+          - /login
+          - /positions
+        attack_vector: Analyze X-Content-Type-Options header
+        expected_result: X-Content-Type-Options: nosniff header present
+      
+      - name: Referrer-Policy
+        description: Test for proper referrer policy
+        target_pages:
+          - /dashboard
+          - /login
+          - /positions
+        attack_vector: Analyze Referrer-Policy header
+        expected_result: Strict Referrer-Policy header present
+
+  # Form Security Tests
+  - name: Form Security Tests
+    description: Tests for security of forms in the application
+    test_cases:
+      - name: CSRF Protection
+        description: Test for CSRF protection in forms
+        target_pages:
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Attempt to submit forms without CSRF token
+        expected_result: Form submission fails without valid CSRF token
+      
+      - name: Form Validation
+        description: Test client-side form validation
+        target_pages:
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Submit forms with invalid data
+        expected_result: Proper client-side validation before submission
+      
+      - name: Form Autocomplete
+        description: Test autocomplete attributes on sensitive forms
+        target_pages:
+          - /login
+          - /forgot-password
+          - /settings
+        attack_vector: Check autocomplete attributes on sensitive fields
+        expected_result: Autocomplete disabled on sensitive fields
+      
+      - name: Form Method
+        description: Test that forms use appropriate HTTP methods
+        target_pages:
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Check form method attributes
+        expected_result: Forms use appropriate HTTP methods (POST for state changes)
+      
+      - name: Form Action
+        description: Test that form actions are properly defined
+        target_pages:
+          - /locates
+          - /rules
+          - /settings
+        attack_vector: Check form action attributes
+        expected_result: Form actions are properly defined and not vulnerable to open redirect
+
+  # Client-Side Performance Security Tests
+  - name: Client-Side Performance Security Tests
+    description: Tests for security issues related to performance optimizations
+    test_cases:
+      - name: Resource Loading
+        description: Test secure loading of external resources
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Analyze resource loading patterns
+        expected_result: Resources loaded securely (HTTPS, integrity attributes)
+      
+      - name: Third-Party Libraries
+        description: Test security of third-party libraries
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Identify and check versions of third-party libraries
+        expected_result: No known vulnerable library versions
+      
+      - name: Lazy Loading Security
+        description: Test security of lazy-loaded components
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Analyze lazy loading implementation
+        expected_result: Secure implementation of lazy loading
+      
+      - name: WebWorker Security
+        description: Test security of WebWorkers if used
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Analyze WebWorker implementation
+        expected_result: Secure implementation of WebWorkers
+      
+      - name: Service Worker Security
+        description: Test security of Service Workers if used
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Analyze Service Worker implementation
+        expected_result: Secure implementation of Service Workers
+
+  # Business Logic Tests
+  - name: Business Logic Tests
+    description: Tests for security issues in business logic implementation
+    test_cases:
+      - name: Locate Request Validation
+        description: Test client-side validation for locate requests
+        target_pages:
+          - /locates
+        attack_vector: Submit locate requests with invalid data
+        expected_result: Proper validation of locate request data
+      
+      - name: Short Sell Validation
+        description: Test client-side validation for short sell orders
+        target_pages:
+          - /positions
+        attack_vector: Submit short sell orders with invalid data
+        expected_result: Proper validation of short sell order data
+      
+      - name: Rule Editor Validation
+        description: Test client-side validation for calculation rules
+        target_pages:
+          - /rules
+        attack_vector: Submit invalid calculation rules
+        expected_result: Proper validation of calculation rule data
+      
+      - name: Data Export Security
+        description: Test security of data export functionality
+        target_pages:
+          - /positions
+          - /inventory
+          - /locates
+        attack_vector: Attempt to export data with different user roles
+        expected_result: Export functionality respects user permissions
+      
+      - name: Notification Security
+        description: Test security of notification system
+        target_pages:
+          - /dashboard
+        attack_vector: Analyze notification handling
+        expected_result: Secure handling of notifications without data leakage
+
+  # Accessibility and Security Tests
+  - name: Accessibility and Security Tests
+    description: Tests for security issues related to accessibility features
+    test_cases:
+      - name: ARIA Attribute Security
+        description: Test security of ARIA attributes
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Check for XSS in ARIA attributes
+        expected_result: No XSS vulnerabilities in ARIA attributes
+      
+      - name: Keyboard Navigation Security
+        description: Test security of keyboard navigation
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Attempt to bypass restrictions using keyboard
+        expected_result: Keyboard navigation respects security boundaries
+      
+      - name: Screen Reader Security
+        description: Test security with screen readers
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Check for sensitive data exposure to screen readers
+        expected_result: No unauthorized data exposure to screen readers
+      
+      - name: High Contrast Mode Security
+        description: Test security in high contrast mode
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Check for data exposure in high contrast mode
+        expected_result: No data leakage in high contrast mode
+      
+      - name: Focus Indicator Security
+        description: Test security of focus indicators
+        target_pages:
+          - /dashboard
+          - /positions
+          - /inventory
+        attack_vector: Manipulate focus to access restricted elements
+        expected_result: Focus management respects security boundaries
+
+# Execution configuration defines how tests should be executed
+execution:
+  max_scan_duration: 240  # minutes
+  thread_count: 4
+  delay_in_ms: 300
+  max_rule_duration: 60  # minutes
+  max_results: 1000
+  browsers:
+    - chrome
+    - firefox
+    - edge
+
+# Reporting configuration defines how test results should be reported
+reporting:
+  output_format:
+    - HTML
+    - JSON
+    - XML
+  report_directory: target/security-reports
+  report_filename: web-security-report
+  include_passing_tests: false
+  fail_on_severity: HIGH
+
+# CI/CD integration configuration
+ci_cd_integration:
+  github_actions: .github/workflows/security-scan.yml
+  jenkins: infrastructure/ci/jenkins/Jenkinsfile
+
+# Test parameters section defines specific test data and configurations
+test_parameters:
+  # XSS test payloads
+  xss_payloads:
+    - <script>alert(1)</script>
+    - <img src="x" onerror="alert(1)">
+    - '"><script>alert(1)</script>'
+    - javascript:alert(1)
+    - <svg/onload=alert(1)>
+    - <iframe src="javascript:alert(1)"></iframe>
+  
+  # Form test data
+  form_tests:
+    locate_form:
+      valid_inputs:
+        clientId: CLIENT001
+        securityId: SEC-EQ-001
+        quantity: 1000
+      invalid_inputs:
+        - clientId: ""
+          securityId: SEC-EQ-001
+          quantity: 1000
+        - clientId: CLIENT001
+          securityId: ""
+          quantity: 1000
+        - clientId: CLIENT001
+          securityId: SEC-EQ-001
+          quantity: -1000
+        - clientId: CLIENT001
+          securityId: SEC-EQ-001
+          quantity: 0
+    rule_editor_form:
+      valid_inputs:
+        name: Test Rule
+        market: Global
+        status: Active
+      invalid_inputs:
+        - name: ""
+          market: Global
+          status: Active
+        - name: Test Rule
+          market: ""
+          status: Active
+        - name: Test Rule
+          market: Global
+          status: ""
+  
+  # Session test parameters
+  session_tests:
+    session_timeout:
+      timeout_minutes: 30
+      expected_behavior: redirect to login
+    concurrent_sessions:
+      max_sessions: 3
+      expected_behavior: terminate oldest session
+  
+  # Accessibility test parameters
+  accessibility_tests:
+    wcag_level: AA
+    test_screen_readers:
+      - NVDA
+      - VoiceOver
+    test_high_contrast: true
+    test_keyboard_only: true
