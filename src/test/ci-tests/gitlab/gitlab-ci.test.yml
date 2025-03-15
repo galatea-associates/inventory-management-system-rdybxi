@@ -1,0 +1,306 @@
+# GitLab CI/CD pipeline configuration for the Inventory Management System (IMS)
+# This file defines a comprehensive CI pipeline that builds the application, runs various types
+# of tests, and validates the system meets its functional, performance, and security requirements.
+
+stages:
+  - build
+  - test
+  - integration-test
+  - e2e-test
+  - performance-test
+  - security-test
+  - deploy
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  NODE_ENV: "test"
+  JAVA_VERSION: "17"
+  NODE_VERSION: "18"
+  CI: "true"
+  TEST_RESULTS_DIR: "test-results"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - src/backend/.gradle
+    - src/backend/*/build
+    - src/web/node_modules
+    - src/test/*/node_modules
+  policy: pull-push
+
+default:
+  image: alpine:latest
+  tags:
+    - kubernetes
+  timeout: 30 minutes
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+# Build stage jobs
+backend-build:
+  stage: build
+  image: eclipse-temurin:17-jdk
+  script:
+    - cd src/backend
+    - chmod +x ./gradlew
+    - ./gradlew clean assemble --no-daemon
+  artifacts:
+    paths:
+      - src/backend/*/build/libs/*.jar
+    expire_in: 1 week
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-backend
+    paths:
+      - src/backend/.gradle
+      - src/backend/*/build
+    policy: pull-push
+
+frontend-build:
+  stage: build
+  image: node:18
+  script:
+    - cd src/web
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - src/web/build
+    expire_in: 1 week
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-frontend
+    paths:
+      - src/web/node_modules
+    policy: pull-push
+
+# Test stage jobs
+backend-test:
+  stage: test
+  image: eclipse-temurin:17-jdk
+  script:
+    - cd src/backend
+    - chmod +x ./gradlew
+    - ./gradlew test jacocoTestReport --no-daemon
+  artifacts:
+    paths:
+      - src/backend/*/build/test-results/test
+      - src/backend/*/build/reports/jacoco
+    reports:
+      junit: src/backend/*/build/test-results/test/TEST-*.xml
+    expire_in: 1 week
+  coverage:
+    format: cobertura
+    path: src/backend/*/build/reports/jacoco/test/jacocoTestReport.xml
+  dependencies:
+    - backend-build
+
+frontend-test:
+  stage: test
+  image: node:18
+  script:
+    - cd src/web
+    - npm ci
+    - npm run lint
+    - npm test -- --coverage --watchAll=false
+  artifacts:
+    paths:
+      - src/web/coverage
+    reports:
+      junit: src/web/junit.xml
+    expire_in: 1 week
+  coverage:
+    format: cobertura
+    path: src/web/coverage/cobertura-coverage.xml
+  dependencies:
+    - frontend-build
+
+code-quality:
+  stage: test
+  image: eclipse-temurin:17-jdk
+  script:
+    - cd src/backend
+    - chmod +x ./gradlew
+    - ./gradlew checkstyleMain pmdMain spotbugsMain --no-daemon
+  artifacts:
+    paths:
+      - src/backend/*/build/reports/checkstyle
+      - src/backend/*/build/reports/pmd
+      - src/backend/*/build/reports/spotbugs
+    expire_in: 1 week
+  dependencies:
+    - backend-build
+  allow_failure: false
+
+# Integration test stage jobs
+integration-test:
+  stage: integration-test
+  image: node:18
+  services:
+    - name: postgres:15.3
+      alias: postgres
+      variables:
+        POSTGRES_USER: ims_test
+        POSTGRES_PASSWORD: ims_test
+        POSTGRES_DB: ims_test
+    - name: redis:7.0
+      alias: redis
+    - name: confluentinc/cp-kafka:7.3.0
+      alias: kafka
+      variables:
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    - name: confluentinc/cp-zookeeper:7.3.0
+      alias: zookeeper
+      variables:
+        ZOOKEEPER_CLIENT_PORT: 2181
+  script:
+    - cd src/test/integration
+    - npm ci
+    - npm run test
+  artifacts:
+    paths:
+      - src/test/integration/reports
+    reports:
+      junit: src/test/integration/reports/junit.xml
+    expire_in: 1 week
+  dependencies:
+    - backend-test
+    - frontend-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' || $CI_COMMIT_BRANCH == 'develop' || $CI_COMMIT_TAG =~ /^v/
+    - if: $RUN_INTEGRATION_TESTS == 'true'
+
+# End-to-end test stage jobs
+e2e-test:
+  stage: e2e-test
+  image: cypress/included:latest
+  script:
+    - cd src/test/e2e
+    - npm ci
+    - npm run test:cypress
+    - npm run test:playwright
+  artifacts:
+    paths:
+      - src/test/e2e/cypress/videos
+      - src/test/e2e/cypress/screenshots
+      - src/test/e2e/playwright-report
+    reports:
+      junit:
+        - src/test/e2e/cypress/results/*.xml
+        - src/test/e2e/playwright-report/*.xml
+    expire_in: 1 week
+  dependencies:
+    - integration-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' || $CI_COMMIT_TAG =~ /^v/
+    - if: $RUN_E2E_TESTS == 'true'
+
+# Performance test stage jobs
+performance-test:
+  stage: performance-test
+  image: grafana/k6:latest
+  script:
+    - cd src/test/performance/k6
+    - k6 run scenarios/locateApproval.js
+    - k6 run scenarios/shortSellValidation.js
+    - k6 run scenarios/positionCalculation.js
+    - k6 run scenarios/inventoryCalculation.js
+    - k6 run scenarios/dataIngestion.js
+  artifacts:
+    paths:
+      - src/test/performance/results
+    expire_in: 1 week
+  dependencies:
+    - e2e-test
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+    - if: $RUN_PERFORMANCE_TESTS == 'true'
+  variables:
+    K6_OUT: json=src/test/performance/results/k6-results.json
+
+# Security test stage jobs
+security-test:
+  stage: security-test
+  image: owasp/zap2docker-stable
+  script:
+    - cd src/test/security/zap
+    - zap-baseline.py -t https://dev-api.example.com -c api-scan.yaml -r zap-report.html
+    - cd ../../../backend
+    - chmod +x ./gradlew
+    - ./gradlew dependencyCheckAggregate --no-daemon
+    - cd ../../web
+    - npm audit --production
+  artifacts:
+    paths:
+      - src/backend/build/reports/dependency-check-report.html
+      - src/test/security/zap/zap-report.html
+      - src/web/npm-audit.json
+    expire_in: 1 week
+  dependencies:
+    - backend-test
+    - frontend-test
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+    - if: $RUN_SECURITY_TESTS == 'true'
+  allow_failure: false
+
+# Deployment stage jobs
+deploy-dev:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo 'Deploying to development environment'
+    - # Deployment commands would go here
+  environment:
+    name: development
+    url: https://dev-api.example.com
+  dependencies:
+    - backend-test
+    - frontend-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop'
+
+deploy-staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo 'Deploying to staging environment'
+    - # Deployment commands would go here
+  environment:
+    name: staging
+    url: https://staging-api.example.com
+  dependencies:
+    - integration-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+  when: manual
+
+deploy-production:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo 'Deploying to production environment'
+    - # Deployment commands would go here
+  environment:
+    name: production
+    url: https://api.example.com
+  dependencies:
+    - e2e-test
+    - performance-test
+    - security-test
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+  when: manual
+
+# Workflow rules
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_MERGE_REQUEST_ID
+      when: always
