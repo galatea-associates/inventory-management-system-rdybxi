@@ -1,0 +1,97 @@
+reports/
+test-results/
+*/test-results/
+*/reports/
+coverage/
+*/coverage/
+junit.xml
+*.junit.xml
+test-report.xml
+test-report.json
+
+# Cypress specific
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+.cypress/
+
+# Playwright specific
+playwright-report/
+playwright/.cache/
+test-results/
+
+# JMeter specific
+jmeter/results/
+*.jtl
+*.hdf
+
+# k6 specific
+k6/results/
+*.k6.json
+
+# Gatling specific
+gatling/results/
+gatling/target/
+
+# Performance test artifacts
+performance/results/
+*/performance/results/
+performance-report.json
+performance-report.html
+
+# Security test artifacts
+security/results/
+*/security/results/
+zap-report.html
+zap-report.json
+dependency-check-report.html
+dependency-check-report.json
+
+# Generated test data
+generated-data/
+*/generated-data/
+
+# Node.js specific
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment specific files
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE specific files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-workspace
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Logs
+logs/
+*.log
