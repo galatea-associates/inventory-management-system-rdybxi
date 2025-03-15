@@ -1,0 +1,126 @@
+spring:
+  profiles: dev
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ims_auth_dev}
+    username: ${DB_USERNAME:ims_auth_user}
+    password: ${DB_PASSWORD:ims_auth_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  cloud:
+    config:
+      enabled: false
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1/auth
+  error:
+    include-stacktrace: always
+    include-message: always
+  ssl:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops,loggers
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+security:
+  jwt:
+    secret: dev_secret_key_for_development_only_do_not_use_in_production
+    expiration: 3600
+    refresh-expiration: 86400
+  password:
+    history-count: 5
+    max-age-days: 365
+    min-length: 8
+    complexity-regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$
+  account:
+    max-failed-attempts: 10
+    lock-duration-minutes: 10
+  session:
+    max-concurrent: 5
+    timeout-seconds: 3600
+
+oauth:
+  client-id: ims-client-dev
+  client-secret: dev-client-secret
+  redirect-uris: http://localhost:3000/callback
+  jwt:
+    signing-key: dev_signing_key_for_development_only
+  identity-provider:
+    url: https://login.microsoftonline.com/
+    tenant-id: dev-tenant-id
+
+kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    group-id: auth-service-dev
+    auto-offset-reset: earliest
+  topics:
+    user-events: user-events
+    auth-events: auth-events
+  security:
+    protocol: PLAINTEXT
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.springframework.security: DEBUG
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n'
+
+resilience4j.circuitbreaker:
+  instances:
+    identityProvider:
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 3
+
+resilience4j.retry:
+  instances:
+    identityProvider:
+      maxAttempts: 3
+      waitDuration: 1000
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+
+mfa:
+  enabled: true
+  required-roles: ADMIN
+  totp:
+    time-step-seconds: 30
+    code-digits: 6
+    window-size: 3
+  backup-codes:
+    enabled: true
+    count: 5
+    length: 8
+
+audit:
+  enabled: true
+  events:
+    authentication: true
+    authorization: true
+    user-management: true
+  retention-days: 30
+  log-format: TEXT
+  destination: DATABASE
