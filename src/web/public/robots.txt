@@ -1,0 +1,26 @@
+User-agent: *
+
+# Disallow all sensitive application areas
+Disallow: /dashboard/
+Disallow: /positions/
+Disallow: /inventory/
+Disallow: /locates/
+Disallow: /workflows/
+Disallow: /analytics/
+Disallow: /settings/
+Disallow: /api/
+
+# Allow public documentation and landing pages
+Allow: /docs/
+Allow: /public/
+Allow: /
+
+# Disallow all for specific crawlers that might ignore rules
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+# Sitemap location
+Sitemap: https://example.com/sitemap.xml
