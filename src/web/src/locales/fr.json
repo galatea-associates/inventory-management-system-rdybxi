@@ -1,0 +1,680 @@
+{
+  "common": {
+    "app": {
+      "name": "Système de Gestion des Inventaires",
+      "shortName": "SGI",
+      "version": "1.0.0",
+      "copyright": "© 2023 Tous droits réservés"
+    },
+    "actions": {
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "confirm": "Confirmer",
+      "apply": "Appliquer",
+      "reset": "Réinitialiser",
+      "search": "Rechercher",
+      "filter": "Filtrer",
+      "export": "Exporter",
+      "import": "Importer",
+      "refresh": "Actualiser",
+      "back": "Retour",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "submit": "Soumettre",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "close": "Fermer",
+      "view": "Voir",
+      "details": "Détails",
+      "download": "Télécharger",
+      "upload": "Téléverser",
+      "clear": "Effacer",
+      "clearAll": "Tout effacer",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "requestInfo": "Demander plus d'informations"
+    },
+    "validation": {
+      "required": "Ce champ est obligatoire",
+      "minLength": "Doit contenir au moins {{count}} caractères",
+      "maxLength": "Doit contenir au maximum {{count}} caractères",
+      "email": "Adresse e-mail invalide",
+      "number": "Doit être un nombre",
+      "integer": "Doit être un nombre entier",
+      "positive": "Doit être un nombre positif",
+      "negative": "Doit être un nombre négatif",
+      "min": "Doit être au moins {{min}}",
+      "max": "Doit être au maximum {{max}}",
+      "pattern": "Format invalide",
+      "passwordMatch": "Les mots de passe ne correspondent pas",
+      "invalidCredentials": "Nom d'utilisateur ou mot de passe invalide"
+    },
+    "notifications": {
+      "success": "Succès",
+      "error": "Erreur",
+      "warning": "Avertissement",
+      "info": "Information",
+      "successMessage": "Opération terminée avec succès",
+      "errorMessage": "Une erreur s'est produite",
+      "warningMessage": "Avertissement: {{message}}",
+      "infoMessage": "{{message}}"
+    },
+    "time": {
+      "now": "Maintenant",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "tomorrow": "Demain",
+      "days": "{{count}} jours",
+      "hours": "{{count}} heures",
+      "minutes": "{{count}} minutes",
+      "seconds": "{{count}} secondes",
+      "ago": "il y a {{time}}",
+      "in": "dans {{time}}"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "completed": "Terminé",
+      "failed": "Échoué",
+      "processing": "En cours de traitement",
+      "draft": "Brouillon",
+      "published": "Publié",
+      "archived": "Archivé",
+      "deleted": "Supprimé"
+    },
+    "errors": {
+      "pageNotFound": "Page non trouvée",
+      "unauthorized": "Non autorisé",
+      "forbidden": "Interdit",
+      "serverError": "Erreur serveur",
+      "connectionError": "Erreur de connexion",
+      "timeoutError": "Erreur de délai d'attente",
+      "validationError": "Erreur de validation",
+      "dataError": "Erreur de données",
+      "unknownError": "Erreur inconnue",
+      "pageNotFoundMessage": "La page que vous recherchez n'existe pas.",
+      "unauthorizedMessage": "Vous n'êtes pas autorisé à accéder à cette page.",
+      "forbiddenMessage": "Vous n'avez pas la permission d'accéder à cette ressource.",
+      "serverErrorMessage": "Une erreur s'est produite sur le serveur.",
+      "connectionErrorMessage": "Impossible de se connecter au serveur.",
+      "timeoutErrorMessage": "La requête a expiré.",
+      "validationErrorMessage": "Veuillez corriger les erreurs de validation.",
+      "dataErrorMessage": "Une erreur s'est produite lors du traitement des données.",
+      "unknownErrorMessage": "Une erreur inconnue s'est produite."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Connectez-vous à votre compte",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "rememberMe": "Se souvenir de moi",
+      "forgotPassword": "Mot de passe oublié ?",
+      "loginButton": "Se connecter",
+      "loginWithMfa": "Se connecter avec MFA",
+      "noAccount": "Vous n'avez pas de compte ?",
+      "contactAdmin": "Contactez votre administrateur",
+      "welcomeBack": "Bienvenue",
+      "welcomeMorning": "Bonjour",
+      "welcomeAfternoon": "Bon après-midi",
+      "welcomeEvening": "Bonsoir"
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Entrez votre e-mail pour réinitialiser votre mot de passe",
+      "email": "E-mail",
+      "submitButton": "Réinitialiser le mot de passe",
+      "backToLogin": "Retour à la connexion",
+      "successMessage": "Les instructions de réinitialisation du mot de passe ont été envoyées à votre e-mail",
+      "errorMessage": "Erreur lors de l'envoi de l'e-mail de réinitialisation du mot de passe"
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Entrez votre nouveau mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submitButton": "Définir le nouveau mot de passe",
+      "successMessage": "Le mot de passe a été réinitialisé avec succès",
+      "errorMessage": "Erreur lors de la réinitialisation du mot de passe"
+    },
+    "mfa": {
+      "title": "Authentification à deux facteurs",
+      "subtitle": "Entrez le code de vérification de votre application d'authentification",
+      "code": "Code de vérification",
+      "verifyButton": "Vérifier",
+      "backToLogin": "Retour à la connexion",
+      "setupTitle": "Configurer l'authentification à deux facteurs",
+      "setupSubtitle": "Scannez le code QR avec votre application d'authentification",
+      "setupInstructions": "1. Téléchargez une application d'authentification\n2. Scannez le code QR\n3. Entrez le code de vérification",
+      "setupCode": "Ou entrez ce code manuellement :",
+      "setupVerifyButton": "Vérifier et activer",
+      "setupSuccessMessage": "L'authentification à deux facteurs a été activée",
+      "setupErrorMessage": "Erreur lors de la configuration de l'authentification à deux facteurs"
+    },
+    "changePassword": {
+      "title": "Changer le mot de passe",
+      "subtitle": "Mettez à jour votre mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "submitButton": "Changer le mot de passe",
+      "successMessage": "Mot de passe changé avec succès",
+      "errorMessage": "Erreur lors du changement de mot de passe"
+    },
+    "logout": {
+      "confirmMessage": "Êtes-vous sûr de vouloir vous déconnecter ?",
+      "confirmButton": "Oui, me déconnecter",
+      "cancelButton": "Non, rester connecté",
+      "successMessage": "Vous avez été déconnecté avec succès"
+    },
+    "session": {
+      "expiring": "Votre session est sur le point d'expirer",
+      "expiringMessage": "Votre session expirera dans {{time}}. Souhaitez-vous rester connecté ?",
+      "expired": "Votre session a expiré",
+      "expiredMessage": "Veuillez vous reconnecter pour continuer",
+      "stayLoggedIn": "Rester connecté",
+      "logout": "Se déconnecter"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "systemStatus": {
+      "title": "État du système",
+      "uptime": "Temps de fonctionnement",
+      "performance": "Performance",
+      "errors": "Erreurs",
+      "warnings": "Avertissements",
+      "healthy": "En bonne santé",
+      "degraded": "Dégradé",
+      "critical": "Critique",
+      "unknown": "Inconnu"
+    },
+    "inventorySummary": {
+      "title": "Résumé de l'inventaire",
+      "forLoan": "Pour prêt",
+      "forPledge": "Pour nantissement",
+      "htb": "Difficile à emprunter",
+      "totalValue": "Valeur totale",
+      "utilizationRate": "Taux d'utilisation",
+      "categories": "Catégories",
+      "topSecurities": "Titres principaux"
+    },
+    "locateRequests": {
+      "title": "Demandes de localisation",
+      "pending": "En attente",
+      "approved": "Approuvées",
+      "rejected": "Rejetées",
+      "today": "Aujourd'hui",
+      "viewAll": "Voir tout",
+      "noRequests": "Aucune demande en attente"
+    },
+    "recentActivity": {
+      "title": "Activité récente",
+      "viewAll": "Voir tout",
+      "noActivity": "Aucune activité récente",
+      "locateApproved": "Localisation approuvée : {{security}}",
+      "locateRejected": "Localisation rejetée : {{security}}",
+      "positionUpdate": "Mise à jour de position : {{security}}",
+      "shortSellApproved": "Vente à découvert approuvée : {{security}}",
+      "shortSellRejected": "Vente à découvert rejetée : {{security}}",
+      "referenceDataUpdate": "Données de référence mises à jour",
+      "marketDataUpdate": "Données de marché mises à jour"
+    },
+    "alerts": {
+      "title": "Alertes",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse",
+      "viewAll": "Voir tout",
+      "noAlerts": "Aucune alerte",
+      "dataFeedInterruption": "Interruption du flux de données : {{source}}",
+      "calculationError": "Erreur de calcul : {{type}}",
+      "systemAlert": "Alerte système : {{message}}",
+      "marketEvent": "Événement de marché : {{event}}"
+    }
+  },
+  "positions": {
+    "title": "Positions",
+    "filters": {
+      "title": "Filtres",
+      "security": "Titre",
+      "book": "Livre",
+      "date": "Date",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres",
+      "save": "Enregistrer les filtres",
+      "load": "Charger les filtres enregistrés"
+    },
+    "summary": {
+      "title": "Résumé",
+      "totalLong": "Total long",
+      "totalShort": "Total court",
+      "netPosition": "Position nette",
+      "securities": "Titres"
+    },
+    "table": {
+      "security": "Titre",
+      "book": "Livre",
+      "sodQty": "Qté début de journée",
+      "intraday": "Intrajournalier",
+      "current": "Actuel",
+      "details": "Détails"
+    },
+    "settlementLadder": {
+      "title": "Échelle de règlement",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "day2": "Jour 2",
+      "day3": "Jour 3",
+      "day4": "Jour 4",
+      "delivery": "Livraison",
+      "receipt": "Réception",
+      "net": "Net"
+    },
+    "detail": {
+      "title": "Détail de la position",
+      "security": "Titre",
+      "book": "Livre",
+      "quantity": "Quantité",
+      "value": "Valeur",
+      "trades": "Transactions",
+      "contracts": "Contrats",
+      "history": "Historique"
+    }
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "filters": {
+      "title": "Filtres",
+      "date": "Date",
+      "market": "Marché",
+      "category": "Catégorie",
+      "security": "Titre",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres"
+    },
+    "summary": {
+      "title": "Inventaire par catégorie",
+      "category": "Catégorie",
+      "value": "Valeur",
+      "percentage": "% du total",
+      "change": "Variation"
+    },
+    "categories": {
+      "longPositions": "Positions longues",
+      "hypothecatable": "Hypothécables",
+      "pledged": "Nantis",
+      "external": "Externes"
+    },
+    "topSecurities": {
+      "title": "Principaux titres par disponibilité",
+      "security": "Titre",
+      "availability": "Disponibilité",
+      "temperature": "Température",
+      "gc": "Garantie générale",
+      "htb": "Difficile à emprunter",
+      "viewAll": "Voir tout"
+    },
+    "detail": {
+      "title": "Détail de l'inventaire",
+      "security": "Titre",
+      "market": "Marché",
+      "availability": "Disponibilité",
+      "utilization": "Utilisation",
+      "sources": "Sources",
+      "history": "Historique"
+    }
+  },
+  "locates": {
+    "title": "Localisations",
+    "filters": {
+      "title": "Filtres",
+      "client": "Client",
+      "security": "Titre",
+      "status": "Statut",
+      "date": "Date",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres"
+    },
+    "queue": {
+      "title": "Localisations en attente",
+      "time": "Heure",
+      "client": "Client",
+      "security": "Titre",
+      "quantity": "Quantité",
+      "type": "Type",
+      "actions": "Actions",
+      "review": "Examiner",
+      "noLocates": "Aucune localisation en attente"
+    },
+    "detail": {
+      "title": "Détails de la localisation",
+      "client": "Client",
+      "security": "Titre",
+      "quantity": "Quantité",
+      "available": "Inventaire disponible",
+      "clientYtdLocates": "Localisations client YTD",
+      "clientYtdUtilization": "Utilisation client YTD",
+      "securityBorrowRate": "Taux d'emprunt du titre",
+      "securityTemperature": "Température du titre",
+      "requestTime": "Heure de la demande",
+      "requestor": "Demandeur",
+      "swapCashIndicator": "Indicateur swap/cash"
+    },
+    "approval": {
+      "title": "Approbation de localisation",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "requestInfo": "Demander plus d'informations",
+      "approveConfirm": "Êtes-vous sûr de vouloir approuver cette demande de localisation ?",
+      "rejectConfirm": "Êtes-vous sûr de vouloir rejeter cette demande de localisation ?",
+      "rejectReason": "Motif du rejet",
+      "approveSuccess": "Demande de localisation approuvée avec succès",
+      "rejectSuccess": "Demande de localisation rejetée avec succès",
+      "approveError": "Erreur lors de l'approbation de la demande de localisation",
+      "rejectError": "Erreur lors du rejet de la demande de localisation"
+    },
+    "history": {
+      "title": "Historique des localisations",
+      "date": "Date",
+      "client": "Client",
+      "security": "Titre",
+      "quantity": "Quantité",
+      "status": "Statut",
+      "approver": "Approbateur",
+      "requestor": "Demandeur",
+      "noHistory": "Aucun historique de localisation trouvé"
+    }
+  },
+  "exceptions": {
+    "title": "Exceptions",
+    "filters": {
+      "title": "Filtres",
+      "type": "Type",
+      "severity": "Gravité",
+      "status": "Statut",
+      "date": "Date",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres"
+    },
+    "queue": {
+      "title": "File d'exceptions",
+      "time": "Heure",
+      "type": "Type",
+      "severity": "Gravité",
+      "description": "Description",
+      "status": "Statut",
+      "actions": "Actions",
+      "view": "Voir",
+      "noExceptions": "Aucune exception trouvée"
+    },
+    "detail": {
+      "title": "Détails de l'exception",
+      "type": "Type",
+      "severity": "Gravité",
+      "description": "Description",
+      "status": "Statut",
+      "createdAt": "Créée le",
+      "updatedAt": "Mise à jour le",
+      "assignedTo": "Assignée à",
+      "resolution": "Résolution",
+      "resolve": "Résoudre",
+      "assign": "Assigner",
+      "escalate": "Escalader",
+      "resolveConfirm": "Êtes-vous sûr de vouloir résoudre cette exception ?",
+      "resolveSuccess": "Exception résolue avec succès",
+      "resolveError": "Erreur lors de la résolution de l'exception"
+    },
+    "types": {
+      "data": "Exception de données",
+      "calculation": "Exception de calcul",
+      "system": "Exception système",
+      "integration": "Exception d'intégration",
+      "validation": "Exception de validation",
+      "business": "Exception métier"
+    },
+    "severities": {
+      "critical": "Critique",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse"
+    }
+  },
+  "rules": {
+    "title": "Règles de calcul",
+    "filters": {
+      "title": "Filtres",
+      "calculationType": "Type de calcul",
+      "market": "Marché",
+      "status": "Statut",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres"
+    },
+    "list": {
+      "title": "Liste des règles",
+      "ruleName": "Nom de la règle",
+      "market": "Marché",
+      "status": "Statut",
+      "version": "Version",
+      "actions": "Actions",
+      "view": "Voir",
+      "edit": "Modifier",
+      "noRules": "Aucune règle trouvée"
+    },
+    "detail": {
+      "title": "Définition de la règle",
+      "name": "Nom",
+      "version": "Version",
+      "status": "Statut",
+      "market": "Marché",
+      "description": "Description",
+      "include": "Inclure",
+      "exclude": "Exclure",
+      "save": "Enregistrer",
+      "test": "Tester",
+      "publish": "Publier",
+      "revert": "Rétablir",
+      "saveConfirm": "Êtes-vous sûr de vouloir enregistrer les modifications de cette règle ?",
+      "publishConfirm": "Êtes-vous sûr de vouloir publier cette règle ?",
+      "revertConfirm": "Êtes-vous sûr de vouloir annuler les modifications ?",
+      "saveSuccess": "Règle enregistrée avec succès",
+      "publishSuccess": "Règle publiée avec succès",
+      "saveError": "Erreur lors de l'enregistrement de la règle",
+      "publishError": "Erreur lors de la publication de la règle"
+    },
+    "editor": {
+      "title": "Éditeur de règles",
+      "addCondition": "Ajouter une condition",
+      "removeCondition": "Supprimer",
+      "addGroup": "Ajouter un groupe",
+      "removeGroup": "Supprimer le groupe",
+      "operator": "Opérateur",
+      "value": "Valeur",
+      "attribute": "Attribut",
+      "and": "ET",
+      "or": "OU",
+      "equals": "Égal à",
+      "notEquals": "Différent de",
+      "greaterThan": "Supérieur à",
+      "lessThan": "Inférieur à",
+      "contains": "Contient",
+      "notContains": "Ne contient pas",
+      "startsWith": "Commence par",
+      "endsWith": "Se termine par"
+    },
+    "calculationTypes": {
+      "forLoanAvailability": "Disponibilité pour prêt",
+      "forPledgeAvailability": "Disponibilité pour nantissement",
+      "longSellAvailability": "Disponibilité pour vente longue",
+      "shortSellAvailability": "Disponibilité pour vente à découvert",
+      "locateAvailability": "Disponibilité de localisation",
+      "overborrow": "Identification de sur-emprunt"
+    }
+  },
+  "analytics": {
+    "title": "Analytique",
+    "filters": {
+      "title": "Filtres",
+      "dateRange": "Plage de dates",
+      "market": "Marché",
+      "security": "Titre",
+      "client": "Client",
+      "apply": "Appliquer les filtres",
+      "clear": "Effacer les filtres"
+    },
+    "inventory": {
+      "title": "Analytique d'inventaire",
+      "availabilityTrend": "Tendance de disponibilité",
+      "utilizationRate": "Taux d'utilisation",
+      "categoryBreakdown": "Répartition par catégorie",
+      "marketComparison": "Comparaison de marchés"
+    },
+    "positions": {
+      "title": "Analytique de positions",
+      "positionTrend": "Tendance des positions",
+      "bookBreakdown": "Répartition par livre",
+      "securityTypeDistribution": "Distribution par type de titre",
+      "turnoverRate": "Taux de rotation"
+    },
+    "locates": {
+      "title": "Analytique de localisations",
+      "requestVolume": "Volume de demandes",
+      "approvalRate": "Taux d'approbation",
+      "clientBreakdown": "Répartition par client",
+      "securityBreakdown": "Répartition par titre",
+      "processingTime": "Temps de traitement"
+    },
+    "exceptions": {
+      "title": "Analytique d'exceptions",
+      "exceptionTrend": "Tendance des exceptions",
+      "typeBreakdown": "Répartition par type",
+      "severityDistribution": "Distribution par gravité",
+      "resolutionTime": "Temps de résolution"
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "user": {
+      "title": "Paramètres utilisateur",
+      "profile": "Profil",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "department": "Département",
+      "role": "Rôle",
+      "save": "Enregistrer les modifications",
+      "saveSuccess": "Paramètres utilisateur enregistrés avec succès",
+      "saveError": "Erreur lors de l'enregistrement des paramètres utilisateur"
+    },
+    "app": {
+      "title": "Paramètres de l'application",
+      "defaultPage": "Page par défaut",
+      "itemsPerPage": "Éléments par page",
+      "dateFormat": "Format de date",
+      "timeFormat": "Format d'heure",
+      "numberFormat": "Format de nombre",
+      "save": "Enregistrer les modifications",
+      "saveSuccess": "Paramètres de l'application enregistrés avec succès",
+      "saveError": "Erreur lors de l'enregistrement des paramètres de l'application"
+    },
+    "notifications": {
+      "title": "Paramètres de notification",
+      "email": "Notifications par e-mail",
+      "push": "Notifications push",
+      "inApp": "Notifications dans l'application",
+      "locateRequests": "Demandes de localisation",
+      "exceptions": "Exceptions",
+      "systemAlerts": "Alertes système",
+      "marketEvents": "Événements de marché",
+      "save": "Enregistrer les modifications",
+      "saveSuccess": "Paramètres de notification enregistrés avec succès",
+      "saveError": "Erreur lors de l'enregistrement des paramètres de notification"
+    },
+    "display": {
+      "title": "Paramètres d'affichage",
+      "theme": "Thème",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système par défaut",
+      "primaryColor": "Couleur principale",
+      "secondaryColor": "Couleur secondaire",
+      "fontFamily": "Famille de police",
+      "fontSize": "Taille de police",
+      "borderRadius": "Rayon de bordure",
+      "highContrast": "Mode contraste élevé",
+      "animations": "Activer les animations",
+      "save": "Enregistrer les modifications",
+      "saveSuccess": "Paramètres d'affichage enregistrés avec succès",
+      "saveError": "Erreur lors de l'enregistrement des paramètres d'affichage"
+    }
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "positions": "Positions",
+    "inventory": "Inventaire",
+    "locates": "Localisations",
+    "exceptions": "Exceptions",
+    "rules": "Règles de calcul",
+    "analytics": "Analytique",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "help": "Aide",
+    "profile": "Profil"
+  },
+  "security": {
+    "securityType": "Type de titre",
+    "issuer": "Émetteur",
+    "issueDate": "Date d'émission",
+    "maturityDate": "Date d'échéance",
+    "currency": "Devise",
+    "market": "Marché",
+    "isin": "ISIN",
+    "cusip": "CUSIP",
+    "sedol": "SEDOL",
+    "ticker": "Symbole",
+    "securityTypes": {
+      "equity": "Action",
+      "bond": "Obligation",
+      "etf": "ETF",
+      "future": "Contrat à terme",
+      "option": "Option",
+      "swap": "Swap",
+      "index": "Indice",
+      "basket": "Panier"
+    }
+  },
+  "counterparty": {
+    "name": "Nom",
+    "type": "Type",
+    "kycStatus": "Statut KYC",
+    "status": "Statut",
+    "lei": "LEI",
+    "bic": "BIC",
+    "counterpartyTypes": {
+      "client": "Client",
+      "broker": "Courtier",
+      "custodian": "Dépositaire",
+      "exchange": "Bourse",
+      "clearingHouse": "Chambre de compensation",
+      "bank": "Banque"
+    }
+  },
+  "help": {
+    "title": "Aide",
+    "gettingStarted": "Premiers pas",
+    "userGuide": "Guide utilisateur",
+    "faq": "FAQ",
+    "contactSupport": "Contacter le support",
+    "reportIssue": "Signaler un problème",
+    "keyboardShortcuts": "Raccourcis clavier",
+    "about": "À propos"
+  }
+}
