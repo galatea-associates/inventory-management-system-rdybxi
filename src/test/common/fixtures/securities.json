@@ -1,0 +1,417 @@
+package com.inventory.model;
+
+import javax.persistence.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * Entity representing a financial security in the Inventory Management System.
+ * Securities can be of various types (equity, bond, ETF, index) and can be simple
+ * or basket products (composed of other securities).
+ */
+@Entity
+@Table(name = "securities")
+public class Security {
+    /**
+     * Represents the type of a security.
+     */
+    public enum SecurityType {
+        EQUITY, BOND, ETF, INDEX
+    }
+
+    /**
+     * Represents the status of a security.
+     */
+    public enum SecurityStatus {
+        ACTIVE, INACTIVE, SUSPENDED
+    }
+
+    /**
+     * Represents the type of a basket product.
+     */
+    public enum BasketType {
+        ETF, INDEX
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "internal_id", nullable = false, unique = true)
+    private String internalId;
+    
+    @Column(name = "security_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SecurityType securityType;
+    
+    @Column(nullable = false)
+    private String issuer;
+    
+    @Column
+    private String description;
+    
+    @Column(nullable = false)
+    private String currency;
+    
+    @Column(name = "issue_date")
+    private LocalDate issueDate;
+    
+    @Column(name = "maturity_date")
+    private LocalDate maturityDate;
+    
+    @Column(nullable = false)
+    private String market;
+    
+    @Column
+    private String exchange;
+    
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SecurityStatus status;
+    
+    @Column(name = "is_basket_product")
+    private boolean isBasketProduct;
+    
+    @Column(name = "basket_type")
+    @Enumerated(EnumType.STRING)
+    private BasketType basketType;
+    
+    @Column(name = "primary_identifier_type")
+    private String primaryIdentifierType;
+    
+    @Column(name = "primary_identifier_value")
+    private String primaryIdentifierValue;
+    
+    @Column(name = "created_by", nullable = false)
+    private String createdBy;
+    
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+    
+    @Column(name = "last_modified_by", nullable = false)
+    private String lastModifiedBy;
+    
+    @Column(name = "last_modified_at", nullable = false)
+    private Instant lastModifiedAt;
+    
+    @Version
+    private int version;
+    
+    @OneToMany(mappedBy = "security", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<SecurityIdentifier> identifiers = new HashSet<>();
+    
+    @OneToMany(mappedBy = "basketSecurity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<IndexConstituent> indexConstituents = new HashSet<>();
+    
+    @OneToMany(mappedBy = "constituentSecurity")
+    private Set<IndexConstituent> basketMemberships = new HashSet<>();
+    
+    /**
+     * Default constructor required by JPA.
+     */
+    public Security() {
+    }
+    
+    /**
+     * Constructs a new Security with minimal required fields.
+     */
+    public Security(String internalId, SecurityType securityType, String issuer, String currency, String market, SecurityStatus status) {
+        this.internalId = internalId;
+        this.securityType = securityType;
+        this.issuer = issuer;
+        this.currency = currency;
+        this.market = market;
+        this.status = status;
+        this.createdBy = "system";
+        this.createdAt = Instant.now();
+        this.lastModifiedBy = "system";
+        this.lastModifiedAt = Instant.now();
+    }
+    
+    /**
+     * Adds a security identifier to this security.
+     *
+     * @param identifier The security identifier to add
+     */
+    public void addIdentifier(SecurityIdentifier identifier) {
+        identifiers.add(identifier);
+        identifier.setSecurity(this);
+    }
+    
+    /**
+     * Removes a security identifier from this security.
+     *
+     * @param identifier The security identifier to remove
+     */
+    public void removeIdentifier(SecurityIdentifier identifier) {
+        identifiers.remove(identifier);
+        identifier.setSecurity(null);
+    }
+    
+    /**
+     * Adds an index constituent to this basket security.
+     *
+     * @param constituent The index constituent to add
+     */
+    public void addIndexConstituent(IndexConstituent constituent) {
+        indexConstituents.add(constituent);
+        constituent.setBasketSecurity(this);
+    }
+    
+    /**
+     * Removes an index constituent from this basket security.
+     *
+     * @param constituent The index constituent to remove
+     */
+    public void removeIndexConstituent(IndexConstituent constituent) {
+        indexConstituents.remove(constituent);
+        constituent.setBasketSecurity(null);
+    }
+    
+    /**
+     * Creates a primary identifier for this security.
+     * 
+     * @param identifierType The type of the identifier
+     * @param identifierValue The value of the identifier
+     * @param source The source of the identifier
+     * @return The created security identifier
+     */
+    public SecurityIdentifier createPrimaryIdentifier(String identifierType, String identifierValue, String source) {
+        SecurityIdentifier identifier = new SecurityIdentifier(identifierType, identifierValue, source, 1, true);
+        addIdentifier(identifier);
+        this.primaryIdentifierType = identifierType;
+        this.primaryIdentifierValue = identifierValue;
+        return identifier;
+    }
+    
+    /**
+     * Finds a security identifier by type.
+     *
+     * @param identifierType The type of identifier to find
+     * @return The security identifier or null if not found
+     */
+    public SecurityIdentifier findIdentifierByType(String identifierType) {
+        return identifiers.stream()
+                .filter(i -> i.getIdentifierType().equals(identifierType))
+                .findFirst()
+                .orElse(null);
+    }
+    
+    // Getters and setters
+    
+    public Long getId() {
+        return id;
+    }
+    
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+    public String getInternalId() {
+        return internalId;
+    }
+    
+    public void setInternalId(String internalId) {
+        this.internalId = internalId;
+    }
+    
+    public SecurityType getSecurityType() {
+        return securityType;
+    }
+    
+    public void setSecurityType(SecurityType securityType) {
+        this.securityType = securityType;
+    }
+    
+    public String getIssuer() {
+        return issuer;
+    }
+    
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public String getCurrency() {
+        return currency;
+    }
+    
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+    
+    public LocalDate getIssueDate() {
+        return issueDate;
+    }
+    
+    public void setIssueDate(LocalDate issueDate) {
+        this.issueDate = issueDate;
+    }
+    
+    public LocalDate getMaturityDate() {
+        return maturityDate;
+    }
+    
+    public void setMaturityDate(LocalDate maturityDate) {
+        this.maturityDate = maturityDate;
+    }
+    
+    public String getMarket() {
+        return market;
+    }
+    
+    public void setMarket(String market) {
+        this.market = market;
+    }
+    
+    public String getExchange() {
+        return exchange;
+    }
+    
+    public void setExchange(String exchange) {
+        this.exchange = exchange;
+    }
+    
+    public SecurityStatus getStatus() {
+        return status;
+    }
+    
+    public void setStatus(SecurityStatus status) {
+        this.status = status;
+    }
+    
+    public boolean isBasketProduct() {
+        return isBasketProduct;
+    }
+    
+    public void setBasketProduct(boolean basketProduct) {
+        isBasketProduct = basketProduct;
+    }
+    
+    public BasketType getBasketType() {
+        return basketType;
+    }
+    
+    public void setBasketType(BasketType basketType) {
+        this.basketType = basketType;
+    }
+    
+    public String getPrimaryIdentifierType() {
+        return primaryIdentifierType;
+    }
+    
+    public void setPrimaryIdentifierType(String primaryIdentifierType) {
+        this.primaryIdentifierType = primaryIdentifierType;
+    }
+    
+    public String getPrimaryIdentifierValue() {
+        return primaryIdentifierValue;
+    }
+    
+    public void setPrimaryIdentifierValue(String primaryIdentifierValue) {
+        this.primaryIdentifierValue = primaryIdentifierValue;
+    }
+    
+    public String getCreatedBy() {
+        return createdBy;
+    }
+    
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+    
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+    
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+    
+    public Instant getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+    
+    public void setLastModifiedAt(Instant lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
+    }
+    
+    public int getVersion() {
+        return version;
+    }
+    
+    public void setVersion(int version) {
+        this.version = version;
+    }
+    
+    public Set<SecurityIdentifier> getIdentifiers() {
+        return identifiers;
+    }
+    
+    public void setIdentifiers(Set<SecurityIdentifier> identifiers) {
+        this.identifiers = identifiers;
+    }
+    
+    public Set<IndexConstituent> getIndexConstituents() {
+        return indexConstituents;
+    }
+    
+    public void setIndexConstituents(Set<IndexConstituent> indexConstituents) {
+        this.indexConstituents = indexConstituents;
+    }
+    
+    public Set<IndexConstituent> getBasketMemberships() {
+        return basketMemberships;
+    }
+    
+    public void setBasketMemberships(Set<IndexConstituent> basketMemberships) {
+        this.basketMemberships = basketMemberships;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Security security = (Security) o;
+        // Compare by business key (internalId)
+        return Objects.equals(internalId, security.internalId);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(internalId);
+    }
+    
+    @Override
+    public String toString() {
+        return "Security{" +
+                "id=" + id +
+                ", internalId='" + internalId + '\'' +
+                ", securityType=" + securityType +
+                ", issuer='" + issuer + '\'' +
+                ", description='" + description + '\'' +
+                ", currency='" + currency + '\'' +
+                ", status=" + status +
+                ", primaryIdentifierType='" + primaryIdentifierType + '\'' +
+                ", primaryIdentifierValue='" + primaryIdentifierValue + '\'' +
+                '}';
+    }
+}
