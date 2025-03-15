@@ -1,0 +1,565 @@
+package com.example.ims.model.inventory;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Represents inventory data in the Inventory Management System, including
+ * inventory availability, calculation results, and locate availability.
+ * 
+ * This model is optimized for high-throughput processing and is designed to support
+ * the system requirement of processing 300,000+ events per second with sub-200ms latency.
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class InventoryData {
+
+    @NotNull
+    @Valid
+    @Builder.Default
+    private List<Inventory> inventories = new ArrayList<>();
+
+    @NotNull
+    @Valid
+    @Builder.Default
+    private List<CalculatedInventory> calculatedInventories = new ArrayList<>();
+
+    @NotNull
+    @Valid
+    @Builder.Default
+    private List<LocateAvailability> locateAvailability = new ArrayList<>();
+
+    @Valid
+    private List<InventoryEvent> inventoryEvents;
+
+    @Valid
+    private Metadata metadata;
+
+    /**
+     * Represents an inventory availability record in the system.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Inventory {
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String id;
+
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String securityId;
+
+        @Size(max = 50)
+        private String counterpartyId;
+
+        @Size(max = 50)
+        private String aggregationUnitId;
+
+        @NotNull
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate businessDate;
+
+        @NotNull
+        private CalculationType calculationType;
+
+        @NotNull
+        private BigDecimal grossQuantity;
+
+        @NotNull
+        private BigDecimal netQuantity;
+
+        @NotNull
+        private BigDecimal availableQuantity;
+
+        @Builder.Default
+        private BigDecimal reservedQuantity = BigDecimal.ZERO;
+
+        @Builder.Default
+        private BigDecimal decrementQuantity = BigDecimal.ZERO;
+
+        @Size(max = 50)
+        private String market;
+
+        private SecurityTemperature securityTemperature;
+
+        @Min(0)
+        private BigDecimal borrowRate;
+
+        @Size(max = 50)
+        private String calculationRuleId;
+
+        @Size(max = 20)
+        private String calculationRuleVersion;
+
+        @Builder.Default
+        private boolean isExternalSource = false;
+
+        @Size(max = 100)
+        private String externalSourceName;
+
+        @NotNull
+        private InventoryStatus status;
+
+        private String createdBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime createdAt;
+
+        private String lastModifiedBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime lastModifiedAt;
+
+        @Min(0)
+        private Integer version;
+    }
+
+    /**
+     * Represents a calculated inventory availability record.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class CalculatedInventory {
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String id;
+
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String securityId;
+
+        @Size(max = 50)
+        private String counterpartyId;
+
+        @Size(max = 50)
+        private String aggregationUnitId;
+
+        @NotNull
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate businessDate;
+
+        @NotNull
+        private CalculationType calculationType;
+
+        @NotNull
+        private BigDecimal grossQuantity;
+
+        @NotNull
+        private BigDecimal netQuantity;
+
+        @NotNull
+        private BigDecimal availableQuantity;
+
+        @Builder.Default
+        private BigDecimal reservedQuantity = BigDecimal.ZERO;
+
+        @Builder.Default
+        private BigDecimal decrementQuantity = BigDecimal.ZERO;
+
+        @Size(max = 50)
+        private String market;
+
+        private SecurityTemperature securityTemperature;
+
+        @Min(0)
+        private BigDecimal borrowRate;
+
+        @Size(max = 50)
+        private String calculationRuleId;
+
+        @Size(max = 20)
+        private String calculationRuleVersion;
+
+        private List<String> sourceInventoryIds;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime calculationTimestamp;
+
+        @Builder.Default
+        private boolean isExternalSource = false;
+
+        @Size(max = 100)
+        private String externalSourceName;
+
+        @NotNull
+        private InventoryStatus status;
+
+        private String createdBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime createdAt;
+
+        private String lastModifiedBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime lastModifiedAt;
+
+        @Min(0)
+        private Integer version;
+    }
+
+    /**
+     * Represents a locate availability record.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class LocateAvailability {
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String id;
+
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String securityId;
+
+        @Size(max = 50)
+        private String counterpartyId;
+
+        @Size(max = 50)
+        private String aggregationUnitId;
+
+        @NotNull
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate businessDate;
+
+        @NotNull
+        private BigDecimal availableQuantity;
+
+        @Builder.Default
+        private BigDecimal decrementQuantity = BigDecimal.ZERO;
+
+        @Size(max = 50)
+        private String market;
+
+        private SecurityTemperature securityTemperature;
+
+        @Min(0)
+        private BigDecimal borrowRate;
+
+        private List<String> sourceInventoryIds;
+
+        @Size(max = 50)
+        private String calculationRuleId;
+
+        @Size(max = 20)
+        private String calculationRuleVersion;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime calculationTimestamp;
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate expiryDate;
+
+        @NotNull
+        private InventoryStatus status;
+
+        private String createdBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime createdAt;
+
+        private String lastModifiedBy;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime lastModifiedAt;
+
+        @Min(0)
+        private Integer version;
+    }
+
+    /**
+     * Represents an inventory-related event.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class InventoryEvent {
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String eventId;
+
+        @NotNull
+        private EventType eventType;
+
+        @NotNull
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime eventTime;
+
+        @NotBlank
+        @Size(min = 1, max = 50)
+        private String securityId;
+
+        @Size(min = 1, max = 50)
+        private String inventoryId;
+
+        @Size(max = 50)
+        private String counterpartyId;
+
+        @Size(max = 50)
+        private String aggregationUnitId;
+
+        @NotNull
+        private CalculationType calculationType;
+
+        @NotNull
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate businessDate;
+
+        private BigDecimal quantityBefore;
+
+        private BigDecimal quantityAfter;
+
+        private BigDecimal quantityChange;
+
+        private BigDecimal decrementBefore;
+
+        private BigDecimal decrementAfter;
+
+        private BigDecimal decrementChange;
+
+        @Size(max = 50)
+        private String locateId;
+
+        @Size(max = 50)
+        private String userId;
+
+        @Size(max = 50)
+        private String source;
+
+        @Size(max = 50)
+        private String correlationId;
+    }
+
+    /**
+     * Metadata about the inventory data.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Metadata {
+        private String version;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        private LocalDateTime generatedAt;
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate businessDate;
+
+        private String source;
+
+        private Environment environment;
+
+        @Min(0)
+        private Integer totalInventories;
+
+        @Min(0)
+        private Integer totalCalculatedInventories;
+
+        @Min(0)
+        private Integer totalLocateAvailability;
+
+        @Min(0)
+        private Integer totalInventoryEvents;
+    }
+
+    /**
+     * Calculation of remaining availability after accounting for decrements.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class RemainingAvailability {
+        @NotNull
+        private BigDecimal availableQuantity;
+
+        @NotNull
+        @Builder.Default
+        private BigDecimal decrementQuantity = BigDecimal.ZERO;
+
+        @NotNull
+        private BigDecimal remainingQuantity;
+
+        /**
+         * Calculate remaining quantity based on available and decrement quantities.
+         * This is a utility method for calculating the remaining quantity in a single operation.
+         */
+        public void calculateRemainingQuantity() {
+            if (availableQuantity != null && decrementQuantity != null) {
+                this.remainingQuantity = availableQuantity.subtract(decrementQuantity);
+            }
+        }
+    }
+
+    /**
+     * Market-specific rules for inventory calculations.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class MarketSpecificRules {
+        @NotBlank
+        @Size(max = 50)
+        private String market;
+
+        @NotNull
+        @Builder.Default
+        private List<MarketRule> rules = new ArrayList<>();
+
+        /**
+         * Represents a market-specific rule.
+         */
+        @Data
+        @Builder
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public static class MarketRule {
+            @NotBlank
+            @Size(min = 1, max = 50)
+            private String ruleId;
+
+            @NotBlank
+            @Size(min = 1, max = 100)
+            private String ruleName;
+
+            @Size(max = 255)
+            private String ruleDescription;
+
+            @NotNull
+            private CalculationType calculationType;
+
+            @NotNull
+            private boolean isActive;
+        }
+    }
+
+    /**
+     * Types of inventory calculations.
+     */
+    public enum CalculationType {
+        @JsonProperty("FOR_LOAN")
+        FOR_LOAN,
+        
+        @JsonProperty("FOR_PLEDGE")
+        FOR_PLEDGE,
+        
+        @JsonProperty("SHORT_SELL")
+        SHORT_SELL,
+        
+        @JsonProperty("LONG_SELL")
+        LONG_SELL,
+        
+        @JsonProperty("LOCATE")
+        LOCATE,
+        
+        @JsonProperty("OVERBORROW")
+        OVERBORROW,
+        
+        @JsonProperty("ALL")
+        ALL
+    }
+
+    /**
+     * Temperature classification of securities.
+     */
+    public enum SecurityTemperature {
+        @JsonProperty("HTB")
+        HTB,
+        
+        @JsonProperty("GC")
+        GC,
+        
+        @JsonProperty("UNKNOWN")
+        UNKNOWN
+    }
+
+    /**
+     * Status of inventory records.
+     */
+    public enum InventoryStatus {
+        @JsonProperty("ACTIVE")
+        ACTIVE,
+        
+        @JsonProperty("INACTIVE")
+        INACTIVE,
+        
+        @JsonProperty("PENDING")
+        PENDING,
+        
+        @JsonProperty("EXPIRED")
+        EXPIRED
+    }
+
+    /**
+     * Types of inventory events.
+     */
+    public enum EventType {
+        @JsonProperty("INVENTORY_CREATED")
+        INVENTORY_CREATED,
+        
+        @JsonProperty("INVENTORY_UPDATED")
+        INVENTORY_UPDATED,
+        
+        @JsonProperty("INVENTORY_DELETED")
+        INVENTORY_DELETED,
+        
+        @JsonProperty("LOCATE_APPROVED")
+        LOCATE_APPROVED,
+        
+        @JsonProperty("LOCATE_REJECTED")
+        LOCATE_REJECTED,
+        
+        @JsonProperty("LOCATE_EXPIRED")
+        LOCATE_EXPIRED,
+        
+        @JsonProperty("LOCATE_CANCELLED")
+        LOCATE_CANCELLED
+    }
+
+    /**
+     * Environment where the inventory data was generated.
+     */
+    public enum Environment {
+        @JsonProperty("DEV")
+        DEV,
+        
+        @JsonProperty("TEST")
+        TEST,
+        
+        @JsonProperty("STAGING")
+        STAGING,
+        
+        @JsonProperty("PRODUCTION")
+        PRODUCTION
+    }
+}
