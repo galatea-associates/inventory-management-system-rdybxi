@@ -1,0 +1,680 @@
+{
+  "common": {
+    "app": {
+      "name": "在庫管理システム",
+      "shortName": "IMS",
+      "version": "1.0.0",
+      "copyright": "© 2023 All Rights Reserved"
+    },
+    "actions": {
+      "add": "追加",
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "confirm": "確認",
+      "apply": "適用",
+      "reset": "リセット",
+      "search": "検索",
+      "filter": "フィルター",
+      "export": "エクスポート",
+      "import": "インポート",
+      "refresh": "更新",
+      "back": "戻る",
+      "next": "次へ",
+      "previous": "前へ",
+      "submit": "送信",
+      "approve": "承認",
+      "reject": "拒否",
+      "close": "閉じる",
+      "view": "表示",
+      "details": "詳細",
+      "download": "ダウンロード",
+      "upload": "アップロード",
+      "clear": "クリア",
+      "clearAll": "すべてクリア",
+      "selectAll": "すべて選択",
+      "deselectAll": "すべて選択解除",
+      "requestInfo": "追加情報を要求"
+    },
+    "validation": {
+      "required": "この項目は必須です",
+      "minLength": "{{count}}文字以上で入力してください",
+      "maxLength": "{{count}}文字以下で入力してください",
+      "email": "無効なメールアドレスです",
+      "number": "数値を入力してください",
+      "integer": "整数を入力してください",
+      "positive": "正の数を入力してください",
+      "negative": "負の数を入力してください",
+      "min": "{{min}}以上の値を入力してください",
+      "max": "{{max}}以下の値を入力してください",
+      "pattern": "無効な形式です",
+      "passwordMatch": "パスワードが一致しません",
+      "invalidCredentials": "ユーザー名またはパスワードが無効です"
+    },
+    "notifications": {
+      "success": "成功",
+      "error": "エラー",
+      "warning": "警告",
+      "info": "情報",
+      "successMessage": "操作が正常に完了しました",
+      "errorMessage": "エラーが発生しました",
+      "warningMessage": "警告: {{message}}",
+      "infoMessage": "{{message}}"
+    },
+    "time": {
+      "now": "現在",
+      "today": "今日",
+      "yesterday": "昨日",
+      "tomorrow": "明日",
+      "days": "{{count}}日",
+      "hours": "{{count}}時間",
+      "minutes": "{{count}}分",
+      "seconds": "{{count}}秒",
+      "ago": "{{time}}前",
+      "in": "{{time}}後"
+    },
+    "status": {
+      "active": "アクティブ",
+      "inactive": "非アクティブ",
+      "pending": "保留中",
+      "approved": "承認済み",
+      "rejected": "拒否済み",
+      "completed": "完了",
+      "failed": "失敗",
+      "processing": "処理中",
+      "draft": "下書き",
+      "published": "公開済み",
+      "archived": "アーカイブ済み",
+      "deleted": "削除済み"
+    },
+    "errors": {
+      "pageNotFound": "ページが見つかりません",
+      "unauthorized": "権限がありません",
+      "forbidden": "アクセスが禁止されています",
+      "serverError": "サーバーエラー",
+      "connectionError": "接続エラー",
+      "timeoutError": "タイムアウトエラー",
+      "validationError": "検証エラー",
+      "dataError": "データエラー",
+      "unknownError": "不明なエラー",
+      "pageNotFoundMessage": "お探しのページは存在しません。",
+      "unauthorizedMessage": "このページにアクセスする権限がありません。",
+      "forbiddenMessage": "このリソースにアクセスする権限がありません。",
+      "serverErrorMessage": "サーバーでエラーが発生しました。",
+      "connectionErrorMessage": "サーバーに接続できません。",
+      "timeoutErrorMessage": "リクエストがタイムアウトしました。",
+      "validationErrorMessage": "検証エラーを修正してください。",
+      "dataErrorMessage": "データの処理中にエラーが発生しました。",
+      "unknownErrorMessage": "不明なエラーが発生しました。"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "subtitle": "アカウントにサインイン",
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "rememberMe": "ログイン状態を保持する",
+      "forgotPassword": "パスワードをお忘れですか？",
+      "loginButton": "サインイン",
+      "loginWithMfa": "MFAでサインイン",
+      "noAccount": "アカウントをお持ちでないですか？",
+      "contactAdmin": "管理者に連絡してください",
+      "welcomeBack": "お帰りなさい",
+      "welcomeMorning": "おはようございます",
+      "welcomeAfternoon": "こんにちは",
+      "welcomeEvening": "こんばんは"
+    },
+    "forgotPassword": {
+      "title": "パスワードをお忘れの方",
+      "subtitle": "パスワードをリセットするためのメールアドレスを入力してください",
+      "email": "メールアドレス",
+      "submitButton": "パスワードをリセット",
+      "backToLogin": "ログインに戻る",
+      "successMessage": "パスワードリセットの手順がメールで送信されました",
+      "errorMessage": "パスワードリセットメールの送信中にエラーが発生しました"
+    },
+    "resetPassword": {
+      "title": "パスワードのリセット",
+      "subtitle": "新しいパスワードを入力してください",
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "パスワードの確認",
+      "submitButton": "新しいパスワードを設定",
+      "successMessage": "パスワードが正常にリセットされました",
+      "errorMessage": "パスワードのリセット中にエラーが発生しました"
+    },
+    "mfa": {
+      "title": "二要素認証",
+      "subtitle": "認証アプリから確認コードを入力してください",
+      "code": "確認コード",
+      "verifyButton": "確認",
+      "backToLogin": "ログインに戻る",
+      "setupTitle": "二要素認証の設定",
+      "setupSubtitle": "認証アプリでQRコードをスキャンしてください",
+      "setupInstructions": "1. 認証アプリをダウンロード\n2. QRコードをスキャン\n3. 確認コードを入力",
+      "setupCode": "または、このコードを手動で入力してください：",
+      "setupVerifyButton": "確認して有効化",
+      "setupSuccessMessage": "二要素認証が有効になりました",
+      "setupErrorMessage": "二要素認証の設定中にエラーが発生しました"
+    },
+    "changePassword": {
+      "title": "パスワードの変更",
+      "subtitle": "パスワードを更新してください",
+      "currentPassword": "現在のパスワード",
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "新しいパスワードの確認",
+      "submitButton": "パスワードを変更",
+      "successMessage": "パスワードが正常に変更されました",
+      "errorMessage": "パスワードの変更中にエラーが発生しました"
+    },
+    "logout": {
+      "confirmMessage": "ログアウトしてもよろしいですか？",
+      "confirmButton": "はい、ログアウトします",
+      "cancelButton": "いいえ、ログインしたままにします",
+      "successMessage": "正常にログアウトしました"
+    },
+    "session": {
+      "expiring": "セッションがまもなく期限切れになります",
+      "expiringMessage": "セッションは{{time}}後に期限切れになります。ログイン状態を維持しますか？",
+      "expired": "セッションが期限切れになりました",
+      "expiredMessage": "続行するには再度ログインしてください",
+      "stayLoggedIn": "ログイン状態を維持",
+      "logout": "ログアウト"
+    }
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "systemStatus": {
+      "title": "システム状態",
+      "uptime": "稼働時間",
+      "performance": "パフォーマンス",
+      "errors": "エラー",
+      "warnings": "警告",
+      "healthy": "正常",
+      "degraded": "低下",
+      "critical": "重大",
+      "unknown": "不明"
+    },
+    "inventorySummary": {
+      "title": "在庫サマリー",
+      "forLoan": "貸出可能",
+      "forPledge": "担保可能",
+      "htb": "借入困難",
+      "totalValue": "合計価値",
+      "utilizationRate": "利用率",
+      "categories": "カテゴリ",
+      "topSecurities": "主要証券"
+    },
+    "locateRequests": {
+      "title": "ロケートリクエスト",
+      "pending": "保留中",
+      "approved": "承認済み",
+      "rejected": "拒否済み",
+      "today": "今日",
+      "viewAll": "すべて表示",
+      "noRequests": "保留中のリクエストはありません"
+    },
+    "recentActivity": {
+      "title": "最近のアクティビティ",
+      "viewAll": "すべて表示",
+      "noActivity": "最近のアクティビティはありません",
+      "locateApproved": "ロケート承認: {{security}}",
+      "locateRejected": "ロケート拒否: {{security}}",
+      "positionUpdate": "ポジション更新: {{security}}",
+      "shortSellApproved": "空売り承認: {{security}}",
+      "shortSellRejected": "空売り拒否: {{security}}",
+      "referenceDataUpdate": "参照データ更新",
+      "marketDataUpdate": "市場データ更新"
+    },
+    "alerts": {
+      "title": "アラート",
+      "high": "高",
+      "medium": "中",
+      "low": "低",
+      "viewAll": "すべて表示",
+      "noAlerts": "アラートはありません",
+      "dataFeedInterruption": "データフィード中断: {{source}}",
+      "calculationError": "計算エラー: {{type}}",
+      "systemAlert": "システムアラート: {{message}}",
+      "marketEvent": "市場イベント: {{event}}"
+    }
+  },
+  "positions": {
+    "title": "ポジション",
+    "filters": {
+      "title": "フィルター",
+      "security": "証券",
+      "book": "ブック",
+      "date": "日付",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア",
+      "save": "フィルターを保存",
+      "load": "保存したフィルターを読み込む"
+    },
+    "summary": {
+      "title": "サマリー",
+      "totalLong": "ロング合計",
+      "totalShort": "ショート合計",
+      "netPosition": "ネットポジション",
+      "securities": "証券"
+    },
+    "table": {
+      "security": "証券",
+      "book": "ブック",
+      "sodQty": "SOD数量",
+      "intraday": "日中",
+      "current": "現在",
+      "details": "詳細"
+    },
+    "settlementLadder": {
+      "title": "決済ラダー",
+      "today": "今日",
+      "tomorrow": "明日",
+      "day2": "2日目",
+      "day3": "3日目",
+      "day4": "4日目",
+      "delivery": "引渡",
+      "receipt": "受取",
+      "net": "ネット"
+    },
+    "detail": {
+      "title": "ポジション詳細",
+      "security": "証券",
+      "book": "ブック",
+      "quantity": "数量",
+      "value": "価値",
+      "trades": "取引",
+      "contracts": "契約",
+      "history": "履歴"
+    }
+  },
+  "inventory": {
+    "title": "在庫",
+    "filters": {
+      "title": "フィルター",
+      "date": "日付",
+      "market": "市場",
+      "category": "カテゴリ",
+      "security": "証券",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア"
+    },
+    "summary": {
+      "title": "カテゴリ別在庫",
+      "category": "カテゴリ",
+      "value": "価値",
+      "percentage": "合計の％",
+      "change": "変化"
+    },
+    "categories": {
+      "longPositions": "ロングポジション",
+      "hypothecatable": "担保可能",
+      "pledged": "担保設定済み",
+      "external": "外部"
+    },
+    "topSecurities": {
+      "title": "利用可能性別トップ証券",
+      "security": "証券",
+      "availability": "利用可能性",
+      "temperature": "温度",
+      "gc": "一般担保",
+      "htb": "借入困難",
+      "viewAll": "すべて表示"
+    },
+    "detail": {
+      "title": "在庫詳細",
+      "security": "証券",
+      "market": "市場",
+      "availability": "利用可能性",
+      "utilization": "利用率",
+      "sources": "ソース",
+      "history": "履歴"
+    }
+  },
+  "locates": {
+    "title": "ロケート",
+    "filters": {
+      "title": "フィルター",
+      "client": "クライアント",
+      "security": "証券",
+      "status": "ステータス",
+      "date": "日付",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア"
+    },
+    "queue": {
+      "title": "保留中のロケート",
+      "time": "時間",
+      "client": "クライアント",
+      "security": "証券",
+      "quantity": "数量",
+      "type": "タイプ",
+      "actions": "アクション",
+      "review": "レビュー",
+      "noLocates": "保留中のロケートはありません"
+    },
+    "detail": {
+      "title": "ロケート詳細",
+      "client": "クライアント",
+      "security": "証券",
+      "quantity": "数量",
+      "available": "利用可能な在庫",
+      "clientYtdLocates": "クライアント年初来ロケート",
+      "clientYtdUtilization": "クライアント年初来利用率",
+      "securityBorrowRate": "証券借入レート",
+      "securityTemperature": "証券温度",
+      "requestTime": "リクエスト時間",
+      "requestor": "リクエスト者",
+      "swapCashIndicator": "スワップ/現金インジケーター"
+    },
+    "approval": {
+      "title": "ロケート承認",
+      "approve": "承認",
+      "reject": "拒否",
+      "requestInfo": "追加情報を要求",
+      "approveConfirm": "このロケートリクエストを承認してもよろしいですか？",
+      "rejectConfirm": "このロケートリクエストを拒否してもよろしいですか？",
+      "rejectReason": "拒否理由",
+      "approveSuccess": "ロケートリクエストが正常に承認されました",
+      "rejectSuccess": "ロケートリクエストが正常に拒否されました",
+      "approveError": "ロケートリクエストの承認中にエラーが発生しました",
+      "rejectError": "ロケートリクエストの拒否中にエラーが発生しました"
+    },
+    "history": {
+      "title": "ロケート履歴",
+      "date": "日付",
+      "client": "クライアント",
+      "security": "証券",
+      "quantity": "数量",
+      "status": "ステータス",
+      "approver": "承認者",
+      "requestor": "リクエスト者",
+      "noHistory": "ロケート履歴が見つかりません"
+    }
+  },
+  "exceptions": {
+    "title": "例外",
+    "filters": {
+      "title": "フィルター",
+      "type": "タイプ",
+      "severity": "重大度",
+      "status": "ステータス",
+      "date": "日付",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア"
+    },
+    "queue": {
+      "title": "例外キュー",
+      "time": "時間",
+      "type": "タイプ",
+      "severity": "重大度",
+      "description": "説明",
+      "status": "ステータス",
+      "actions": "アクション",
+      "view": "表示",
+      "noExceptions": "例外が見つかりません"
+    },
+    "detail": {
+      "title": "例外詳細",
+      "type": "タイプ",
+      "severity": "重大度",
+      "description": "説明",
+      "status": "ステータス",
+      "createdAt": "作成日時",
+      "updatedAt": "更新日時",
+      "assignedTo": "担当者",
+      "resolution": "解決策",
+      "resolve": "解決",
+      "assign": "割り当て",
+      "escalate": "エスカレーション",
+      "resolveConfirm": "この例外を解決してもよろしいですか？",
+      "resolveSuccess": "例外が正常に解決されました",
+      "resolveError": "例外の解決中にエラーが発生しました"
+    },
+    "types": {
+      "data": "データ例外",
+      "calculation": "計算例外",
+      "system": "システム例外",
+      "integration": "統合例外",
+      "validation": "検証例外",
+      "business": "ビジネス例外"
+    },
+    "severities": {
+      "critical": "重大",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    }
+  },
+  "rules": {
+    "title": "計算ルール",
+    "filters": {
+      "title": "フィルター",
+      "calculationType": "計算タイプ",
+      "market": "市場",
+      "status": "ステータス",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア"
+    },
+    "list": {
+      "title": "ルールリスト",
+      "ruleName": "ルール名",
+      "market": "市場",
+      "status": "ステータス",
+      "version": "バージョン",
+      "actions": "アクション",
+      "view": "表示",
+      "edit": "編集",
+      "noRules": "ルールが見つかりません"
+    },
+    "detail": {
+      "title": "ルール定義",
+      "name": "名前",
+      "version": "バージョン",
+      "status": "ステータス",
+      "market": "市場",
+      "description": "説明",
+      "include": "含める",
+      "exclude": "除外する",
+      "save": "保存",
+      "test": "テスト",
+      "publish": "公開",
+      "revert": "元に戻す",
+      "saveConfirm": "このルールの変更を保存してもよろしいですか？",
+      "publishConfirm": "このルールを公開してもよろしいですか？",
+      "revertConfirm": "変更を破棄してもよろしいですか？",
+      "saveSuccess": "ルールが正常に保存されました",
+      "publishSuccess": "ルールが正常に公開されました",
+      "saveError": "ルールの保存中にエラーが発生しました",
+      "publishError": "ルールの公開中にエラーが発生しました"
+    },
+    "editor": {
+      "title": "ルールエディタ",
+      "addCondition": "条件を追加",
+      "removeCondition": "削除",
+      "addGroup": "グループを追加",
+      "removeGroup": "グループを削除",
+      "operator": "演算子",
+      "value": "値",
+      "attribute": "属性",
+      "and": "AND",
+      "or": "OR",
+      "equals": "等しい",
+      "notEquals": "等しくない",
+      "greaterThan": "より大きい",
+      "lessThan": "より小さい",
+      "contains": "含む",
+      "notContains": "含まない",
+      "startsWith": "で始まる",
+      "endsWith": "で終わる"
+    },
+    "calculationTypes": {
+      "forLoanAvailability": "貸出可能性",
+      "forPledgeAvailability": "担保可能性",
+      "longSellAvailability": "ロング売り可能性",
+      "shortSellAvailability": "空売り可能性",
+      "locateAvailability": "ロケート可能性",
+      "overborrow": "過剰借入識別"
+    }
+  },
+  "analytics": {
+    "title": "分析",
+    "filters": {
+      "title": "フィルター",
+      "dateRange": "日付範囲",
+      "market": "市場",
+      "security": "証券",
+      "client": "クライアント",
+      "apply": "フィルターを適用",
+      "clear": "フィルターをクリア"
+    },
+    "inventory": {
+      "title": "在庫分析",
+      "availabilityTrend": "利用可能性トレンド",
+      "utilizationRate": "利用率",
+      "categoryBreakdown": "カテゴリ内訳",
+      "marketComparison": "市場比較"
+    },
+    "positions": {
+      "title": "ポジション分析",
+      "positionTrend": "ポジショントレンド",
+      "bookBreakdown": "ブック内訳",
+      "securityTypeDistribution": "証券タイプ分布",
+      "turnoverRate": "回転率"
+    },
+    "locates": {
+      "title": "ロケート分析",
+      "requestVolume": "リクエスト量",
+      "approvalRate": "承認率",
+      "clientBreakdown": "クライアント内訳",
+      "securityBreakdown": "証券内訳",
+      "processingTime": "処理時間"
+    },
+    "exceptions": {
+      "title": "例外分析",
+      "exceptionTrend": "例外トレンド",
+      "typeBreakdown": "タイプ内訳",
+      "severityDistribution": "重大度分布",
+      "resolutionTime": "解決時間"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "user": {
+      "title": "ユーザー設定",
+      "profile": "プロフィール",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "department": "部署",
+      "role": "役割",
+      "save": "変更を保存",
+      "saveSuccess": "ユーザー設定が正常に保存されました",
+      "saveError": "ユーザー設定の保存中にエラーが発生しました"
+    },
+    "app": {
+      "title": "アプリケーション設定",
+      "defaultPage": "デフォルトページ",
+      "itemsPerPage": "ページあたりの項目数",
+      "dateFormat": "日付形式",
+      "timeFormat": "時間形式",
+      "numberFormat": "数値形式",
+      "save": "変更を保存",
+      "saveSuccess": "アプリケーション設定が正常に保存されました",
+      "saveError": "アプリケーション設定の保存中にエラーが発生しました"
+    },
+    "notifications": {
+      "title": "通知設定",
+      "email": "メール通知",
+      "push": "プッシュ通知",
+      "inApp": "アプリ内通知",
+      "locateRequests": "ロケートリクエスト",
+      "exceptions": "例外",
+      "systemAlerts": "システムアラート",
+      "marketEvents": "市場イベント",
+      "save": "変更を保存",
+      "saveSuccess": "通知設定が正常に保存されました",
+      "saveError": "通知設定の保存中にエラーが発生しました"
+    },
+    "display": {
+      "title": "表示設定",
+      "theme": "テーマ",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システムデフォルト",
+      "primaryColor": "プライマリカラー",
+      "secondaryColor": "セカンダリカラー",
+      "fontFamily": "フォントファミリー",
+      "fontSize": "フォントサイズ",
+      "borderRadius": "ボーダー半径",
+      "highContrast": "ハイコントラストモード",
+      "animations": "アニメーションを有効化",
+      "save": "変更を保存",
+      "saveSuccess": "表示設定が正常に保存されました",
+      "saveError": "表示設定の保存中にエラーが発生しました"
+    }
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "positions": "ポジション",
+    "inventory": "在庫",
+    "locates": "ロケート",
+    "exceptions": "例外",
+    "rules": "計算ルール",
+    "analytics": "分析",
+    "settings": "設定",
+    "logout": "ログアウト",
+    "help": "ヘルプ",
+    "profile": "プロフィール"
+  },
+  "security": {
+    "securityType": "証券タイプ",
+    "issuer": "発行者",
+    "issueDate": "発行日",
+    "maturityDate": "満期日",
+    "currency": "通貨",
+    "market": "市場",
+    "isin": "ISIN",
+    "cusip": "CUSIP",
+    "sedol": "SEDOL",
+    "ticker": "ティッカー",
+    "securityTypes": {
+      "equity": "株式",
+      "bond": "債券",
+      "etf": "ETF",
+      "future": "先物",
+      "option": "オプション",
+      "swap": "スワップ",
+      "index": "指数",
+      "basket": "バスケット"
+    }
+  },
+  "counterparty": {
+    "name": "名前",
+    "type": "タイプ",
+    "kycStatus": "KYCステータス",
+    "status": "ステータス",
+    "lei": "LEI",
+    "bic": "BIC",
+    "counterpartyTypes": {
+      "client": "クライアント",
+      "broker": "ブローカー",
+      "custodian": "カストディアン",
+      "exchange": "取引所",
+      "clearingHouse": "清算機関",
+      "bank": "銀行"
+    }
+  },
+  "help": {
+    "title": "ヘルプ",
+    "gettingStarted": "はじめに",
+    "userGuide": "ユーザーガイド",
+    "faq": "よくある質問",
+    "contactSupport": "サポートに連絡",
+    "reportIssue": "問題を報告",
+    "keyboardShortcuts": "キーボードショートカット",
+    "about": "このアプリについて"
+  }
+}
