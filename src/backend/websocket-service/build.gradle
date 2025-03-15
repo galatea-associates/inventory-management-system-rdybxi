@@ -1,0 +1,82 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.0'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'com.palantir.docker' version '0.35.0'
+    id 'jacoco'
+}
+
+group = 'com.ims.websocket'
+version = '0.1.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://plugins.gradle.org/m2/' }
+}
+
+dependencies {
+    implementation project(':common-lib')
+    
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+bootJar {
+    mainClassName = 'com.ims.websocket.WebSocketServiceApplication'
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Built-By': System.properties['user.name'],
+            'Built-Date': new Date(),
+            'Built-JDK': System.properties['java.version']
+        )
+    }
+}
+
+docker {
+    name "ims/websocket-service:${project.version}"
+    buildArgs([
+        'JAR_FILE': "${bootJar.archiveFileName.get()}"
+    ])
+    files bootJar.archiveFile
+    dockerfile file('src/main/docker/Dockerfile')
+    labels([
+        'maintainer': 'IMS DevOps Team',
+        'app.name': project.name,
+        'app.version': project.version
+    ])
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    systemProperty 'spring.profiles.active', 'test'
+    environment 'KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'
+}
+
+applicationDefaultJvmArgs = [
+    '-Dspring.profiles.active=default',
+    '-Dserver.port=8086',
+    '-Dmanagement.server.port=8087'
+]
+
+tasks.withType(Test) {
+    jvmArgs = ['-Xms512m', '-Xmx1g', '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=100', '-XX:+UseStringDeduplication']
+}
