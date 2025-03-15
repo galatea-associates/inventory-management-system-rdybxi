@@ -1,0 +1,83 @@
+.gradle/
+*/.gradle/
+build/
+*/build/
+out/
+*/out/
+target/
+*/target/
+gradle-app.setting
+.gradletasknamecache
+
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+.classpath
+.project
+.settings/
+bin/
+.vscode/
+
+# Git files
+.git/
+.gitignore
+.github/
+
+# Logs and reports
+logs/
+*.log
+test-results/
+reports/
+
+# Environment specific files
+*.env
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+
+# Docker files (except the service-specific Dockerfile)
+docker-compose.yml
+docker/
+docker/volumes/
+
+# Generated files
+generated/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Sensitive information
+*.pem
+*.key
+*.p12
+*.jks
+secrets/
+
+# Documentation and non-essential files
+README.md
+CHANGELOG.md
+LICENSE
+docs/
+
+# Test files (when not needed in the image)
+src/test/
+**/src/test/
+
+# Kubernetes and deployment files
+kubernetes/
+k8s/
+helm/
+
+# Node modules (for any frontend dependencies in backend)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
