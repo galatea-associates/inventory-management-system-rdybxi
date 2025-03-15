@@ -1,0 +1,341 @@
+# API Gateway Configuration
+# Spring Boot version: 3.1.0
+# Spring Cloud Gateway version: 4.0.6
+# Spring Cloud Netflix version: 4.0.2
+# Spring Security version: 6.0.2
+# Spring Data Redis version: 2.7.0
+
+# Core Spring Configuration
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
+  # API Gateway Configuration
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 30000
+        response-timeout: 30000
+      routes:
+        # Authentication Service Routes
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=1
+            
+        # Data Ingestion Service Routes
+        - id: data-ingestion-service
+          uri: lb://data-ingestion-service
+          predicates:
+            - Path=/api/v1/ingestion/**
+          filters:
+            - StripPrefix=1
+            
+        # Calculation Service Routes  
+        - id: calculation-service
+          uri: lb://calculation-service
+          predicates:
+            - Path=/api/v1/calculation/**
+          filters:
+            - StripPrefix=1
+            
+        # Workflow Service Routes (includes locate and order APIs)
+        - id: workflow-service
+          uri: lb://workflow-service
+          predicates:
+            - Path=/api/v1/workflow/**
+            - Path=/api/v1/locate/**
+            - Path=/api/v1/order/**
+          filters:
+            - StripPrefix=1
+            
+        # Monitoring Service Routes
+        - id: monitoring-service
+          uri: lb://monitoring-service
+          predicates:
+            - Path=/api/v1/monitoring/**
+          filters:
+            - StripPrefix=1
+            
+        # WebSocket Service Routes
+        - id: websocket-service
+          uri: lb://websocket-service
+          predicates:
+            - Path=/ws/**
+      
+      # Enable Service Discovery
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+  
+  # Service Discovery Configuration with Netflix Eureka
+  netflix:
+    eureka:
+      client:
+        service-url:
+          defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
+        register-with-eureka: true
+        fetch-registry: true
+        registry-fetch-interval-seconds: 10
+      instance:
+        prefer-ip-address: true
+        instance-id: ${spring.application.name}:${random.uuid}
+  
+  # Redis Configuration for Rate Limiting
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 2000
+    connect-timeout: 2000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1
+  
+  # Security Configuration with JWT
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080/auth}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8080/auth/.well-known/jwks.json}
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  http2:
+    enabled: true
+
+# Management Endpoints Configuration
+management:
+  endpoint:
+    health:
+      show-details: when_authorized
+      roles: ADMIN
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,redis,discoveryComposite
+        liveness:
+          include: livenessState,ping
+    info:
+      enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: [0.5, 0.9, 0.95, 0.99]
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.ims: ${LOG_LEVEL:INFO}
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n"
+
+# Resilience4j Configuration for Circuit Breaker, Retry, Bulkhead, and Rate Limiter
+resilience4j:
+  circuitbreaker:
+    instances:
+      authService:
+        waitDurationInOpenState: 20s
+        failureRateThreshold: 50
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        registerHealthIndicator: true
+      shortSellService:
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 30
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        registerHealthIndicator: true
+      default:
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        permittedNumberOfCallsInHalfOpenState: 10
+        registerHealthIndicator: true
+  retry:
+    instances:
+      authService:
+        maxAttempts: 3
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+      shortSellService:
+        maxAttempts: 1
+        waitDuration: 50ms
+        enableExponentialBackoff: false
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+      default:
+        maxAttempts: 3
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+  bulkhead:
+    instances:
+      default:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 100ms
+      shortSellService:
+        maxConcurrentCalls: 100
+        maxWaitDuration: 50ms
+  ratelimiter:
+    instances:
+      default:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+        registerHealthIndicator: true
+      critical:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+        registerHealthIndicator: true
+
+# Application Custom Configuration
+app:
+  # Security Configuration
+  security:
+    jwt:
+      secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnly}
+      expiration: 3600             # Token expiration in seconds (1 hour)
+      refresh-expiration: 86400    # Refresh token expiration in seconds (24 hours)
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+      allow-credentials: true
+      max-age: 3600
+    public-paths:
+      - /api/v1/auth/login
+      - /api/v1/auth/refresh
+      - /api/v1/auth/forgot-password
+      - /api/v1/auth/reset-password
+      - /actuator/health
+      - /actuator/info
+  
+  # Rate Limiting Configuration
+  rate-limiting:
+    enabled: true
+    key-resolver: principalKeyResolver
+    fallback-resolver: ipAddressKeyResolver
+    tiers:
+      standard:
+        limit: 100
+        refresh-period: 60s
+        burst-capacity: 20
+      premium:
+        limit: 1000
+        refresh-period: 60s
+        burst-capacity: 100
+      internal:
+        limit: 10000
+        refresh-period: 60s
+        burst-capacity: 1000
+    path-specific:
+      /api/v1/locate/**:
+        limit: 50
+        refresh-period: 60s
+        burst-capacity: 10
+      /api/v1/order/validate:
+        limit: 200
+        refresh-period: 60s
+        burst-capacity: 50
+  
+  # Distributed Tracing Configuration
+  tracing:
+    enabled: true
+    correlation-header: X-Correlation-ID
+    sampling-rate: 0.5
+  
+  # Request/Response Logging Configuration  
+  logging:
+    include-headers: true
+    include-body: false
+    include-query-params: true
+    sensitive-headers:
+      - Authorization
+      - Cookie
+      - Set-Cookie
+  
+  # Service Configuration
+  services:
+    auth-service:
+      url: lb://auth-service
+      timeout: 30000
+      retry-attempts: 3
+    data-ingestion-service:
+      url: lb://data-ingestion-service
+      timeout: 30000
+      retry-attempts: 3
+    calculation-service:
+      url: lb://calculation-service
+      timeout: 30000
+      retry-attempts: 3
+    workflow-service:
+      url: lb://workflow-service
+      timeout: 30000
+      retry-attempts: 3
+    websocket-service:
+      url: lb://websocket-service
+      timeout: 30000
+      retry-attempts: 3
+    monitoring-service:
+      url: lb://monitoring-service
+      timeout: 30000
+      retry-attempts: 3
+    # Special configuration for short sell service which has strict latency requirements (<150ms)
+    short-sell-service:
+      url: lb://workflow-service
+      timeout: 150
+      retry-attempts: 1
