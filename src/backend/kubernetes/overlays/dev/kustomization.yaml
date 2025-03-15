@@ -1,0 +1,159 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: ims-dev
+resources:
+  - ../../base/deployment.yaml
+  - ../../base/service.yaml
+  - ../../base/configmap.yaml
+namespace: ims-dev
+commonLabels:
+  environment: development
+  app: ims
+  part-of: inventory-management-system
+  managed-by: kustomize
+commonAnnotations:
+  environment: development
+  description: Development environment for Inventory Management System
+  version: 1.0.0-dev
+images:
+  - name: ims-registry/data-ingestion-service
+    newName: ims-registry/data-ingestion-service
+    newTag: dev
+  - name: ims-registry/calculation-service
+    newName: ims-registry/calculation-service
+    newTag: dev
+  - name: ims-registry/workflow-service
+    newName: ims-registry/workflow-service
+    newTag: dev
+  - name: ims-registry/api-gateway
+    newName: ims-registry/api-gateway
+    newTag: dev
+  - name: ims-registry/websocket-service
+    newName: ims-registry/websocket-service
+    newTag: dev
+  - name: ims-registry/monitoring-service
+    newName: ims-registry/monitoring-service
+    newTag: dev
+  - name: ims-registry/auth-service
+    newName: ims-registry/auth-service
+    newTag: dev
+replicas:
+  - name: ims-data-ingestion-service
+    count: 1
+  - name: ims-calculation-service
+    count: 1
+  - name: ims-workflow-service
+    count: 1
+  - name: ims-api-gateway
+    count: 1
+  - name: ims-websocket-service
+    count: 1
+  - name: ims-monitoring-service
+    count: 1
+  - name: ims-auth-service
+    count: 1
+patchesStrategicMerge: []
+configMapGenerator:
+  - name: ims-common-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-headless.kafka.svc.cluster.local:9092
+      - EUREKA_SERVICE_URL=http://ims-service-registry.ims-dev.svc.cluster.local:8761/eureka/
+      - SERVICE_DOMAIN=ims-dev.svc.cluster.local
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,https://dev.ims.example.com
+  - name: ims-data-ingestion-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-data-ingestion-db.ims-dev.svc.cluster.local:5432/ims_ingestion_dev
+      - INGESTION_VALIDATION_STRICT_MODE=false
+      - INGESTION_BATCH_PROCESSING_THREADS=2
+  - name: ims-calculation-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-calculation-db.ims-dev.svc.cluster.local:5432/ims_calculation_dev
+      - CALCULATION_PERFORMANCE_THREAD_POOL_SIZE=8
+      - CALCULATION_PERFORMANCE_QUEUE_CAPACITY=100
+  - name: ims-workflow-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-workflow-db.ims-dev.svc.cluster.local:5432/ims_workflow_dev
+      - WORKFLOW_LOCATE_AUTO_APPROVAL_ENABLED=true
+      - WORKFLOW_LOCATE_AUTO_APPROVAL_MAX_QUANTITY=100000
+      - WORKFLOW_SHORT_SELL_VALIDATION_TIMEOUT_MS=300
+  - name: ims-api-gateway-config
+    behavior: merge
+    literals:
+      - RATE_LIMIT_DEFAULT_REPLENISH_RATE=1000
+      - RATE_LIMIT_DEFAULT_BURST_CAPACITY=2000
+  - name: ims-websocket-config
+    behavior: merge
+    literals:
+      - WEBSOCKET_MAX_SESSIONS_PER_USER=10
+  - name: ims-monitoring-config
+    behavior: merge
+    literals:
+      - MONITORING_ALERT_ENABLED=false
+      - MONITORING_ALERT_RECIPIENTS=dev-alerts@example.com
+  - name: ims-auth-config
+    behavior: merge
+    literals:
+      - DB_URL=jdbc:postgresql://ims-auth-db.ims-dev.svc.cluster.local:5432/ims_auth_dev
+      - AUTH_TOKEN_ACCESS_TOKEN_VALIDITY_SECONDS=86400
+      - AUTH_PASSWORD_POLICY_MIN_LENGTH=8
+      - AUTH_MFA_ENABLED=false
+secretGenerator:
+  - name: ims-common-secrets
+    type: Opaque
+    literals:
+      - JWT_SECRET=dev-jwt-secret-placeholder-replace-in-vault
+      - ENCRYPTION_KEY=dev-encryption-key-placeholder-replace-in-vault
+  - name: ims-data-ingestion-secrets
+    type: Opaque
+    literals:
+      - DB_PASSWORD=dev-password-placeholder-replace-in-vault
+      - REUTERS_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - REUTERS_API_SECRET=dev-api-secret-placeholder-replace-in-vault
+      - BLOOMBERG_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - BLOOMBERG_API_SECRET=dev-api-secret-placeholder-replace-in-vault
+      - MARKIT_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - MARKIT_API_SECRET=dev-api-secret-placeholder-replace-in-vault
+      - ULTUMUS_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - ULTUMUS_API_SECRET=dev-api-secret-placeholder-replace-in-vault
+      - RIMES_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - RIMES_API_SECRET=dev-api-secret-placeholder-replace-in-vault
+  - name: ims-calculation-secrets
+    type: Opaque
+    literals:
+      - DB_PASSWORD=dev-password-placeholder-replace-in-vault
+      - HAZELCAST_CLUSTER_PASSWORD=dev-password-placeholder-replace-in-vault
+      - REDIS_PASSWORD=dev-password-placeholder-replace-in-vault
+  - name: ims-workflow-secrets
+    type: Opaque
+    literals:
+      - DB_PASSWORD=dev-password-placeholder-replace-in-vault
+      - CAMUNDA_ADMIN_PASSWORD=dev-password-placeholder-replace-in-vault
+      - NOTIFICATION_SERVICE_API_KEY=dev-api-key-placeholder-replace-in-vault
+  - name: ims-api-gateway-secrets
+    type: Opaque
+    literals:
+      - RATE_LIMIT_REDIS_PASSWORD=dev-password-placeholder-replace-in-vault
+  - name: ims-websocket-secrets
+    type: Opaque
+    literals:
+      - REDIS_PASSWORD=dev-password-placeholder-replace-in-vault
+  - name: ims-monitoring-secrets
+    type: Opaque
+    literals:
+      - ALERT_SMTP_PASSWORD=dev-password-placeholder-replace-in-vault
+      - PAGERDUTY_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - SLACK_WEBHOOK_URL=dev-webhook-url-placeholder-replace-in-vault
+  - name: ims-auth-secrets
+    type: Opaque
+    literals:
+      - DB_PASSWORD=dev-password-placeholder-replace-in-vault
+      - AUTH_OAUTH2_PROVIDER_OKTA_CLIENT_SECRET=dev-client-secret-placeholder-replace-in-vault
+      - AUTH_SMS_PROVIDER_API_KEY=dev-api-key-placeholder-replace-in-vault
+      - AUTH_EMAIL_PROVIDER_API_KEY=dev-api-key-placeholder-replace-in-vault
