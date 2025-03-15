@@ -1,0 +1,665 @@
+{
+  "info": {
+    "name": "Position API Tests",
+    "description": "API tests for the Position endpoints of the Inventory Management System. This collection contains requests for testing position calculations, settlement ladder projections, and related operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Position Calculations",
+      "description": "Tests for position calculation endpoints",
+      "item": [
+        {
+          "name": "Calculate Positions",
+          "description": "Test calculating positions for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Position items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].bookId).to.exist;",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "        pm.expect(jsonData[0].contractualQty).to.exist;",
+                  "        pm.expect(jsonData[0].settledQty).to.exist;",
+                  "        pm.expect(jsonData[0].currentNetPosition).to.exist;",
+                  "        pm.expect(jsonData[0].projectedNetPosition).to.exist;",
+                  "        ",
+                  "        // Save a position for later tests",
+                  "        if (jsonData[0].bookId === \"EQUITY-01\") {",
+                  "            pm.collectionVariables.set(\"testBookId\", jsonData[0].bookId);",
+                  "            pm.collectionVariables.set(\"testSecurityId\", jsonData[0].security.internalId);",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Positions For Security",
+          "description": "Test calculating positions for a specific security and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions/security/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Positions are for the correct security\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Position",
+          "description": "Test retrieving a specific position by book ID, security ID, and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions/{{testBookId}}/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains position data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.bookId).to.equal(pm.collectionVariables.get(\"testBookId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.contractualQty).to.exist;",
+                  "    pm.expect(jsonData.settledQty).to.exist;",
+                  "    pm.expect(jsonData.currentNetPosition).to.exist;",
+                  "    pm.expect(jsonData.projectedNetPosition).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recalculate Positions",
+          "description": "Test recalculating positions with a specific calculation status for a business date",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions/recalculate?businessDate={{businessDate}}&calculationStatus=PENDING",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Recalculated positions have VALID status\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].calculationStatus).to.equal(\"VALID\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Settlement Ladder",
+      "description": "Tests for settlement ladder endpoints",
+      "item": [
+        {
+          "name": "Get Settlement Ladder",
+          "description": "Test retrieving the settlement ladder for a specific position",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions/{{testBookId}}/{{testSecurityId}}/settlement-ladder?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains settlement ladder data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.bookId).to.equal(pm.collectionVariables.get(\"testBookId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.calculationStatus).to.exist;",
+                  "    pm.expect(jsonData.sd0Deliver).to.exist;",
+                  "    pm.expect(jsonData.sd0Receipt).to.exist;",
+                  "    pm.expect(jsonData.sd1Deliver).to.exist;",
+                  "    pm.expect(jsonData.sd1Receipt).to.exist;",
+                  "    pm.expect(jsonData.sd2Deliver).to.exist;",
+                  "    pm.expect(jsonData.sd2Receipt).to.exist;",
+                  "    pm.expect(jsonData.sd3Deliver).to.exist;",
+                  "    pm.expect(jsonData.sd3Receipt).to.exist;",
+                  "    pm.expect(jsonData.sd4Deliver).to.exist;",
+                  "    pm.expect(jsonData.sd4Receipt).to.exist;",
+                  "    pm.expect(jsonData.netSettlement).to.exist;",
+                  "    pm.expect(jsonData.deliveries).to.exist;",
+                  "    pm.expect(jsonData.receipts).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Inventory Availability",
+      "description": "Tests for inventory availability endpoints related to positions",
+      "item": [
+        {
+          "name": "Calculate For Loan Availability",
+          "description": "Test calculating for loan availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/for-loan?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].availabilityType).to.equal(\"FOR_LOAN\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate For Pledge Availability",
+          "description": "Test calculating for pledge availability for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/for-pledge?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Inventory items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].availabilityType).to.equal(\"FOR_PLEDGE\");",
+                  "        pm.expect(jsonData[0].availableQuantity).to.exist;",
+                  "        pm.expect(jsonData[0].businessDate).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate All Inventory Types",
+          "description": "Test calculating all inventory types for a specific business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a map of inventory types\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "    pm.expect(jsonData.FOR_LOAN).to.exist;",
+                  "    pm.expect(jsonData.FOR_PLEDGE).to.exist;",
+                  "    pm.expect(jsonData.LONG_SELL).to.exist;",
+                  "    pm.expect(jsonData.SHORT_SELL).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Each inventory type contains an array of items\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.FOR_LOAN).to.be.an('array');",
+                  "    pm.expect(jsonData.FOR_PLEDGE).to.be.an('array');",
+                  "    pm.expect(jsonData.LONG_SELL).to.be.an('array');",
+                  "    pm.expect(jsonData.SHORT_SELL).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calculate Inventory For Security",
+          "description": "Test calculating all inventory types for a specific security and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/inventory/security/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a map of inventory types\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Inventory items are for the correct security\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var securityId = pm.collectionVariables.get(\"testSecurityId\");",
+                  "    ",
+                  "    // Check each inventory type for the security",
+                  "    Object.keys(jsonData).forEach(function(key) {",
+                  "        if (jsonData[key].length > 0) {",
+                  "            pm.expect(jsonData[key][0].security.internalId).to.equal(securityId);",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trading Limits",
+      "description": "Tests for trading limit endpoints related to positions",
+      "item": [
+        {
+          "name": "Get Client Limit",
+          "description": "Test retrieving a client limit for a specific client, security, and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/client/{{testClientId}}/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains client limit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.clientId).to.equal(pm.collectionVariables.get(\"testClientId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.longSellLimit).to.exist;",
+                  "    pm.expect(jsonData.shortSellLimit).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Aggregation Unit Limit",
+          "description": "Test retrieving an aggregation unit limit for a specific aggregation unit, security, and business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/aggregation-unit/{{testAggregationUnitId}}/{{testSecurityId}}?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains aggregation unit limit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.aggregationUnitId).to.equal(pm.collectionVariables.get(\"testAggregationUnitId\"));",
+                  "    pm.expect(jsonData.security.internalId).to.equal(pm.collectionVariables.get(\"testSecurityId\"));",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "    pm.expect(jsonData.longSellLimit).to.exist;",
+                  "    pm.expect(jsonData.shortSellLimit).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Order Against Limits",
+          "description": "Test validating an order against both client and aggregation unit limits",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/validate?clientId={{testClientId}}&aggregationUnitId={{testAggregationUnitId}}&securityId={{testSecurityId}}&orderType=SHORT_SELL&quantity=1000",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is a boolean\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recalculate Limits",
+          "description": "Test triggering a recalculation of all limits for the current business date",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/limits/recalculate",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Tests for error handling in position-related endpoints",
+      "item": [
+        {
+          "name": "Invalid Business Date",
+          "description": "Test error handling for an invalid business date",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions?businessDate=invalid-date",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.businessDate).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Position Not Found",
+          "description": "Test error handling for a non-existent position",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions/NONEXISTENT/NONEXISTENT?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Access",
+          "description": "Test error handling for unauthorized access",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/calculations/positions?businessDate={{businessDate}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "testBookId",
+      "value": "EQUITY-01"
+    },
+    {
+      "key": "testSecurityId",
+      "value": "US0378331005"
+    },
+    {
+      "key": "testClientId",
+      "value": "CP001"
+    },
+    {
+      "key": "testAggregationUnitId",
+      "value": "AU001"
+    },
+    {
+      "key": "businessDate",
+      "value": "2023-06-15"
+    }
+  ]
+}
