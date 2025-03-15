@@ -1,0 +1,941 @@
+{
+  "info": {
+    "name": "Locate API Tests",
+    "description": "API tests for the Locate endpoints of the Inventory Management System. This collection contains requests for testing locate request creation, approval, rejection, and management workflows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Locate Request Management",
+      "description": "Tests for locate request management endpoints",
+      "item": [
+        {
+          "name": "Create Locate Request",
+          "description": "Test creating a new locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"US0378331005\"\n  },\n  \"requestor\": {\n    \"counterpartyId\": \"CP001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU001\"\n  },\n  \"locateType\": \"SHORT_SELL\",\n  \"requestedQuantity\": 5000,\n  \"swapCashIndicator\": \"CASH\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains locate request data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.exist;",
+                  "    pm.expect(jsonData.security).to.exist;",
+                  "    pm.expect(jsonData.security.internalId).to.equal(\"US0378331005\");",
+                  "    pm.expect(jsonData.requestor).to.exist;",
+                  "    pm.expect(jsonData.client).to.exist;",
+                  "    pm.expect(jsonData.aggregationUnit).to.exist;",
+                  "    pm.expect(jsonData.locateType).to.equal(\"SHORT_SELL\");",
+                  "    pm.expect(jsonData.requestedQuantity).to.equal(5000);",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.requestTimestamp).to.exist;",
+                  "    ",
+                  "    // Save locate request ID for later use",
+                  "    pm.collectionVariables.set(\"locateRequestId\", jsonData.requestId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Locate Request",
+          "description": "Test retrieving a locate request by its ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{locateRequestId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains locate request data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.equal(pm.collectionVariables.get(\"locateRequestId\"));",
+                  "    pm.expect(jsonData.security).to.exist;",
+                  "    pm.expect(jsonData.requestor).to.exist;",
+                  "    pm.expect(jsonData.client).to.exist;",
+                  "    pm.expect(jsonData.aggregationUnit).to.exist;",
+                  "    pm.expect(jsonData.locateType).to.exist;",
+                  "    pm.expect(jsonData.requestedQuantity).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "    pm.expect(jsonData.requestTimestamp).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pending Locates",
+          "description": "Test retrieving all pending locate requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/pending",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].requestId).to.exist;",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].requestor).to.exist;",
+                  "        pm.expect(jsonData[0].client).to.exist;",
+                  "        pm.expect(jsonData[0].status).to.equal(\"PENDING\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Active Locates",
+          "description": "Test retrieving all active locate requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/active",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have expected properties\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].requestId).to.exist;",
+                  "        pm.expect(jsonData[0].security).to.exist;",
+                  "        pm.expect(jsonData[0].requestor).to.exist;",
+                  "        pm.expect(jsonData[0].client).to.exist;",
+                  "        pm.expect(jsonData[0].status).to.equal(\"APPROVED\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Locate Approval Workflow",
+      "description": "Tests for locate approval workflow endpoints",
+      "item": [
+        {
+          "name": "Approve Locate Request",
+          "description": "Test approving a pending locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{locateRequestId}}/approve",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "approvedQuantity",
+                "value": "5000"
+              },
+              {
+                "key": "approvedBy",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "securityTemperature",
+                "value": "GC"
+              },
+              {
+                "key": "borrowRate",
+                "value": "0.25"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains approved locate data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.equal(pm.collectionVariables.get(\"locateRequestId\"));",
+                  "    pm.expect(jsonData.status).to.equal(\"APPROVED\");",
+                  "    pm.expect(jsonData.approval).to.exist;",
+                  "    pm.expect(jsonData.approval.approvedQuantity).to.equal(5000);",
+                  "    pm.expect(jsonData.approval.approvedBy).to.equal(pm.variables.get(\"userId\"));",
+                  "    pm.expect(jsonData.approval.securityTemperature).to.equal(\"GC\");",
+                  "    pm.expect(jsonData.approval.borrowRate).to.equal(0.25);",
+                  "    pm.expect(jsonData.approval.expiryDate).to.exist;",
+                  "    ",
+                  "    // Save approval ID for later use",
+                  "    pm.collectionVariables.set(\"approvalId\", jsonData.approval.approvalId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Locate Request",
+          "description": "Test rejecting a pending locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{locateRequestId}}/reject",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "rejectionReason",
+                "value": "INSUFFICIENT_INVENTORY"
+              },
+              {
+                "key": "rejectedBy",
+                "value": "{{userId}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains rejected locate data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.equal(pm.collectionVariables.get(\"locateRequestId\"));",
+                  "    pm.expect(jsonData.status).to.equal(\"REJECTED\");",
+                  "    pm.expect(jsonData.rejection).to.exist;",
+                  "    pm.expect(jsonData.rejection.rejectionReason).to.equal(\"INSUFFICIENT_INVENTORY\");",
+                  "    pm.expect(jsonData.rejection.rejectedBy).to.equal(pm.variables.get(\"userId\"));",
+                  "    ",
+                  "    // Save rejection ID for later use",
+                  "    pm.collectionVariables.set(\"rejectionId\", jsonData.rejection.rejectionId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create and Auto-Process Locate",
+          "description": "Test creating a locate request that will be auto-processed",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"US5949181045\"\n  },\n  \"requestor\": {\n    \"counterpartyId\": \"CP001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU001\"\n  },\n  \"locateType\": \"SHORT_SELL\",\n  \"requestedQuantity\": 1000,\n  \"swapCashIndicator\": \"CASH\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains locate request data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.exist;",
+                  "    pm.expect(jsonData.security.internalId).to.equal(\"US5949181045\");",
+                  "    ",
+                  "    // Check if auto-approved",
+                  "    if (jsonData.status === \"APPROVED\") {",
+                  "        pm.expect(jsonData.approval).to.exist;",
+                  "        pm.expect(jsonData.approval.isAutoApproved).to.be.true;",
+                  "    }",
+                  "    // Check if auto-rejected",
+                  "    else if (jsonData.status === \"REJECTED\") {",
+                  "        pm.expect(jsonData.rejection).to.exist;",
+                  "        pm.expect(jsonData.rejection.isAutoRejected).to.be.true;",
+                  "    }",
+                  "    ",
+                  "    // Save auto-processed locate ID for later use",
+                  "    pm.collectionVariables.set(\"autoProcessedLocateId\", jsonData.requestId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Locate Request",
+          "description": "Test cancelling a pending locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{locateRequestId}}/cancel",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains cancelled locate data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.equal(pm.collectionVariables.get(\"locateRequestId\"));",
+                  "    pm.expect(jsonData.status).to.equal(\"CANCELLED\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Expire Locate Request",
+          "description": "Test manually expiring an approved locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{autoProcessedLocateId}}/expire",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains expired locate data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requestId).to.equal(pm.collectionVariables.get(\"autoProcessedLocateId\"));",
+                  "    pm.expect(jsonData.status).to.equal(\"EXPIRED\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Expired Locates",
+          "description": "Test processing all expired locate requests",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/process-expired",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains count of expired locates\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Locate Filtering and Search",
+      "description": "Tests for locate filtering and search endpoints",
+      "item": [
+        {
+          "name": "Search Locates by Security",
+          "description": "Test searching locate requests by security ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/search",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "securityId",
+                "value": "US0378331005"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have correct security ID\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].security.internalId).to.equal(\"US0378331005\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Locates by Client",
+          "description": "Test searching locate requests by client ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/search",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "clientId",
+                "value": "CP002"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have correct client ID\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].client.counterpartyId).to.equal(\"CP002\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Locates by Status",
+          "description": "Test searching locate requests by status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/search",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "status",
+                "value": "APPROVED"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().length > 0) {",
+                  "    pm.test(\"Locate items have correct status\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData[0].status).to.equal(\"APPROVED\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Locates by Date Range",
+          "description": "Test searching locate requests by date range",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/search",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "fromDate",
+                "value": "{{$isoTimestamp}}"
+              },
+              {
+                "key": "toDate",
+                "value": "{{$isoTimestamp}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Tests for error handling in the Locate API",
+      "item": [
+        {
+          "name": "Invalid Locate Request",
+          "description": "Test creating an invalid locate request (missing required fields)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"US0378331005\"\n  },\n  \"requestedQuantity\": -5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Locate Request Not Found",
+          "description": "Test retrieving a non-existent locate request",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/non-existent-id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"not found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve Already Processed Locate",
+          "description": "Test approving an already processed locate request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/{{autoProcessedLocateId}}/approve",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "approvedQuantity",
+                "value": "5000"
+              },
+              {
+                "key": "approvedBy",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "securityTemperature",
+                "value": "GC"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.exist;",
+                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"already processed\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Access",
+          "description": "Test accessing the API without authentication",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates/pending",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Performance Tests",
+      "description": "Tests specifically focused on performance requirements",
+      "item": [
+        {
+          "name": "Bulk Locate Creation",
+          "description": "Test creating multiple locate requests in sequence to verify performance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"US0378331005\"\n  },\n  \"requestor\": {\n    \"counterpartyId\": \"CP001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU001\"\n  },\n  \"locateType\": \"SHORT_SELL\",\n  \"requestedQuantity\": 5000,\n  \"swapCashIndicator\": \"CASH\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 200ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auto-Approval Performance",
+          "description": "Test auto-approval performance for locate requests",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/{{apiVersion}}/locates",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "X-User-ID",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"security\": {\n    \"internalId\": \"US5949181045\"\n  },\n  \"requestor\": {\n    \"counterpartyId\": \"CP001\"\n  },\n  \"client\": {\n    \"counterpartyId\": \"CP002\"\n  },\n  \"aggregationUnit\": {\n    \"aggregationUnitId\": \"AU001\"\n  },\n  \"locateType\": \"SHORT_SELL\",\n  \"requestedQuantity\": 1000,\n  \"swapCashIndicator\": \"CASH\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 200ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "locateRequestId",
+      "value": ""
+    },
+    {
+      "key": "approvalId",
+      "value": ""
+    },
+    {
+      "key": "rejectionId",
+      "value": ""
+    },
+    {
+      "key": "autoProcessedLocateId",
+      "value": ""
+    }
+  ]
+}
