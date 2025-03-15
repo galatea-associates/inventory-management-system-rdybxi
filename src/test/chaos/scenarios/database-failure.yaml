@@ -1,0 +1,236 @@
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-database-chaos
+  namespace: chaos-testing
+spec:
+  appinfo:
+    appns: "ims"
+    applabel: "app.kubernetes.io/part-of=ims"
+    appkind: "deployment"
+  chaosServiceAccount: chaos-service-account
+  monitoring: true
+  jobCleanUpPolicy: delete
+  annotationCheck: "false"
+  engineState: "active"
+  auxiliaryAppInfo: ""
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "postgresql"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "cassandra"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "33"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "timescaledb"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "redis"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "elasticsearch"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "33"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: db-connection-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: TARGET_SERVICES
+              value: "calculation-service,workflow-service,data-ingestion-service"
+            - name: DB_SERVICE
+              value: "postgresql"
+            - name: CONNECTION_FAILURE_PERCENTAGE
+              value: "60"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: db-query-timeout
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: TARGET_SERVICES
+              value: "calculation-service,workflow-service"
+            - name: DB_SERVICE
+              value: "cassandra,timescaledb"
+            - name: QUERY_TIMEOUT_PERCENTAGE
+              value: "70"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    - name: db-corruption
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "120"
+            - name: TARGET_DB
+              value: "postgresql"
+            - name: CORRUPTION_TYPE
+              value: "data"
+            - name: TABLES_AFFECTED
+              value: "security,counterparty,position"
+            - name: ROWS_AFFECTED_PERCENTAGE
+              value: "5"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+# Test Scenarios and Success Criteria Documentation
+# 
+# Test Scenarios:
+# - postgresql-pod-failure: Tests system resilience when PostgreSQL database pods are deleted at 60-second intervals
+#   Duration: 5 minutes
+#   Target Components: postgresql
+#   Expected Behavior: Reference data services should maintain functionality through database failover mechanisms and connection retry logic
+#
+# - cassandra-pod-failure: Tests system resilience when Cassandra database pods are deleted at 60-second intervals
+#   Duration: 5 minutes
+#   Target Components: cassandra
+#   Expected Behavior: Position data services should maintain functionality through Cassandra's distributed architecture and multi-node resilience
+#
+# - timescaledb-pod-failure: Tests system resilience when TimescaleDB pods are deleted at 60-second intervals
+#   Duration: 5 minutes
+#   Target Components: timescaledb
+#   Expected Behavior: Market data services should maintain functionality through database failover and time-series data recovery mechanisms
+#
+# - redis-pod-failure: Tests system resilience when Redis cache pods are deleted at 60-second intervals
+#   Duration: 4 minutes
+#   Target Components: redis
+#   Expected Behavior: Calculation services should continue functioning with possible performance degradation, rebuilding cache as needed
+#
+# - elasticsearch-pod-failure: Tests system resilience when Elasticsearch pods are deleted at 60-second intervals
+#   Duration: 4 minutes
+#   Target Components: elasticsearch
+#   Expected Behavior: Search and analytics functionality should maintain operation through Elasticsearch's distributed architecture
+#
+# - db-connection-failure: Tests system resilience when 60% of database connections to PostgreSQL fail for key services
+#   Duration: 3 minutes
+#   Target Components: calculation-service, workflow-service, data-ingestion-service, postgresql
+#   Expected Behavior: Services should handle connection failures through connection pooling, circuit breaking, and retry mechanisms
+#
+# - db-query-timeout: Tests system resilience when 70% of database queries to Cassandra and TimescaleDB timeout
+#   Duration: 3 minutes
+#   Target Components: calculation-service, workflow-service, cassandra, timescaledb
+#   Expected Behavior: Services should handle query timeouts through retry mechanisms and circuit breaking
+#
+# - db-corruption: Tests system resilience when data corruption occurs in critical PostgreSQL tables
+#   Duration: 2 minutes
+#   Target Components: postgresql, security, counterparty, position
+#   Expected Behavior: System should detect data corruption through validation checks and recover using backup data or event sourcing
+#
+# Success Criteria:
+# - No data loss or corruption during database disruptions
+#   Measurement: Data consistency validation after chaos test completion
+#
+# - Short sell validation maintains 150ms SLA during normal conditions and degrades gracefully during disruptions
+#   Measurement: Response time metrics during chaos test execution
+#
+# - Locate approval workflow continues to function with degraded performance
+#   Measurement: Successful locate processing during database failures
+#
+# - System recovers automatically after database failures are resolved
+#   Measurement: Recovery time metrics after chaos test completion
+#
+# - Circuit breakers activate appropriately during database failures
+#   Measurement: Circuit breaker state metrics during chaos test execution
+#
+# - Connection pooling effectively manages database connections during failures
+#   Measurement: Connection pool metrics during chaos test execution
+#
+# - Data validation mechanisms detect and handle corrupted data
+#   Measurement: Validation exception metrics and data integrity checks
+#
+# - Event sourcing enables recovery from data loss scenarios
+#   Measurement: Event replay metrics and data reconstruction validation
