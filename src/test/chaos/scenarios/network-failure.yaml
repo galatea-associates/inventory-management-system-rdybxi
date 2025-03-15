@@ -1,0 +1,207 @@
+# Network Failure Chaos Testing Scenarios for Inventory Management System
+# 
+# This configuration defines various network disruption patterns to test system resilience,
+# including network latency, packet loss, network partitions, and connection failures between services.
+#
+# Requirements addressed:
+# - System Resilience: Comprehensive fault tolerance mechanisms
+# - Network Resilience: Retry mechanisms, alternative routing, connection pooling
+# - High Availability: 99.999% uptime during operational hours (24x6)
+# - Performance Requirements: Event Processing <200ms (P99), Short Sell Approval <150ms (P99)
+
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-network-chaos
+  namespace: chaos-testing
+spec:
+  appinfo:
+    appns: ims
+    applabel: app.kubernetes.io/part-of=ims
+    appkind: deployment
+  chaosServiceAccount: chaos-service-account
+  monitoring: true
+  jobCleanUpPolicy: delete
+  annotationCheck: "false"
+  engineState: active
+  auxiliaryAppInfo: ""
+  experiments:
+    # Test Scenario: Tests system resilience when high network latency (2000ms ± 500ms) is introduced
+    # between calculation and workflow services
+    # Expected Behavior: Services should maintain functionality with degraded performance,
+    # applying timeouts and circuit breaking where appropriate
+    - name: pod-network-latency
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+            - name: NETWORK_LATENCY
+              value: "2000"
+            - name: JITTER
+              value: "500"
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when 50% packet loss is introduced for API gateway and
+    # WebSocket services
+    # Expected Behavior: Services should handle packet loss through retries and maintain connectivity
+    # with clients
+    - name: pod-network-loss
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+            - name: NETWORK_PACKET_LOSS_PERCENTAGE
+              value: "50"
+            - name: TARGET_PODS
+              value: "api-gateway,websocket-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when 30% of network packets are corrupted for data
+    # ingestion service
+    # Expected Behavior: Data integrity should be maintained through checksums and retries,
+    # with corrupted messages properly rejected
+    - name: pod-network-corruption
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+            - name: NETWORK_PACKET_CORRUPTION_PERCENTAGE
+              value: "30"
+            - name: TARGET_PODS
+              value: "data-ingestion-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when 40% of network packets are duplicated for calculation service
+    # Expected Behavior: Idempotent processing should prevent duplicate calculations,
+    # maintaining data consistency
+    - name: pod-network-duplication
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+            - name: NETWORK_PACKET_DUPLICATION_PERCENTAGE
+              value: "40"
+            - name: TARGET_PODS
+              value: "calculation-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when 80% of connections between workflow service
+    # and calculation service fail
+    # Expected Behavior: Circuit breakers should activate, with fallback mechanisms providing
+    # degraded service
+    - name: service-connection-failure
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: SOURCE_SERVICE
+              value: "workflow-service"
+            - name: DESTINATION_SERVICE
+              value: "calculation-service"
+            - name: CONNECTION_FAILURE_PERCENTAGE
+              value: "80"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when DNS resolution fails for key services
+    # Expected Behavior: Services should use connection caching and retry with exponential
+    # backoff to maintain connectivity
+    - name: dns-error
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: TARGET_HOSTS
+              value: "calculation-service,workflow-service,data-ingestion-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "30"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Test Scenario: Tests system resilience when network partitions occur between critical service pairs
+    # Expected Behavior: System should maintain partial functionality in each partition
+    # with graceful degradation
+    - name: network-partition
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+            - name: PARTITION_SERVICES
+              value: "calculation-service:workflow-service,data-ingestion-service:api-gateway"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+# Success Criteria for Chaos Tests
+# 
+# - No data loss or corruption during network disruptions
+#   Measurement: Data consistency validation after chaos test completion
+# 
+# - Short sell validation maintains 150ms SLA during normal conditions and degrades gracefully during disruptions
+#   Measurement: Response time metrics during chaos test execution
+# 
+# - Locate approval workflow continues to function with degraded performance
+#   Measurement: Successful locate processing during network failures
+# 
+# - System recovers automatically after network connectivity is restored
+#   Measurement: Recovery time metrics after chaos test completion
+# 
+# - Circuit breakers activate appropriately during network failures
+#   Measurement: Circuit breaker state metrics during chaos test execution
+# 
+# - Retry mechanisms successfully handle transient network issues
+#   Measurement: Retry metrics and successful operation completion rates
+# 
+# - WebSocket connections reconnect automatically after network disruptions
+#   Measurement: WebSocket reconnection metrics and client session continuity
+# 
+# - Message delivery guarantees maintained despite network issues
+#   Measurement: Message delivery confirmation and order validation after recovery
