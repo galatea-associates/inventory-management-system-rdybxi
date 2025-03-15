@@ -1,0 +1,23 @@
+{{/* Generate ConfigMaps for each service */}}
+{{- range $name, $configMap := .Values.configMaps }}
+{{- if $configMap.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configMap.name }}
+  labels:
+    app.kubernetes.io/name: {{ template "ims.name" $ }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    helm.sh/chart: {{ template "ims.chart" $ }}
+    app.kubernetes.io/component: {{ $name }}
+  annotations:
+    helm.sh/hook: "pre-install,pre-upgrade"
+    helm.sh/hook-weight: "-5"
+data:
+  {{- range $key, $value := $configMap.data }}
+  {{ $key }}: {{ tpl (toString $value) $ | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
