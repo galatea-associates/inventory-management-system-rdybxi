@@ -1,0 +1,96 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ims-dev
+  EKS_CLUSTER_NAME: ims-dev-cluster
+  KUBE_NAMESPACE: ims-development
+  HELM_RELEASE_NAME: ims-dev
+  HELM_CHART_PATH: infrastructure/kubernetes/helm/ims
+
+jobs:
+  deploy:
+    name: Deploy to Development Environment
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/backend
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ github.sha }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./src/web
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ github.sha }},${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: latest
+          
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v3
+        with:
+          cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          cluster-type: aws
+          
+      - name: Set up Helm
+        uses: helm/kind-action@v1.5.0
+        with:
+          install_only: true
+          
+      - name: Update Kubernetes deployment image tags
+        run: sed -i 's|image: .*backend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/backend:${{ github.sha }}|g' ${{ env.HELM_CHART_PATH }}/values-dev.yaml && sed -i 's|image: .*frontend:.*|image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}/frontend:${{ github.sha }}|g' ${{ env.HELM_CHART_PATH }}/values-dev.yaml
+          
+      - name: Deploy to Kubernetes
+        run: helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} --namespace ${{ env.KUBE_NAMESPACE }} --create-namespace --values ${{ env.HELM_CHART_PATH }}/values-dev.yaml --set imageTag=${{ github.sha }} --atomic --timeout 10m
+            
+      - name: Verify deployment
+        run: kubectl rollout status deployment/ims-api-gateway -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-data-ingestion-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-calculation-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-workflow-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s && kubectl rollout status deployment/ims-websocket-service -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+          
+      - name: Run integration tests
+        run: cd src/test && npm ci && npm run test:integration:dev
+          
+      - name: Send deployment notification
+        if: success()
+        run: curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ Successfully deployed IMS to development environment. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+            
+      - name: Send deployment failure notification
+        if: failure()
+        run: curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ Failed to deploy IMS to development environment. Build: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' ${{ secrets.SLACK_WEBHOOK_URL }}
