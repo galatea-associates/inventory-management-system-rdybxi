@@ -1,0 +1,244 @@
+# .github/workflows/performance-test.yml
+name: Performance Tests
+
+# Define the events that trigger this workflow
+on:
+  # Schedule weekly performance tests on Monday at midnight
+  schedule:
+    - cron: '0 0 * * 1'
+      branches:
+        - main
+        - develop
+
+  # Trigger on push to performance-* branches
+  push:
+    branches:
+      - 'performance-*'
+    paths:
+      - 'src/backend/**'
+      - 'src/web/**'
+      - 'src/test/performance/**'
+      - 'src/test/load/**'
+
+  # Allow manual triggering via workflow_dispatch with customizable parameters
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      test_type:
+        description: 'Type of performance test to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - locate
+          - shortsell
+          - position
+          - inventory
+          - ingestion
+          - api
+      load_level:
+        description: 'Load level for the test'
+        required: true
+        default: 'normal'
+        type: choice
+        options:
+          - normal
+          - peak
+          - stress
+          - endurance
+          - spike
+
+# Define global environment variables for the workflow
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '18'
+  K6_VERSION: '0.42.0'
+  PERFORMANCE_THRESHOLD_EVENT_PROCESSING: 200
+  PERFORMANCE_THRESHOLD_SHORT_SELL: 150
+  PERFORMANCE_THRESHOLD_UI_RESPONSE: 3000
+
+# Define the jobs that make up the workflow
+jobs:
+  # Define prepare-environment job for setting up test environment
+  prepare-environment:
+    name: Prepare Test Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # actions/checkout version: v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3 # actions/setup-java version: v3
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.JAVA_VERSION }}'
+          cache: 'gradle'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3 # actions/setup-node version: v3
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'npm'
+          cache-dependency-path: 'src/web/package-lock.json'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2 # docker/setup-buildx-action version: v2
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v4 # docker/build-push-action version: v4
+        with:
+          context: './src/backend'
+          push: false
+          tags: 'ims/backend:perf-test'
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v4 # docker/build-push-action version: v4
+        with:
+          context: './src/web'
+          push: false
+          tags: 'ims/frontend:perf-test'
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start test environment
+        run: docker-compose -f src/test/docker/compose-test.yml up -d
+
+      - name: Wait for services to be ready
+        run: chmod +x src/test/scripts/wait-for-services.sh && src/test/scripts/wait-for-services.sh
+
+      - name: Prepare test data
+        run: cd src/test && npm ci && npm run prepare-test-data
+
+  # Define k6-performance-tests job for running k6 performance tests
+  k6-performance-tests:
+    name: Run K6 Performance Tests
+    runs-on: ubuntu-latest
+    needs: [prepare-environment]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # actions/checkout version: v3
+
+      - name: Run locate approval performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'locate' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/locateApproval.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Run short sell validation performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'shortsell' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/shortSellValidation.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Run position calculation performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'position' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/positionCalculation.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Run inventory calculation performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'inventory' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/inventoryCalculation.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Run data ingestion performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'ingestion' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/dataIngestion.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Run API load performance test
+        if: "${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'api' || github.event_name != 'workflow_dispatch' }}"
+        uses: grafana/k6-action@v0.3.0 # grafana/k6-action version: v0.3.0
+        with:
+          filename: 'src/test/performance/k6/scenarios/apiLoad.js'
+          flags: "--env ENVIRONMENT=${{ github.event.inputs.environment || 'development' }} --env LOAD_LEVEL=${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Upload k6 test results
+        uses: actions/upload-artifact@v3 # actions/upload-artifact version: v3
+        with:
+          name: k6-results
+          path: summary.json
+
+  # Define load-tests job for running comprehensive load tests
+  load-tests:
+    name: Run Load Tests
+    runs-on: ubuntu-latest
+    needs: [prepare-environment]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # actions/checkout version: v3
+
+      - name: Make scripts executable
+        run: chmod +x src/test/load/scripts/*.sh
+
+      - name: Run load tests
+        run: "src/test/load/scripts/run-load-tests.sh --scenario ${{ github.event.inputs.test_type == 'all' && 'normal-load' || format('{0}-test', github.event.inputs.test_type) }} --environment ${{ github.event.inputs.environment || 'development' }} --output-format json --summary true --detailed true"
+        env:
+          LOAD_LEVEL: "${{ github.event.inputs.load_level || 'normal' }}"
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3 # actions/upload-artifact version: v3
+        with:
+          name: load-test-results
+          path: 'src/test/load/results/**'
+
+  # Define analyze-results job for analyzing and reporting test results
+  analyze-results:
+    name: Analyze Test Results
+    runs-on: ubuntu-latest
+    needs: [k6-performance-tests, load-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # actions/checkout version: v3
+
+      - name: Download k6 test results
+        uses: actions/download-artifact@v3 # actions/download-artifact version: v3
+        with:
+          name: k6-results
+          path: k6-results
+
+      - name: Download load test results
+        uses: actions/download-artifact@v3 # actions/download-artifact version: v3
+        with:
+          name: load-test-results
+          path: load-test-results
+
+      - name: Make scripts executable
+        run: chmod +x src/test/load/scripts/*.sh
+
+      - name: Analyze test results
+        run: "src/test/load/scripts/analyze-results.sh --input-dir load-test-results --k6-results k6-results/summary.json --output-file performance-report.html --environment ${{ github.event.inputs.environment || 'development' }} --detailed true"
+
+      - name: Check performance thresholds
+        run: 'node src/test/scripts/check-performance-thresholds.js --event-processing ${{ env.PERFORMANCE_THRESHOLD_EVENT_PROCESSING }} --short-sell ${{ env.PERFORMANCE_THRESHOLD_SHORT_SELL }} --ui-response ${{ env.PERFORMANCE_THRESHOLD_UI_RESPONSE }} --results-file k6-results/summary.json'
+        continue-on-error: true
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3 # actions/upload-artifact version: v3
+        with:
+          name: performance-report
+          path: performance-report.html
+
+      - name: Send performance report notification
+        if: "github.event_name == 'schedule'"
+        run: 'curl -X POST -H \'Content-type: application/json\' --data \'{"text":"📊 Performance test results for IMS are available. Report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}\' ${{ secrets.SLACK_WEBHOOK_URL }}'
