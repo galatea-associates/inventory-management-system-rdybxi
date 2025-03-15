@@ -1,0 +1,219 @@
+{{- if .Values.services.dataIngestion.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.dataIngestion.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: data-ingestion-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for Data Ingestion Service handling reference data, market data, trade data, and contract data"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.dataIngestion.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.dataIngestion.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.dataIngestion.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.dataIngestion.type }}
+  ports:
+    - port: {{ .Values.services.dataIngestion.port }}
+      targetPort: 8081
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: data-ingestion-service
+    release: {{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.services.calculation.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.calculation.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: calculation-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for Calculation Service handling position, inventory, and limit calculations"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.calculation.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.calculation.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.calculation.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.calculation.type }}
+  ports:
+    - port: {{ .Values.services.calculation.port }}
+      targetPort: 8082
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: calculation-service
+    release: {{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.services.workflow.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.workflow.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: workflow-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for Workflow Service handling locate approval and short sell approval workflows"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.workflow.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.workflow.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.workflow.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.workflow.type }}
+  ports:
+    - port: {{ .Values.services.workflow.port }}
+      targetPort: 8083
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: workflow-service
+    release: {{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.services.apiGateway.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.apiGateway.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: api-gateway
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for API Gateway handling routing, authentication, and rate limiting"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.apiGateway.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.apiGateway.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.apiGateway.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.apiGateway.type }}
+  ports:
+    - port: {{ .Values.services.apiGateway.port }}
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: api-gateway
+    release: {{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.services.websocket.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.websocket.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: websocket-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for WebSocket Service handling real-time data streaming"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.websocket.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.websocket.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.websocket.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.websocket.type }}
+  ports:
+    - port: {{ .Values.services.websocket.port }}
+      targetPort: 8085
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: websocket-service
+    release: {{ .Release.Name }}
+  sessionAffinity: {{ .Values.services.websocket.sessionAffinity }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ .Values.services.websocket.sessionAffinityConfig.clientIP.timeoutSeconds }}
+{{- end }}
+
+{{- if .Values.services.monitoring.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.monitoring.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: monitoring-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for Monitoring Service handling health checks and metrics"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.monitoring.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.monitoring.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.monitoring.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.monitoring.type }}
+  ports:
+    - port: {{ .Values.services.monitoring.port }}
+      targetPort: 8086
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: monitoring-service
+    release: {{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.services.auth.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.auth.name }}
+  labels:
+    app: {{ template "ims.name" . }}
+    component: auth-service
+    chart: {{ template "ims.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    description: "Service for Authentication Service handling user management and token issuance"
+    helm.sh/chart: {{ template "ims.chart" . }}
+    prometheus.io/scrape: {{ .Values.services.auth.annotations.prometheus\.io/scrape }}
+    prometheus.io/path: {{ .Values.services.auth.annotations.prometheus\.io/path }}
+    prometheus.io/port: {{ .Values.services.auth.annotations.prometheus\.io/port }}
+spec:
+  type: {{ .Values.services.auth.type }}
+  ports:
+    - port: {{ .Values.services.auth.port }}
+      targetPort: 8084
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "ims.name" . }}
+    component: auth-service
+    release: {{ .Release.Name }}
+{{- end }}
