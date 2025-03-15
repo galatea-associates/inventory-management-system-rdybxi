@@ -1,0 +1,133 @@
+# Spring Boot application-staging.yml - Version 3.1.0
+# Spring Kafka - Version 3.0.7
+# Spring Security - Version 6.0.2
+
+spring:
+  profiles: staging
+  application:
+    name: websocket-service
+  kafka:
+    bootstrap-servers: kafka-staging:9092
+    consumer:
+      group-id: websocket-service-staging
+      auto-offset-reset: earliest
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth-staging.ims.example.com/auth
+          jwk-set-uri: https://auth-staging.ims.example.com/auth/.well-known/jwks.json
+  cloud:
+    netflix:
+      eureka:
+        client:
+          service-url:
+            defaultZone: http://eureka-staging:8761/eureka/
+        instance:
+          prefer-ip-address: true
+
+server:
+  port: 8085
+  compression:
+    enabled: true
+  netty:
+    max-connections: 5000
+  http2:
+    enabled: true
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      roles: ADMIN
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,kafka,discoveryComposite
+        liveness:
+          include: livenessState,ping
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: [0.5, 0.9, 0.95, 0.99]
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.ims: INFO
+    org.springframework.web.socket: INFO
+    org.springframework.kafka: INFO
+    org.springframework.security: INFO
+  file:
+    name: /var/log/ims/websocket-service-staging.log
+    max-size: 100MB
+    max-history: 30
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{X-Correlation-ID}] %-5level %logger{36} - %msg%n'
+
+kafka:
+  topic:
+    position: position-events-staging
+    inventory: inventory-events-staging
+    locate: locate-events-staging
+    alert: alert-events-staging
+    workflow: workflow-events-staging
+  group:
+    websocket: websocket-service-staging
+  consumer:
+    max-poll-records: 300
+    concurrency: 3
+
+websocket:
+  endpoints:
+    positions: /ws/positions
+    inventory: /ws/inventory
+    locates: /ws/locates
+    alerts: /ws/alerts
+  allowed-origins: https://app-staging.ims.example.com,https://api-staging.ims.example.com
+  allowed-methods: GET,POST,OPTIONS
+  allowed-headers: Content-Type,Authorization,X-Requested-With
+  allow-credentials: true
+  max-age: 3600
+  message:
+    max-size: 65536
+  session:
+    timeout: 300000
+
+app:
+  security:
+    jwt:
+      audience: ims-clients-staging
+      required-role: WEBSOCKET_USER
+    cors:
+      allowed-origins: https://app-staging.ims.example.com,https://api-staging.ims.example.com
+      allowed-methods: GET,POST,OPTIONS
+      allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,X-Client-ID,X-Correlation-ID
+      allow-credentials: true
+      max-age: 3600
+  websocket:
+    client-inactivity-timeout: 300000
+    max-sessions-per-user: 10
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+    heartbeat-interval: 25000
+  performance:
+    thread-pool-size: 15
+    queue-capacity: 300
+    message-batch-size: 75
+  tracing:
+    enabled: true
+    correlation-header: X-Correlation-ID
