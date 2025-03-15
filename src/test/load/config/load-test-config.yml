@@ -1,0 +1,418 @@
+# Load Test Configuration for Inventory Management System (IMS)
+# This configuration file defines test parameters, thresholds, and environments 
+# for various load test scenarios to validate the system's ability to handle 
+# high throughput and meet strict latency requirements.
+
+# Environment configurations
+environments:
+  dev:
+    base_url: "https://ims-dev.example.com"
+    api_key: "${DEV_API_KEY}"
+    users:
+      trader:
+        username: "dev-trader"
+        password: "${DEV_TRADER_PASSWORD}"
+      operations:
+        username: "dev-operations"
+        password: "${DEV_OPS_PASSWORD}"
+      compliance:
+        username: "dev-compliance"
+        password: "${DEV_COMPLIANCE_PASSWORD}"
+    rate_limit: 10000  # requests per minute
+    monitoring:
+      prometheus_endpoint: "https://prometheus-dev.example.com"
+      grafana_dashboard: "https://grafana-dev.example.com/dashboards/ims-performance"
+    
+  staging:
+    base_url: "https://ims-staging.example.com"
+    api_key: "${STAGING_API_KEY}"
+    users:
+      trader:
+        username: "staging-trader"
+        password: "${STAGING_TRADER_PASSWORD}"
+      operations:
+        username: "staging-operations"
+        password: "${STAGING_OPS_PASSWORD}"
+      compliance:
+        username: "staging-compliance"
+        password: "${STAGING_COMPLIANCE_PASSWORD}"
+    rate_limit: 100000  # requests per minute
+    monitoring:
+      prometheus_endpoint: "https://prometheus-staging.example.com"
+      grafana_dashboard: "https://grafana-staging.example.com/dashboards/ims-performance"
+    
+  prod:
+    base_url: "https://ims.example.com"
+    api_key: "${PROD_API_KEY}"
+    users:
+      trader:
+        username: "prod-trader"
+        password: "${PROD_TRADER_PASSWORD}"
+      operations:
+        username: "prod-operations"
+        password: "${PROD_OPS_PASSWORD}"
+      compliance:
+        username: "prod-compliance"
+        password: "${PROD_COMPLIANCE_PASSWORD}"
+    rate_limit: 500000  # requests per minute
+    monitoring:
+      prometheus_endpoint: "https://prometheus.example.com"
+      grafana_dashboard: "https://grafana.example.com/dashboards/ims-performance"
+
+# Test scenario configurations
+scenarios:
+  # Normal load representing average daily operations
+  normal-load:
+    duration: 30m
+    ramp_up: 2m
+    ramp_down: 1m
+    concurrent_users: 500
+    think_time: 2s
+    pace: 0.5s
+    event_rate: 100000  # events per second
+    data_volume:
+      reference_data: 10000  # records
+      market_data: 50000     # events per second
+      trade_data: 20000      # events per second
+    thresholds:
+      response_time_p95: 150ms
+      response_time_p99: 200ms
+      error_rate: 0.1%
+      throughput: 100000  # requests per second
+    data_validation: true
+    monitoring_interval: 10s
+      
+  # Peak load representing market open/close periods
+  peak-load:
+    duration: 15m
+    ramp_up: 5m
+    ramp_down: 2m
+    concurrent_users: 1000
+    think_time: 1s
+    pace: 0.2s
+    event_rate: 300000  # events per second
+    data_volume:
+      reference_data: 10000  # records
+      market_data: 150000    # events per second
+      trade_data: 50000      # events per second
+    thresholds:
+      response_time_p95: 180ms
+      response_time_p99: 200ms
+      error_rate: 0.1%
+      throughput: 300000  # requests per second
+    data_validation: true
+    monitoring_interval: 5s
+      
+  # Stress test to identify breaking points
+  stress-test:
+    duration: 10m
+    ramp_up: 5m
+    ramp_down: 0m  # Immediate stop
+    concurrent_users: 2000
+    think_time: 0.5s
+    pace: 0.1s
+    event_rate: 500000  # events per second
+    data_volume:
+      reference_data: 10000  # records
+      market_data: 300000    # events per second
+      trade_data: 100000     # events per second
+    thresholds:
+      response_time_p95: 250ms
+      response_time_p99: 350ms
+      error_rate: 1%
+      throughput: 500000  # requests per second
+    data_validation: false  # Skip validation to maximize throughput
+    monitoring_interval: 2s
+      
+  # Endurance test to identify memory leaks and performance degradation
+  endurance-test:
+    duration: 8h
+    ramp_up: 15m
+    ramp_down: 15m
+    concurrent_users: 750
+    think_time: 1.5s
+    pace: 0.3s
+    event_rate: 150000  # events per second
+    data_volume:
+      reference_data: 10000  # records
+      market_data: 100000    # events per second
+      trade_data: 30000      # events per second
+    thresholds:
+      response_time_p95: 180ms
+      response_time_p99: 200ms
+      error_rate: 0.1%
+      throughput: 150000  # requests per second
+    data_validation: true
+    monitoring_interval: 30s
+    memory_leak_threshold: 5%  # Allowable memory growth over test period
+      
+  # Spike test to validate system resilience
+  spike-test:
+    duration: 30m
+    ramp_up: 0m  # Immediate start
+    ramp_down: 0m  # Immediate stop
+    baseline_users: 500
+    spike_users: 2000
+    spike_duration: 2m
+    spike_interval: 5m
+    think_time: 1s
+    pace: 0.2s
+    event_rate:
+      baseline: 100000  # events per second
+      spike: 400000     # events per second
+    data_volume:
+      reference_data: 10000  # records
+      market_data:
+        baseline: 50000     # events per second
+        spike: 200000       # events per second
+      trade_data:
+        baseline: 20000     # events per second
+        spike: 80000        # events per second
+    thresholds:
+      response_time_p95:
+        baseline: 150ms
+        spike: 250ms
+      response_time_p99:
+        baseline: 200ms
+        spike: 350ms
+      error_rate:
+        baseline: 0.1%
+        spike: 1%
+      throughput:
+        baseline: 100000  # requests per second
+        spike: 400000     # requests per second
+      recovery_time: 30s  # Time to return to baseline after spike
+    data_validation: true
+    monitoring_interval: 5s
+
+# Component-specific test configurations
+components:
+  # Data ingestion component tests
+  data-ingestion:
+    endpoints:
+      reference_data: "/api/v1/reference-data"
+      market_data: "/api/v1/market-data"
+      trade_data: "/api/v1/trade-data"
+      contract_data: "/api/v1/contract-data"
+    test_data:
+      reference_data: "data/reference-data-sample.json"
+      market_data: "data/market-data-sample.json"
+      trade_data: "data/trade-data-sample.json"
+      contract_data: "data/contract-data-sample.json"
+    thresholds:
+      reference_data:
+        batch_processing_time: 5m
+        record_processing_time: 50ms
+        error_rate: 0.01%
+      market_data:
+        ingestion_latency: 50ms
+        throughput: 150000  # events per second
+        error_rate: 0.01%
+      trade_data:
+        ingestion_latency: 100ms
+        throughput: 50000  # events per second
+        error_rate: 0.01%
+      contract_data:
+        ingestion_latency: 100ms
+        throughput: 10000  # events per second
+        error_rate: 0.01%
+    validation:
+      reference_data:
+        schema: "schemas/reference-data-schema.json"
+        custom_validators: ["validators.js::validateReferenceData"]
+      market_data:
+        schema: "schemas/market-data-schema.json"
+        custom_validators: ["validators.js::validateMarketData"]
+      trade_data:
+        schema: "schemas/trade-data-schema.json"
+        custom_validators: ["validators.js::validateTradeData"]
+      contract_data:
+        schema: "schemas/contract-data-schema.json"
+        custom_validators: ["validators.js::validateContractData"]
+    
+  # Calculation engine tests
+  calculation:
+    endpoints:
+      position: "/api/v1/positions/calculate"
+      inventory: "/api/v1/inventory/calculate"
+      settlement_ladder: "/api/v1/settlement-ladder/calculate"
+      limit: "/api/v1/limits/calculate"
+    test_data:
+      position: "data/position-calculation-requests.json"
+      inventory: "data/inventory-calculation-requests.json"
+      settlement_ladder: "data/settlement-ladder-requests.json"
+      limit: "data/limit-calculation-requests.json"
+    thresholds:
+      position:
+        calculation_time: 150ms  # P99
+        throughput: 100000  # calculations per second
+        error_rate: 0.01%
+      inventory:
+        calculation_time: 180ms  # P99
+        throughput: 50000  # calculations per second
+        error_rate: 0.01%
+      settlement_ladder:
+        calculation_time: 200ms  # P99
+        throughput: 10000  # calculations per second
+        error_rate: 0.01%
+      limit:
+        calculation_time: 120ms  # P99
+        throughput: 100000  # calculations per second
+        error_rate: 0.01%
+    validation:
+      position:
+        schema: "schemas/position-result-schema.json"
+        custom_validators: ["validators.js::validatePositionCalculation"]
+      inventory:
+        schema: "schemas/inventory-result-schema.json"
+        custom_validators: ["validators.js::validateInventoryCalculation"]
+      settlement_ladder:
+        schema: "schemas/settlement-ladder-result-schema.json"
+        custom_validators: ["validators.js::validateSettlementLadderCalculation"]
+      limit:
+        schema: "schemas/limit-result-schema.json"
+        custom_validators: ["validators.js::validateLimitCalculation"]
+    
+  # Workflow processing tests
+  workflow:
+    endpoints:
+      locate_approval: "/api/v1/locates"
+      short_sell_approval: "/api/v1/orders/validate"
+    test_data:
+      locate_approval: "data/locate-requests.json"
+      short_sell_approval: "data/short-sell-requests.json"
+    thresholds:
+      locate_approval:
+        processing_time: 200ms  # P99
+        throughput: 5000  # requests per second
+        approval_rate: 95%
+        error_rate: 0.1%
+      short_sell_approval:
+        processing_time: 150ms  # P99, meets requirement of <150ms
+        throughput: 10000  # requests per second
+        approval_rate: 98%
+        error_rate: 0.1%
+    validation:
+      locate_approval:
+        schema: "schemas/locate-response-schema.json"
+        custom_validators: ["validators.js::validateLocateResponse"]
+      short_sell_approval:
+        schema: "schemas/short-sell-validation-schema.json"
+        custom_validators: ["validators.js::validateShortSellResponse"]
+    scenario:
+      auto_approval:
+        approval_rate: 80%
+        response_time: 100ms
+      manual_approval:
+        approval_rate: 70%
+        response_time: 500ms  # Includes simulated manual review time
+    
+  # API layer tests
+  api:
+    endpoints:
+      positions: "/api/v1/positions"
+      inventory: "/api/v1/inventory"
+      locates: "/api/v1/locates"
+      limits: "/api/v1/limits"
+    test_data:
+      positions: "data/position-requests.json"
+      inventory: "data/inventory-requests.json"
+      locates: "data/locate-api-requests.json"
+      limits: "data/limit-requests.json"
+    thresholds:
+      positions:
+        response_time: 250ms  # P99
+        throughput: 5000  # requests per second
+        error_rate: 0.1%
+      inventory:
+        response_time: 300ms  # P99
+        throughput: 3000  # requests per second
+        error_rate: 0.1%
+      locates:
+        response_time: 200ms  # P99
+        throughput: 1000  # requests per second
+        error_rate: 0.1%
+      limits:
+        response_time: 150ms  # P99
+        throughput: 2000  # requests per second
+        error_rate: 0.1%
+    validation:
+      positions:
+        schema: "schemas/positions-api-schema.json"
+        custom_validators: ["validators.js::validatePositionsResponse"]
+      inventory:
+        schema: "schemas/inventory-api-schema.json"
+        custom_validators: ["validators.js::validateInventoryResponse"]
+      locates:
+        schema: "schemas/locates-api-schema.json"
+        custom_validators: ["validators.js::validateLocatesResponse"]
+      limits:
+        schema: "schemas/limits-api-schema.json"
+        custom_validators: ["validators.js::validateLimitsResponse"]
+    
+# Common HTTP headers for requests
+headers:
+  common:
+    Accept: "application/json"
+    User-Agent: "IMS-LoadTest/1.0"
+    X-Request-ID: "${__UUID()}"
+    
+  json:
+    Content-Type: "application/json"
+    Accept: "application/json"
+    
+  form:
+    Content-Type: "application/x-www-form-urlencoded"
+
+# General test options
+options:
+  timeouts:
+    connect: 5s
+    read: 30s
+    write: 10s
+    idle: 60s
+    
+  sleep:
+    min: 100ms
+    max: 500ms
+    std_deviation: 50ms
+    
+  reporting:
+    summary_interval: 10s
+    console_summary: true
+    summary_file: "results/summary.json"
+    detailed_results: "results/detailed.csv"
+    error_log: "results/errors.log"
+    metrics_format: "prometheus"
+    metrics_endpoint: "${METRICS_ENDPOINT:-http://localhost:9090/metrics}"
+    jmeter_dashboard: true
+    grafana_dashboard: "${GRAFANA_DASHBOARD}"
+    artifacts_retention: "30d"
+    
+    thresholds:
+      # Overall system performance thresholds aligned with requirements
+      system:
+        event_processing:
+          p99: 200ms  # Per requirements: <200ms (P99)
+          p95: 150ms
+        short_sell_approval:
+          p99: 150ms  # Per requirements: <150ms (P99)
+          p95: 100ms
+        ui_response:
+          p95: 3s     # Per requirements: <3s (P95)
+          p90: 2s
+        error_rate: 0.1%
+        
+      # Test failure criteria
+      test_failure:
+        p99_exceed_percent: 10  # Fail if P99 exceeds threshold by 10%
+        error_rate_threshold: 1% # Fail if error rate exceeds 1%
+        test_error_rate: 5%     # Fail if 5% of test iterations fail
+        
+    notifications:
+      slack_webhook: "${SLACK_WEBHOOK}"
+      email:
+        smtp_server: "${SMTP_SERVER}"
+        from: "loadtest@example.com"
+        to: "${NOTIFICATION_EMAIL}"
+        subject: "IMS Load Test Results - ${__time()}"
