@@ -1,0 +1,273 @@
+groups:
+  - name: test_system_alerts
+    rules:
+      - alert: TestSystemHighCpuUsage
+        expr: avg by(instance) (rate(process_cpu_seconds_total{job=~".*ims-test.*"}[5m]) * 100) > 70
+        for: 5m
+        labels:
+          severity: high
+          category: system
+          environment: test
+        annotations:
+          summary: High CPU usage detected in test environment
+          description: CPU usage is above 70% for 5 minutes on {{$labels.instance}} for service {{$labels.job}}
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-cpu-usage
+          
+      - alert: TestSystemHighMemoryUsage
+        expr: sum by(instance) (jvm_memory_used_bytes{job=~".*ims-test.*"}) / sum by(instance) (jvm_memory_max_bytes{job=~".*ims-test.*"}) * 100 > 75
+        for: 5m
+        labels:
+          severity: high
+          category: system
+          environment: test
+        annotations:
+          summary: High memory usage detected in test environment
+          description: Memory usage is above 75% for 5 minutes on {{$labels.instance}} for service {{$labels.job}}
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-memory-usage
+          
+      - alert: TestSystemServiceDown
+        expr: up{job=~".*ims-test.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: system
+          environment: test
+        annotations:
+          summary: Service is down in test environment
+          description: Service {{$labels.job}} has been down for more than 2 minutes on {{$labels.instance}}
+          runbook_url: https://wiki.ims.example.com/test/runbooks/service-down
+
+  - name: test_application_alerts
+    rules:
+      - alert: TestApplicationHighResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~".*ims-test.*"}[5m])) by (le, job, instance)) > 0.5
+        for: 5m
+        labels:
+          severity: high
+          category: application
+          environment: test
+        annotations:
+          summary: High API response time in test environment
+          description: 95th percentile of API response time is above 500ms for service {{$labels.job}} on {{$labels.instance}}
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-api-response-time
+          
+      - alert: TestApplicationHighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~".*ims-test.*"}[5m])) by (job, instance) / sum(rate(http_server_requests_seconds_count{job=~".*ims-test.*"}[5m])) by (job, instance) > 0.05
+        for: 5m
+        labels:
+          severity: high
+          category: application
+          environment: test
+        annotations:
+          summary: High error rate in test environment
+          description: Error rate is above 5% for service {{$labels.job}} on {{$labels.instance}}
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-error-rate
+
+  - name: test_business_process_alerts
+    rules:
+      - alert: TestBusinessHighLocateApprovalTime
+        expr: histogram_quantile(0.95, sum(rate(ims_business_locate_approval_seconds_bucket{environment="test"}[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          environment: test
+        annotations:
+          summary: High locate approval time in test environment
+          description: 95th percentile of locate approval time is above 2s in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-locate-approval-time
+          
+      - alert: TestBusinessHighShortSellValidationTime
+        expr: histogram_quantile(0.99, sum(rate(ims_business_short_sell_validation_seconds_bucket{environment="test"}[5m])) by (le)) > 0.1
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          environment: test
+        annotations:
+          summary: High short sell validation time in test environment
+          description: 99th percentile of short sell validation time is above 100ms in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-short-sell-validation-time
+          
+      - alert: TestBusinessLowEventProcessingRate
+        expr: sum(rate(ims_business_events_processed_total{environment="test"}[5m])) < 200000
+        for: 5m
+        labels:
+          severity: high
+          category: business
+          environment: test
+        annotations:
+          summary: Low event processing rate in test environment
+          description: Event processing rate is below 200,000 events per second in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/low-event-processing-rate
+
+  - name: test_database_alerts
+    rules:
+      - alert: TestDatabaseHighQueryTime
+        expr: histogram_quantile(0.95, sum(rate(ims_database_query_seconds_bucket{environment="test"}[5m])) by (le, database)) > 0.1
+        for: 5m
+        labels:
+          severity: high
+          category: database
+          environment: test
+        annotations:
+          summary: High database query time in test environment
+          description: 95th percentile of database query time is above 100ms for {{$labels.database}} in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-database-query-time
+          
+      - alert: TestDatabaseHighConnectionPoolUsage
+        expr: sum by (pool_name) (hikaricp_connections_active{environment="test"}) / sum by (pool_name) (hikaricp_connections_max{environment="test"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: high
+          category: database
+          environment: test
+        annotations:
+          summary: High connection pool usage in test environment
+          description: Connection pool usage is above 80% for {{$labels.pool_name}} in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/high-connection-pool-usage
+
+  - name: test_infrastructure_alerts
+    rules:
+      - alert: TestInfrastructureNodeHighCpuUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle",environment="test"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+          environment: test
+        annotations:
+          summary: Node CPU usage exceeding 80% in test environment
+          description: Node {{$labels.instance}} CPU usage is at {{$value}}% in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/node-high-cpu-usage
+          
+      - alert: TestInfrastructurePodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total{namespace=~"ims-test.*"}[1h]) > 5
+        for: 10m
+        labels:
+          severity: high
+          category: infrastructure
+          environment: test
+        annotations:
+          summary: Pod is crash looping in test environment
+          description: Pod {{$labels.namespace}}/{{$labels.pod}} is crash looping ({{$value}} restarts in the last hour) in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/pod-crash-looping
+
+  - name: test_integration_alerts
+    rules:
+      - alert: TestIntegrationKafkaHighLag
+        expr: kafka_consumergroup_lag{consumergroup=~"ims-test-.*"} > 10000
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          environment: test
+        annotations:
+          summary: Kafka consumer group has high lag in test environment
+          description: Consumer group {{$labels.consumergroup}} for topic {{$labels.topic}} has lag of {{$value}} messages in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/kafka-high-lag
+          
+      - alert: TestIntegrationExternalApiHighLatency
+        expr: histogram_quantile(0.95, sum(rate(ims_external_api_request_duration_seconds_bucket{environment="test"}[5m])) by (le, api)) > 1
+        for: 5m
+        labels:
+          severity: high
+          category: integration
+          environment: test
+        annotations:
+          summary: External API high latency in test environment
+          description: 95th percentile of external API {{$labels.api}} response time is above 1s in test environment
+          runbook_url: https://wiki.ims.example.com/test/runbooks/external-api-high-latency
+
+  - name: test_system_metrics
+    interval: 30s
+    rules:
+      - record: test_ims_system_health_status
+        expr: min(up{job=~".*ims-test.*"})
+        labels:
+          category: system
+          environment: test
+          
+      - record: test_ims_system_cpu_utilization_percent
+        expr: avg by (instance) (rate(process_cpu_seconds_total{job=~".*ims-test.*"}[5m]) * 100)
+        labels:
+          category: system
+          environment: test
+          
+      - record: test_ims_system_memory_utilization_percent
+        expr: sum by (instance) (jvm_memory_used_bytes{job=~".*ims-test.*"}) / sum by (instance) (jvm_memory_max_bytes{job=~".*ims-test.*"}) * 100
+        labels:
+          category: system
+          environment: test
+
+  - name: test_application_metrics
+    interval: 30s
+    rules:
+      - record: test_ims_application_request_rate
+        expr: sum(rate(http_server_requests_seconds_count{job=~".*ims-test.*"}[5m]))
+        labels:
+          category: application
+          environment: test
+          
+      - record: test_ims_application_response_time_ms
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~".*ims-test.*"}[5m])) by (le)) * 1000
+        labels:
+          category: application
+          environment: test
+          
+      - record: test_ims_application_error_rate_percent
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job=~".*ims-test.*"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~".*ims-test.*"}[5m])) * 100
+        labels:
+          category: application
+          environment: test
+
+  - name: test_business_metrics
+    interval: 30s
+    rules:
+      - record: test_ims_business_events_per_second
+        expr: sum(rate(ims_business_events_processed_total{environment="test"}[5m]))
+        labels:
+          category: business
+          environment: test
+          
+      - record: test_ims_business_event_processing_latency_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_business_event_processing_seconds_bucket{environment="test"}[5m])) by (le)) * 1000
+        labels:
+          category: business
+          environment: test
+          
+      - record: test_ims_business_locate_approval_time_ms
+        expr: histogram_quantile(0.95, sum(rate(ims_business_locate_approval_seconds_bucket{environment="test"}[5m])) by (le)) * 1000
+        labels:
+          category: business
+          environment: test
+          
+      - record: test_ims_business_short_sell_validation_time_ms
+        expr: histogram_quantile(0.99, sum(rate(ims_business_short_sell_validation_seconds_bucket{environment="test"}[5m])) by (le)) * 1000
+        labels:
+          category: business
+          environment: test
+
+  - name: test_sla_metrics
+    interval: 1m
+    rules:
+      - record: test_ims_sla_compliance_percent
+        expr: 100 * (1 - (count_over_time(test_ims_business_event_processing_latency_ms > 200[30m]) / count_over_time(test_ims_business_event_processing_latency_ms[30m])))
+        labels:
+          category: sla
+          sla: event_processing_latency
+          environment: test
+          
+      - record: test_ims_sla_compliance_percent
+        expr: 100 * (1 - (count_over_time(test_ims_business_short_sell_validation_time_ms > 150[30m]) / count_over_time(test_ims_business_short_sell_validation_time_ms[30m])))
+        labels:
+          category: sla
+          sla: short_sell_approval_time
+          environment: test
+          
+      - record: test_ims_sla_compliance_percent
+        expr: 100 * avg_over_time(test_ims_business_events_per_second >= 250000[30m])
+        labels:
+          category: sla
+          sla: calculation_throughput
+          environment: test
