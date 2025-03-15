@@ -1,0 +1,142 @@
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-service-chaos
+  namespace: chaos-testing
+spec:
+  appinfo:
+    appns: "ims"
+    applabel: "app.kubernetes.io/part-of=ims"
+    appkind: "deployment"
+  chaosServiceAccount: chaos-service-account
+  monitoring: true
+  jobCleanUpPolicy: delete
+  annotationCheck: "false"
+  engineState: "active"
+  auxiliaryAppInfo: ""
+  experiments:
+    # Calculation Service Pod Deletion Test
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "calculation-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # Workflow Service Pod Deletion Test
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "false"
+            - name: TARGET_PODS
+              value: "workflow-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # API Gateway Service Kill Test
+    - name: service-kill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: TARGET_SERVICE
+              value: "api-gateway"
+            - name: SERVICE_PORT
+              value: "8080"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # WebSocket Service Kill Test
+    - name: service-kill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: TARGET_SERVICE
+              value: "websocket-service"
+            - name: SERVICE_PORT
+              value: "8085"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # Calculation Service CPU Hog Test
+    - name: pod-cpu-hog
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: CPU_CORES
+              value: "2"
+            - name: TARGET_PODS
+              value: "calculation-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "75"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # Workflow Service Memory Hog Test
+    - name: pod-memory-hog
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+            - name: MEMORY_PERCENTAGE
+              value: "90"
+            - name: TARGET_PODS
+              value: "workflow-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "75"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+
+    # Data Ingestion Service Container Kill Test
+    - name: container-kill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+            - name: CHAOS_INTERVAL
+              value: "30"
+            - name: TARGET_PODS
+              value: "data-ingestion-service"
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
