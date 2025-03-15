@@ -1,0 +1,534 @@
+[
+  {
+    "locateRequests": [
+      {
+        "id": 1,
+        "requestId": "LOC-20230615-00001",
+        "security": {
+          "internalId": "SEC-EQ-001",
+          "description": "Apple Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00001",
+          "name": "ABC Capital Partners"
+        },
+        "client": {
+          "counterpartyId": "CP-00001",
+          "name": "ABC Capital Partners"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 5000,
+        "requestTimestamp": "2023-06-15T09:32:15Z",
+        "status": "APPROVED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:32:15Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:32:20Z",
+        "version": 2
+      },
+      {
+        "id": 2,
+        "requestId": "LOC-20230615-00002",
+        "security": {
+          "internalId": "SEC-EQ-003",
+          "description": "Tesla, Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00002",
+          "name": "XYZ Investment Fund"
+        },
+        "client": {
+          "counterpartyId": "CP-00002",
+          "name": "XYZ Investment Fund"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 2500,
+        "requestTimestamp": "2023-06-15T09:35:22Z",
+        "status": "APPROVED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:35:22Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:35:30Z",
+        "version": 2
+      },
+      {
+        "id": 3,
+        "requestId": "LOC-20230615-00003",
+        "security": {
+          "internalId": "SEC-EQ-002",
+          "description": "Microsoft Corporation Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00003",
+          "name": "Global Asset Management"
+        },
+        "client": {
+          "counterpartyId": "CP-00003",
+          "name": "Global Asset Management"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 10000,
+        "requestTimestamp": "2023-06-15T09:40:05Z",
+        "status": "REJECTED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:40:05Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:40:10Z",
+        "version": 2
+      },
+      {
+        "id": 4,
+        "requestId": "LOC-20230615-00004",
+        "security": {
+          "internalId": "SEC-EQ-004",
+          "description": "Amazon.com, Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00004",
+          "name": "Tech Innovations Corp"
+        },
+        "client": {
+          "counterpartyId": "CP-00004",
+          "name": "Tech Innovations Corp"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 3000,
+        "requestTimestamp": "2023-06-15T09:42:18Z",
+        "status": "PENDING",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:42:18Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:42:18Z",
+        "version": 1
+      },
+      {
+        "id": 5,
+        "requestId": "LOC-20230615-00005",
+        "security": {
+          "internalId": "SEC-EQ-005",
+          "description": "Alphabet Inc. Class A Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00005",
+          "name": "European Pension Fund"
+        },
+        "client": {
+          "counterpartyId": "CP-00005",
+          "name": "European Pension Fund"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 7500,
+        "requestTimestamp": "2023-06-15T09:45:30Z",
+        "status": "PENDING",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:45:30Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:45:30Z",
+        "version": 1
+      },
+      {
+        "id": 6,
+        "requestId": "LOC-20230615-00006",
+        "security": {
+          "internalId": "SEC-EQ-006",
+          "description": "Toyota Motor Corporation Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00006",
+          "name": "Asia Pacific Trading Ltd"
+        },
+        "client": {
+          "counterpartyId": "CP-00006",
+          "name": "Asia Pacific Trading Ltd"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-JP-001",
+          "name": "Japan Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 15000,
+        "requestTimestamp": "2023-06-15T09:50:45Z",
+        "status": "APPROVED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:50:45Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:50:55Z",
+        "version": 2
+      },
+      {
+        "id": 7,
+        "requestId": "LOC-20230615-00007",
+        "security": {
+          "internalId": "SEC-EQ-007",
+          "description": "Taiwan Semiconductor Manufacturing Company Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00008",
+          "name": "Sovereign Wealth Fund"
+        },
+        "client": {
+          "counterpartyId": "CP-00008",
+          "name": "Sovereign Wealth Fund"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-TW-001",
+          "name": "Taiwan Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 20000,
+        "requestTimestamp": "2023-06-15T09:55:10Z",
+        "status": "REJECTED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:55:10Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:55:15Z",
+        "version": 2
+      },
+      {
+        "id": 8,
+        "requestId": "LOC-20230615-00008",
+        "security": {
+          "internalId": "SEC-ETF-001",
+          "description": "S&P 500 ETF Trust"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00007",
+          "name": "Retail Investor Services"
+        },
+        "client": {
+          "counterpartyId": "CP-00007",
+          "name": "Retail Investor Services"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 5000,
+        "requestTimestamp": "2023-06-15T10:05:30Z",
+        "status": "APPROVED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:05:30Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:05:35Z",
+        "version": 2
+      },
+      {
+        "id": 9,
+        "requestId": "LOC-20230615-00009",
+        "security": {
+          "internalId": "SEC-EQ-001",
+          "description": "Apple Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00009",
+          "name": "Global Investment Bank"
+        },
+        "client": {
+          "counterpartyId": "CP-00009",
+          "name": "Global Investment Bank"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SWAP",
+        "requestedQuantity": 10000,
+        "requestTimestamp": "2023-06-15T10:15:20Z",
+        "status": "APPROVED",
+        "swapCashIndicator": "SWAP",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:15:20Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:15:25Z",
+        "version": 2
+      },
+      {
+        "id": 10,
+        "requestId": "LOC-20230615-00010",
+        "security": {
+          "internalId": "SEC-EQ-003",
+          "description": "Tesla, Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00010",
+          "name": "North American Insurance Co"
+        },
+        "client": {
+          "counterpartyId": "CP-00010",
+          "name": "North American Insurance Co"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 8000,
+        "requestTimestamp": "2023-06-15T10:25:45Z",
+        "status": "PENDING",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:25:45Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:25:45Z",
+        "version": 1
+      },
+      {
+        "id": 11,
+        "requestId": "LOC-20230615-00011",
+        "security": {
+          "internalId": "SEC-EQ-002",
+          "description": "Microsoft Corporation Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00012",
+          "name": "Japanese Financial Group"
+        },
+        "client": {
+          "counterpartyId": "CP-00012",
+          "name": "Japanese Financial Group"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 12000,
+        "requestTimestamp": "2023-06-15T10:35:10Z",
+        "status": "REJECTED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:35:10Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:35:15Z",
+        "version": 2
+      },
+      {
+        "id": 12,
+        "requestId": "LOC-20230615-00012",
+        "security": {
+          "internalId": "SEC-EQ-004",
+          "description": "Amazon.com, Inc. Common Stock"
+        },
+        "requestor": {
+          "counterpartyId": "CP-00015",
+          "name": "Inactive Client Corp"
+        },
+        "client": {
+          "counterpartyId": "CP-00015",
+          "name": "Inactive Client Corp"
+        },
+        "aggregationUnit": {
+          "aggregationUnitId": "AU-US-001",
+          "name": "US Equity Trading"
+        },
+        "locateType": "SHORT_SELL",
+        "requestedQuantity": 5000,
+        "requestTimestamp": "2023-06-15T10:45:30Z",
+        "status": "REJECTED",
+        "swapCashIndicator": "CASH",
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:45:30Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:45:35Z",
+        "version": 2
+      }
+    ],
+    "locateApprovals": [
+      {
+        "id": 1,
+        "approvalId": "LOC-APP-20230615-00001",
+        "request": {
+          "requestId": "LOC-20230615-00001"
+        },
+        "approvedQuantity": 5000,
+        "decrementQuantity": 5000,
+        "approvalTimestamp": "2023-06-15T09:32:20Z",
+        "approvedBy": "system",
+        "expiryDate": "2023-06-16",
+        "isAutoApproved": true,
+        "securityTemperature": "GC",
+        "borrowRate": 0.25,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:32:20Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:32:20Z",
+        "version": 1
+      },
+      {
+        "id": 2,
+        "approvalId": "LOC-APP-20230615-00002",
+        "request": {
+          "requestId": "LOC-20230615-00002"
+        },
+        "approvedQuantity": 2500,
+        "decrementQuantity": 2500,
+        "approvalTimestamp": "2023-06-15T09:35:30Z",
+        "approvedBy": "system",
+        "expiryDate": "2023-06-16",
+        "isAutoApproved": true,
+        "securityTemperature": "HTB",
+        "borrowRate": 1.5,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:35:30Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:35:30Z",
+        "version": 1
+      },
+      {
+        "id": 3,
+        "approvalId": "LOC-APP-20230615-00003",
+        "request": {
+          "requestId": "LOC-20230615-00006"
+        },
+        "approvedQuantity": 15000,
+        "decrementQuantity": 15000,
+        "approvalTimestamp": "2023-06-15T09:50:55Z",
+        "approvedBy": "john.smith",
+        "expiryDate": "2023-06-16",
+        "isAutoApproved": false,
+        "securityTemperature": "GC",
+        "borrowRate": 0.3,
+        "createdBy": "john.smith",
+        "createdAt": "2023-06-15T09:50:55Z",
+        "lastModifiedBy": "john.smith",
+        "lastModifiedAt": "2023-06-15T09:50:55Z",
+        "version": 1
+      },
+      {
+        "id": 4,
+        "approvalId": "LOC-APP-20230615-00004",
+        "request": {
+          "requestId": "LOC-20230615-00008"
+        },
+        "approvedQuantity": 5000,
+        "decrementQuantity": 5000,
+        "approvalTimestamp": "2023-06-15T10:05:35Z",
+        "approvedBy": "system",
+        "expiryDate": "2023-06-16",
+        "isAutoApproved": true,
+        "securityTemperature": "GC",
+        "borrowRate": 0.2,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:05:35Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:05:35Z",
+        "version": 1
+      },
+      {
+        "id": 5,
+        "approvalId": "LOC-APP-20230615-00005",
+        "request": {
+          "requestId": "LOC-20230615-00009"
+        },
+        "approvedQuantity": 10000,
+        "decrementQuantity": 10000,
+        "approvalTimestamp": "2023-06-15T10:15:25Z",
+        "approvedBy": "sarah.jones",
+        "expiryDate": "2023-06-16",
+        "isAutoApproved": false,
+        "securityTemperature": "GC",
+        "borrowRate": 0.25,
+        "createdBy": "sarah.jones",
+        "createdAt": "2023-06-15T10:15:25Z",
+        "lastModifiedBy": "sarah.jones",
+        "lastModifiedAt": "2023-06-15T10:15:25Z",
+        "version": 1
+      }
+    ],
+    "locateRejections": [
+      {
+        "id": 1,
+        "rejectionId": "LOC-REJ-20230615-00001",
+        "request": {
+          "requestId": "LOC-20230615-00003"
+        },
+        "rejectionReason": "INSUFFICIENT_INVENTORY",
+        "rejectionTimestamp": "2023-06-15T09:40:10Z",
+        "rejectedBy": "system",
+        "isAutoRejected": true,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:40:10Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:40:10Z",
+        "version": 1
+      },
+      {
+        "id": 2,
+        "rejectionId": "LOC-REJ-20230615-00002",
+        "request": {
+          "requestId": "LOC-20230615-00007"
+        },
+        "rejectionReason": "MARKET_SPECIFIC_RESTRICTION",
+        "rejectionTimestamp": "2023-06-15T09:55:15Z",
+        "rejectedBy": "system",
+        "isAutoRejected": true,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T09:55:15Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T09:55:15Z",
+        "version": 1
+      },
+      {
+        "id": 3,
+        "rejectionId": "LOC-REJ-20230615-00003",
+        "request": {
+          "requestId": "LOC-20230615-00011"
+        },
+        "rejectionReason": "INSUFFICIENT_INVENTORY",
+        "rejectionTimestamp": "2023-06-15T10:35:15Z",
+        "rejectedBy": "david.wilson",
+        "isAutoRejected": false,
+        "createdBy": "david.wilson",
+        "createdAt": "2023-06-15T10:35:15Z",
+        "lastModifiedBy": "david.wilson",
+        "lastModifiedAt": "2023-06-15T10:35:15Z",
+        "version": 1
+      },
+      {
+        "id": 4,
+        "rejectionId": "LOC-REJ-20230615-00004",
+        "request": {
+          "requestId": "LOC-20230615-00012"
+        },
+        "rejectionReason": "CLIENT_INELIGIBLE",
+        "rejectionTimestamp": "2023-06-15T10:45:35Z",
+        "rejectedBy": "system",
+        "isAutoRejected": true,
+        "createdBy": "system",
+        "createdAt": "2023-06-15T10:45:35Z",
+        "lastModifiedBy": "system",
+        "lastModifiedAt": "2023-06-15T10:45:35Z",
+        "version": 1
+      }
+    ]
+  }
+]
