@@ -1,0 +1,332 @@
+---
+# Litmus Chaos Experiment Configuration for Inventory Management System (IMS)
+# This configuration defines a series of controlled chaos experiments 
+# to validate the system's resilience against various failure conditions
+
+apiVersion: chaos.litmus.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: ims-chaos-engine
+  namespace: chaos-testing
+spec:
+  # Application information - targeting all IMS components
+  appinfo:
+    appns: "ims"                                  # Namespace where IMS is deployed
+    applabel: "app.kubernetes.io/part-of=ims"     # Label selector for IMS components
+    appkind: "deployment"                         # Target Kubernetes resource type
+  
+  # Service account that will be used to run the chaos experiments
+  chaosServiceAccount: chaos-service-account
+  
+  # Enable prometheus monitoring for chaos metrics
+  monitoring: true
+  
+  # Clean up job pods after experiment completion
+  jobCleanUpPolicy: "delete"
+  
+  # Disable annotation check - we'll control targeting via env variables
+  annotationCheck: "false"
+  
+  # Engine is active and ready to execute experiments
+  engineState: "active"
+  
+  # No auxiliary applications needed
+  auxiliaryAppInfo: ""
+  
+  # Runner configuration
+  components:
+    runner:
+      image: "litmuschaos/chaos-runner:latest"
+      type: "go"
+  
+  # Chaos experiments to be executed
+  experiments:
+    # Experiment 1: Pod Delete
+    # Tests system resilience when pods are randomly deleted
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (5 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+              
+            # Interval between successive pod deletion (1 minute)
+            - name: CHAOS_INTERVAL
+              value: "60"
+              
+            # Don't force delete pods - allow for graceful termination
+            - name: FORCE
+              value: "false"
+              
+            # Target critical computation and workflow services to test resilience
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service,data-ingestion-service"
+              
+            # Affect 50% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+              
+            # Container runtime being used
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+              
+            # Socket path for container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Experiment 2: Pod Network Latency
+    # Tests system resilience when network latency is introduced
+    - name: pod-network-latency
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (5 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+              
+            # Network interface to target
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+              
+            # Add 2000ms (2s) of latency
+            - name: NETWORK_LATENCY
+              value: "2000"
+              
+            # Add 500ms jitter for randomness
+            - name: JITTER
+              value: "500"
+              
+            # Target calculation and workflow services to test performance under latency conditions
+            - name: TARGET_PODS
+              value: "calculation-service,workflow-service"
+              
+            # Affect 50% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+              
+            # Container runtime being used
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+              
+            # Socket path for container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Experiment 3: Pod Network Loss
+    # Tests system resilience when network packet loss is introduced
+    - name: pod-network-loss
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (5 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+              
+            # Network interface to target
+            - name: NETWORK_INTERFACE
+              value: "eth0"
+              
+            # Percentage of packets to drop (50%)
+            - name: NETWORK_PACKET_LOSS_PERCENTAGE
+              value: "50"
+              
+            # Target API gateway and WebSocket service to test client connectivity resilience
+            - name: TARGET_PODS
+              value: "api-gateway,websocket-service"
+              
+            # Affect 40% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"
+              
+            # Container runtime being used
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+              
+            # Socket path for container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Experiment 4: Kafka Broker Pod Failure
+    # Tests system resilience when Kafka message brokers fail
+    - name: kafka-broker-pod-failure
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (5 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+              
+            # Kafka namespace
+            - name: KAFKA_NAMESPACE
+              value: "kafka"
+              
+            # Kafka broker label
+            - name: KAFKA_LABEL
+              value: "app=kafka"
+              
+            # Kafka service name
+            - name: KAFKA_SERVICE
+              value: "kafka-service"
+              
+            # Kafka port
+            - name: KAFKA_PORT
+              value: "9092"
+              
+            # Kafka replication factor (3 for high availability)
+            - name: KAFKA_REPLICATION_FACTOR
+              value: "3"
+              
+            # Kafka consumer timeout in milliseconds
+            - name: KAFKA_CONSUMER_TIMEOUT
+              value: "30000"
+              
+            # Specific Kafka broker pod to target (empty means random selection)
+            - name: KAFKA_BROKER_POD
+              value: ""
+              
+            # Affect 33% of Kafka broker pods (1 of 3)
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "33"
+    
+    # Experiment 5: Node CPU Hog
+    # Tests system resilience when nodes experience high CPU load
+    - name: node-cpu-hog
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (4 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+              
+            # Number of CPU cores to stress per node
+            - name: NODE_CPU_CORE
+              value: "2"
+              
+            # Percentage of cluster nodes to affect (25%)
+            - name: NODES_AFFECTED_PERCENTAGE
+              value: "25"
+              
+            # Target nodes running IMS components
+            - name: NODE_LABEL
+              value: "app.kubernetes.io/part-of=ims"
+    
+    # Experiment 6: Node Memory Hog
+    # Tests system resilience when nodes experience high memory pressure
+    - name: node-memory-hog
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (4 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+              
+            # Percentage of memory to consume on each node (80%)
+            - name: MEMORY_PERCENTAGE
+              value: "80"
+              
+            # Percentage of cluster nodes to affect (25%)
+            - name: NODES_AFFECTED_PERCENTAGE
+              value: "25"
+              
+            # Target nodes running IMS components
+            - name: NODE_LABEL
+              value: "app.kubernetes.io/part-of=ims"
+    
+    # Experiment 7: Pod Memory Hog
+    # Tests system resilience when specific pods experience high memory pressure
+    - name: pod-memory-hog
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (4 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+              
+            # Memory consumption in MB per pod
+            - name: MEMORY_CONSUMPTION
+              value: "500"
+              
+            # Target calculation services to test memory pressure handling
+            - name: TARGET_PODS
+              value: "calculation-service"
+              
+            # Affect 50% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+              
+            # Container runtime being used
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+              
+            # Socket path for container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Experiment 8: Pod CPU Hog
+    # Tests system resilience when specific pods experience high CPU load
+    - name: pod-cpu-hog
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (4 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "240"
+              
+            # Number of CPU cores to stress per pod
+            - name: CPU_CORES
+              value: "1"
+              
+            # Target workflow services to test CPU pressure handling
+            - name: TARGET_PODS
+              value: "workflow-service"
+              
+            # Affect 50% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "50"
+              
+            # Container runtime being used
+            - name: CONTAINER_RUNTIME
+              value: "containerd"
+              
+            # Socket path for container runtime
+            - name: SOCKET_PATH
+              value: "/run/containerd/containerd.sock"
+    
+    # Experiment 9: Database Connection Failure
+    # Tests system resilience when database connections fail
+    - name: db-connection-failure
+      spec:
+        components:
+          env:
+            # Duration of chaos experiment (3 minutes)
+            - name: TOTAL_CHAOS_DURATION
+              value: "180"
+              
+            # Target database services (PostgreSQL, Cassandra, TimescaleDB)
+            - name: DB_SERVICE
+              value: "postgresql,cassandra,timescaledb"
+              
+            # Database ports to target
+            - name: DB_PORT
+              value: "5432,9042,5432"
+              
+            # Percentage of connections to fail (70%)
+            - name: CONNECTION_FAILURE_PERCENTAGE
+              value: "70"
+              
+            # Target data-dependent services
+            - name: TARGET_PODS
+              value: "calculation-service,data-ingestion-service"
+              
+            # Affect 40% of the matching pods at a time
+            - name: PODS_AFFECTED_PERCENTAGE
+              value: "40"
+
+# NOTE: This chaos test suite validates the following resilience requirements:
+# 1. System must maintain 99.999% uptime during 24x6 operational hours
+# 2. Event processing must maintain <200ms latency (P99) under normal conditions
+# 3. Short sell approval must complete within <150ms (P99) under normal conditions
+# 4. System must implement fault tolerance through circuit breakers, retries, and fallbacks
+# 5. Data integrity must be maintained during all failure scenarios
+# 6. Recovery must be automatic once failure conditions are resolved
