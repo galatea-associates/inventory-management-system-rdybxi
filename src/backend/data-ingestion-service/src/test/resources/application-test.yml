@@ -1,0 +1,199 @@
+spring:
+  profiles:
+    active: test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 5000
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 20
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    producer:
+      acks: all
+      retries: 1
+      batch-size: 16384
+      properties:
+        linger.ms: 1
+    consumer:
+      group-id: data-ingestion-service-test
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 1
+    topics:
+      reference-data: reference-data-events-test
+      market-data: market-data-events-test
+      trade-data: trade-data-events-test
+      contract-data: contract-data-events-test
+      market-data-input: market-data-input-test
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000/auth/realms/ims-test
+          audience: ims-api-test
+  cors:
+    allowed-origins: http://localhost:3000
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept
+    allow-credentials: true
+    max-age: 3600
+
+server:
+  port: 0
+  servlet:
+    context-path: /api/v1/ingestion
+  tomcat:
+    max-threads: 10
+    min-spare-threads: 2
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka: WARN
+  file:
+    name: logs/data-ingestion-service-test.log
+
+external:
+  reuters:
+    api-url: http://localhost:${wiremock.server.port}/mock/reuters
+    api-key: test-reuters-key
+    username: test-reuters-user
+    password: test-reuters-password
+    reference-data-batch-path: src/test/resources/data/reuters/batch
+    connection-timeout: 1000
+    read-timeout: 5000
+    max-connections: 5
+  bloomberg:
+    api-url: http://localhost:${wiremock.server.port}/mock/bloomberg
+    api-key: test-bloomberg-key
+    username: test-bloomberg-user
+    password: test-bloomberg-password
+    reference-data-batch-path: src/test/resources/data/bloomberg/batch
+    connection-timeout: 1000
+    read-timeout: 5000
+    max-connections: 5
+  markit:
+    api-url: http://localhost:${wiremock.server.port}/mock/markit
+    api-key: test-markit-key
+    username: test-markit-user
+    password: test-markit-password
+    reference-data-batch-path: src/test/resources/data/markit/batch
+    connection-timeout: 1000
+    read-timeout: 5000
+    max-connections: 5
+  ultumus:
+    api-url: http://localhost:${wiremock.server.port}/mock/ultumus
+    api-key: test-ultumus-key
+    username: test-ultumus-user
+    password: test-ultumus-password
+    reference-data-batch-path: src/test/resources/data/ultumus/batch
+    connection-timeout: 1000
+    read-timeout: 5000
+    max-connections: 5
+  rimes:
+    api-url: http://localhost:${wiremock.server.port}/mock/rimes
+    api-key: test-rimes-key
+    username: test-rimes-user
+    password: test-rimes-password
+    reference-data-batch-path: src/test/resources/data/rimes/batch
+    connection-timeout: 1000
+    read-timeout: 5000
+    max-connections: 5
+
+app:
+  kafka:
+    topics:
+      market-data: market-data-events-test
+      market-data-input: market-data-input-test
+    group-id: data-ingestion-service-test
+  market-data:
+    real-time:
+      enabled: true
+    batch-size: 100
+    processing:
+      interval: 5000
+  reference-data:
+    batch-directory: src/test/resources/data/reference-data/batch
+    conflict-resolution:
+      enabled: true
+      priority-sources: REUTERS,BLOOMBERG,MARKIT
+  trade-data:
+    batch-directory: src/test/resources/data/trade-data/batch
+    processing:
+      interval: 5000
+  contract-data:
+    batch-directory: src/test/resources/data/contract-data/batch
+    processing:
+      interval: 5000
+
+ingestion:
+  batch:
+    max-batch-size: 200
+    processing-threads: 2
+    retry-attempts: 2
+    retry-delay-ms: 500
+  validation:
+    enabled: true
+    strict-mode: true
+  scheduling:
+    reference-data-update: 0 */1 * * * *
+    market-data-cleanup: 0 */2 * * * *
+    health-check: 0 */1 * * * *
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCalls:
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 1
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      externalServiceCalls:
+        maxAttempts: 2
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  ratelimiter:
+    instances:
+      externalServiceCalls:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 100ms
+
+wiremock:
+  server:
+    port: 8090
+  reset-mappings-after-each-test: true
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
