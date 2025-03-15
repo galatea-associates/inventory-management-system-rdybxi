@@ -1,0 +1,369 @@
+# Kibana Helm chart configuration
+# Version 7.17.3 (matches Elasticsearch version)
+
+# Image settings
+image:
+  repository: docker.elastic.co/kibana/kibana
+  tag: 7.17.3
+  pullPolicy: IfNotPresent
+
+# Naming
+nameOverride: ""
+fullnameOverride: "ims-kibana"
+
+# Deployment settings
+replicas: 2
+
+# Resource requirements
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+# Priority class
+priorityClassName: medium-priority
+
+# Security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+
+securityContext:
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Elasticsearch connection
+elasticsearchHosts: "https://ims-elasticsearch-client:9200"
+elasticsearchCredentials:
+  username: ${ELASTICSEARCH_USERNAME}
+  password: ${ELASTICSEARCH_PASSWORD}
+  secretName: ims-elasticsearch-credentials
+
+# Kibana configuration
+kibanaConfig:
+  kibana.yml: |
+    server.name: ims-kibana
+    server.host: 0.0.0.0
+    elasticsearch.hosts: ["https://ims-elasticsearch-client:9200"]
+    elasticsearch.username: ${ELASTICSEARCH_USERNAME}
+    elasticsearch.password: ${ELASTICSEARCH_PASSWORD}
+    elasticsearch.ssl.verificationMode: certificate
+    elasticsearch.ssl.certificateAuthorities: [/usr/share/kibana/config/certs/ca.crt]
+    server.ssl.enabled: true
+    server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt
+    server.ssl.key: /usr/share/kibana/config/certs/kibana.key
+    server.ssl.certificateAuthorities: [/usr/share/kibana/config/certs/ca.crt]
+    xpack.security.enabled: true
+    xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+    xpack.reporting.encryptionKey: ${KIBANA_REPORTING_KEY}
+    xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_SAVED_OBJECTS_KEY}
+    xpack.reporting.enabled: true
+    xpack.reporting.capture.browser.chromium.disableSandbox: true
+    xpack.monitoring.ui.container.elasticsearch.enabled: true
+    telemetry.enabled: false
+    telemetry.optIn: false
+    telemetry.sendUsageFrom: server
+    server.publicBaseUrl: https://kibana.ims.example.com
+    logging.root.level: info
+    logging.appenders.file.type: file
+    logging.appenders.file.fileName: /var/log/kibana/kibana.log
+    logging.appenders.file.layout.type: pattern
+    logging.appenders.console.type: console
+    logging.appenders.console.layout.type: pattern
+    logging.loggers:
+      - name: plugins
+        level: info
+      - name: elasticsearch
+        level: info
+      - name: http
+        level: info
+
+# Environment variables
+extraEnvs:
+  - name: ELASTICSEARCH_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: ims-elasticsearch-credentials
+        key: username
+  - name: ELASTICSEARCH_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: ims-elasticsearch-credentials
+        key: password
+  - name: KIBANA_ENCRYPTION_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ims-kibana-secrets
+        key: encryptionKey
+  - name: KIBANA_REPORTING_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ims-kibana-secrets
+        key: reportingKey
+  - name: KIBANA_SAVED_OBJECTS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ims-kibana-secrets
+        key: savedObjectsKey
+  - name: NODE_OPTIONS
+    value: "--max-old-space-size=1024"
+
+# Volumes and mounts
+extraVolumes:
+  - name: kibana-config
+    configMap:
+      name: ims-kibana-config
+      defaultMode: 420
+  - name: kibana-certs
+    secret:
+      secretName: ims-kibana-certs
+      defaultMode: 420
+  - name: elasticsearch-certs
+    secret:
+      secretName: ims-elasticsearch-certs
+      defaultMode: 420
+
+extraVolumeMounts:
+  - name: kibana-config
+    mountPath: /usr/share/kibana/config/kibana.yml
+    subPath: kibana.yml
+    readOnly: true
+  - name: kibana-certs
+    mountPath: /usr/share/kibana/config/certs/kibana.crt
+    subPath: kibana.crt
+    readOnly: true
+  - name: kibana-certs
+    mountPath: /usr/share/kibana/config/certs/kibana.key
+    subPath: kibana.key
+    readOnly: true
+  - name: elasticsearch-certs
+    mountPath: /usr/share/kibana/config/certs/ca.crt
+    subPath: ca.crt
+    readOnly: true
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 5601
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "5601"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - kibana.ims.example.com
+  tls:
+    - secretName: kibana-tls
+      hosts:
+        - kibana.ims.example.com
+
+# Health checks
+readinessProbe:
+  httpGet:
+    path: /api/status
+    port: 5601
+    scheme: HTTPS
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /api/status
+    port: 5601
+    scheme: HTTPS
+  initialDelaySeconds: 120
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Node placement
+nodeSelector:
+  role: logging
+
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: logging
+    effect: NoSchedule
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - kibana
+          topologyKey: kubernetes.io/hostname
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+
+# Pod annotations for monitoring
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "5601"
+  prometheus.io/path: "/api/status/metrics"
+
+# Pod labels
+podLabels:
+  app.kubernetes.io/component: logging
+  app.kubernetes.io/part-of: ims
+
+# Service account
+serviceAccount:
+  create: true
+  name: ims-kibana
+  annotations: {}
+
+# Lifecycle hooks for plugin installation
+lifecycle:
+  postStart:
+    exec:
+      command:
+        - sh
+        - -c
+        - |
+          #!/bin/bash
+          sleep 60
+          /usr/share/kibana/bin/kibana-plugin install https://github.com/sivasamyk/logtrail/releases/download/v0.1.31/logtrail-7.17.3-0.1.31.zip
+
+# Dashboard import configuration
+dashboardImport:
+  enabled: true
+  timeout: 60
+  dashboards:
+    - name: ims-system-logs
+      file: /usr/share/kibana/dashboards/system-logs.json
+    - name: ims-application-logs
+      file: /usr/share/kibana/dashboards/application-logs.json
+    - name: ims-security-logs
+      file: /usr/share/kibana/dashboards/security-logs.json
+    - name: ims-audit-logs
+      file: /usr/share/kibana/dashboards/audit-logs.json
+    - name: ims-performance-logs
+      file: /usr/share/kibana/dashboards/performance-logs.json
+
+# Index patterns
+indexPatterns:
+  - name: ims-logs-*
+    timeFieldName: @timestamp
+  - name: ims-audit-*
+    timeFieldName: @timestamp
+
+# Saved objects
+savedObjects:
+  configMaps:
+    - kibana-saved-objects
+
+# Plugins
+plugins:
+  - x-pack
+  - logtrail
+  - elastic-charts
+  - kibana-reporting
+
+# Additional Kubernetes objects
+extraObjects:
+  # Secret for Kibana encryption keys
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ims-kibana-secrets
+      namespace: logging
+    type: Opaque
+    data:
+      encryptionKey: ${KIBANA_ENCRYPTION_KEY_BASE64}
+      reportingKey: ${KIBANA_REPORTING_KEY_BASE64}
+      savedObjectsKey: ${KIBANA_SAVED_OBJECTS_KEY_BASE64}
+
+  # ConfigMap for Kibana configuration
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ims-kibana-config
+      namespace: logging
+    data:
+      kibana.yml: |
+        server.name: ims-kibana
+        server.host: 0.0.0.0
+        elasticsearch.hosts: ["https://ims-elasticsearch-client:9200"]
+        elasticsearch.username: ${ELASTICSEARCH_USERNAME}
+        elasticsearch.password: ${ELASTICSEARCH_PASSWORD}
+        elasticsearch.ssl.verificationMode: certificate
+        elasticsearch.ssl.certificateAuthorities: [/usr/share/kibana/config/certs/ca.crt]
+        server.ssl.enabled: true
+        server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt
+        server.ssl.key: /usr/share/kibana/config/certs/kibana.key
+        server.ssl.certificateAuthorities: [/usr/share/kibana/config/certs/ca.crt]
+        xpack.security.enabled: true
+        xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+        xpack.reporting.encryptionKey: ${KIBANA_REPORTING_KEY}
+        xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_SAVED_OBJECTS_KEY}
+        xpack.reporting.enabled: true
+        xpack.reporting.capture.browser.chromium.disableSandbox: true
+        xpack.monitoring.ui.container.elasticsearch.enabled: true
+        telemetry.enabled: false
+        telemetry.optIn: false
+        telemetry.sendUsageFrom: server
+        server.publicBaseUrl: https://kibana.ims.example.com
+        logging.root.level: info
+        logging.appenders.file.type: file
+        logging.appenders.file.fileName: /var/log/kibana/kibana.log
+        logging.appenders.file.layout.type: pattern
+        logging.appenders.console.type: console
+        logging.appenders.console.layout.type: pattern
+        logging.loggers:
+          - name: plugins
+            level: info
+          - name: elasticsearch
+            level: info
+          - name: http
+            level: info
+
+  # ConfigMap for saved objects
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: kibana-saved-objects
+      namespace: logging
+    data:
+      ims-index-patterns.ndjson: |
+        [{"id":"ims-logs-*","type":"index-pattern","attributes":{"title":"ims-logs-*","timeFieldName":"@timestamp"}},{"id":"ims-audit-*","type":"index-pattern","attributes":{"title":"ims-audit-*","timeFieldName":"@timestamp"}}]
+      ims-searches.ndjson: |
+        [{"id":"error-logs","type":"search","attributes":{"title":"Error Logs","description":"All error level logs","hits":0,"columns":["kubernetes.namespace","kubernetes.container_name","message","severity","correlation_id"],"sort":["@timestamp","desc"],"version":1,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\\"index\\":\\"ims-logs-*\\",\\"highlightAll\\":true,\\"version\\":true,\\"query\\":{\\"query\\":\\"severity:ERROR\\",\\"language\\":\\"kuery\\"},\\"filter\\":[]}"}}}]
+      ims-visualizations.ndjson: |
+        [{"id":"error-rate-over-time","type":"visualization","attributes":{"title":"Error Rate Over Time","visState":"{\\"title\\":\\"Error Rate Over Time\\",\\"type\\":\\"line\\",\\"params\\":{\\"type\\":\\"line\\",\\"grid\\":{\\"categoryLines\\":false},\\"categoryAxes\\":[{\\"id\\":\\"CategoryAxis-1\\",\\"type\\":\\"category\\",\\"position\\":\\"bottom\\",\\"show\\":true,\\"style\\":{},\\"scale\\":{\\"type\\":\\"linear\\"},\\"labels\\":{\\"show\\":true,\\"filter\\":true,\\"truncate\\":100},\\"title\\":{}}],\\"valueAxes\\":[{\\"id\\":\\"ValueAxis-1\\",\\"name\\":\\"LeftAxis-1\\",\\"type\\":\\"value\\",\\"position\\":\\"left\\",\\"show\\":true,\\"style\\":{},\\"scale\\":{\\"type\\":\\"linear\\",\\"mode\\":\\"normal\\"},\\"labels\\":{\\"show\\":true,\\"rotate\\":0,\\"filter\\":false,\\"truncate\\":100},\\"title\\":{\\"text\\":\\"Error Count\\"}}],\\"seriesParams\\":[{\\"show\\":\\"true\\",\\"type\\":\\"line\\",\\"mode\\":\\"normal\\",\\"data\\":{\\"label\\":\\"Error Count\\",\\"id\\":\\"1\\"},\\"valueAxis\\":\\"ValueAxis-1\\",\\"drawLinesBetweenPoints\\":true,\\"showCircles\\":true,\\"interpolate\\":\\"linear\\"}],\\"addTooltip\\":true,\\"addLegend\\":true,\\"legendPosition\\":\\"right\\",\\"times\\":[],\\"addTimeMarker\\":false,\\"dimensions\\":{\\"x\\":{\\"accessor\\":0,\\"format\\":{\\"id\\":\\"date\\",\\"params\\":{\\"pattern\\":\\"HH:mm:ss\\"}},\\"params\\":{\\"date\\":true,\\"interval\\":\\"PT30S\\",\\"format\\":\\"HH:mm:ss\\",\\"bounds\\":{\\"min\\":\\"2020-04-09T14:11:20.000Z\\",\\"max\\":\\"2020-04-09T14:26:09.000Z\\"}},\\"aggType\\":\\"date_histogram\\"},\\"y\\":[{\\"accessor\\":1,\\"format\\":{\\"id\\":\\"number\\"},\\"params\\":{},\\"aggType\\":\\"count\\"}]}},\\"aggs\\":[{\\"id\\":\\"1\\",\\"enabled\\":true,\\"type\\":\\"count\\",\\"schema\\":\\"metric\\",\\"params\\":{}},{\\"id\\":\\"2\\",\\"enabled\\":true,\\"type\\":\\"date_histogram\\",\\"schema\\":\\"segment\\",\\"params\\":{\\"field\\":\\"@timestamp\\",\\"timeRange\\":{\\"from\\":\\"now-15m\\",\\"to\\":\\"now\\"},\\"useNormalizedEsInterval\\":true,\\"interval\\":\\"auto\\",\\"drop_partials\\":false,\\"min_doc_count\\":1,\\"extended_bounds\\":{}}}]}","uiStateJSON":"{}","description":"","version":1,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\\"index\\":\\"ims-logs-*\\",\\"query\\":{\\"query\\":\\"severity:ERROR\\",\\"language\\":\\"kuery\\"},\\"filter\\":[]}"}}}]
+      ims-dashboards.ndjson: |
+        [{"id":"application-logs-dashboard","type":"dashboard","attributes":{"title":"Application Logs Dashboard","hits":0,"description":"Overview of application logs","panelsJSON":"[{\\"embeddableConfig\\":{},\\"gridData\\":{\\"h\\":15,\\"i\\":\\"1\\",\\"w\\":24,\\"x\\":0,\\"y\\":0},\\"panelIndex\\":\\"1\\",\\"version\\":\\"7.17.3\\",\\"panelRefName\\":\\"panel_0\\"}]","optionsJSON":"{\\"hidePanelTitles\\":false,\\"useMargins\\":true}","version":1,"timeRestore":false,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\\"query\\":{\\"language\\":\\"kuery\\",\\"query\\":\\"\\"},\\"filter\\":[]}"}},"references":[{"name":"panel_0","type":"visualization","id":"error-rate-over-time"}]}]
+
+# Prometheus ServiceMonitor
+serviceMonitor:
+  enabled: true
+  labels:
+    app: ims
+    prometheus: ims
+  interval: 30s
+  scrapeTimeout: 10s
+  scheme: https
+  tlsConfig:
+    insecureSkipVerify: true
