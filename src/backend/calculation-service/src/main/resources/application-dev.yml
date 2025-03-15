@@ -1,0 +1,192 @@
+# ============================================
+# Development Configuration for Calculation Service
+# ============================================
+
+spring:
+  # Database configuration for development
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ims_calculation_dev
+    username: ims_dev
+    password: ims_dev_password
+    hikari:
+      # Reduced connection pool settings for development
+      minimum-idle: 5
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      max-lifetime: 1800000
+      idle-timeout: 600000
+
+  # JPA configuration for development
+  jpa:
+    hibernate:
+      # Automatically update schema for rapid development
+      ddl-auto: update
+    # Enable SQL logging for development debugging
+    show-sql: true
+    properties:
+      hibernate:
+        # Format SQL for better readability in logs
+        format_sql: true
+        # Batch operations for better performance
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # Kafka messaging configuration for development
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: calculation-service-dev
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      # Reduced batch size for development
+      max-poll-records: 100
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+      linger-ms: 5
+      compression-type: snappy
+    # Development-specific topic names
+    topics:
+      position-event: position-events-dev
+      inventory-event: inventory-events-dev
+      market-data-event: market-data-events-dev
+      workflow-event: workflow-events-dev
+    listener:
+      # Reduced concurrency for development environment
+      concurrency: 3
+
+  # Hazelcast distributed cache configuration for development
+  hazelcast:
+    cluster-name: ims-calculation-cluster-dev
+    instance-name: calculation-service-dev
+    multicast-enabled: true
+    tcp-ip-members: localhost
+    port: 5701
+    backup-count: 1
+    position-map-ttl-seconds: 3600
+    inventory-map-ttl-seconds: 1800
+    rule-map-ttl-seconds: 7200
+    # Reduced cache size for development
+    max-size-per-node: 5000
+
+  # Security configuration for development
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Local development auth server
+          issuer-uri: http://localhost:8080/auth/realms/ims-dev
+          audience: ims-api-dev
+    cors:
+      # Allow requests from local development server
+      allowed-origins: http://localhost:3000
+
+  # Local cache configuration for development
+  cache:
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=30m
+
+# Server configuration for development
+server:
+  port: 8082
+  tomcat:
+    # Reduced thread pool for development
+    max-threads: 50
+    min-spare-threads: 10
+    max-connections: 1000
+    connection-timeout: 30000
+    accept-count: 100
+
+# Actuator configuration with extended visibility for development
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose all endpoints for development debugging
+        include: '*'
+  endpoint:
+    health:
+      # Show detailed health information for debugging
+      show-details: always
+
+# Enhanced logging for development
+logging:
+  level:
+    root: INFO
+    com.ims: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    # Enable SQL logging for query debugging
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    # Colorized console output for better readability
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n"
+
+# Calculation service specific configuration for development
+calculation:
+  position:
+    cache-enabled: true
+    # Reduced cache TTL for development to see changes faster
+    cache-ttl-seconds: 1800
+  inventory:
+    cache-enabled: true
+    cache-ttl-seconds: 900
+  limit:
+    cache-enabled: true
+    cache-ttl-seconds: 900
+  rule:
+    cache-enabled: true
+    cache-ttl-seconds: 3600
+  performance:
+    # Reduced thread pool for development environment
+    thread-pool-size: 10
+    queue-capacity: 200
+
+# Resilience4j circuit breaker configuration for development
+resilience4j:
+  circuitbreaker:
+    instances:
+      positionCalculation:
+        registerHealthIndicator: true
+        # Reduced thresholds for development environment
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: '10s'
+        failureRateThreshold: 50
+      inventoryCalculation:
+        registerHealthIndicator: true
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: '10s'
+        failureRateThreshold: 50
+  retry:
+    instances:
+      positionCalculation:
+        maxAttempts: 3
+        waitDuration: '1s'
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      inventoryCalculation:
+        maxAttempts: 3
+        waitDuration: '1s'
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+# API documentation configuration - enabled in development for testing
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /api-docs
+    enabled: true
+  packages-to-scan: com.ims.calculation.controller
+  paths-to-match: /api/**
