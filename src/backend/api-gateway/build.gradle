@@ -1,9 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.1.0'
-    id 'io.spring.dependency-management' version '1.1.0'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
     id 'io.freefair.lombok' version '8.0.1'
-    id 'com.palantir.docker' version '0.35.0'
+    id 'com.palantir.docker'
 }
 
 group = 'com.ims.gateway'
@@ -61,10 +61,9 @@ docker {
     dockerfile file('Dockerfile')
     files bootJar.archiveFile
     buildArgs([
-        'JAR_FILE': "${bootJar.archiveFileName.get()}",
-        'VERSION': project.version
+            'JAR_FILE': "${bootJar.archiveFileName.get()}",
+            'VERSION': project.version
     ])
-    tag 'latest', 'ims/api-gateway:latest'
 }
 
 test {

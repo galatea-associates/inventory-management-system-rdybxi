@@ -1,8 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.1.0'
+    id 'application'
+    id 'org.springframework.boot'
     id 'io.spring.dependency-management' version '1.1.0'
-    id 'com.palantir.docker' version '0.35.0'
+    id 'com.palantir.docker'
     id 'jacoco'
     id 'io.freefair.lombok' version '8.0.1'
 }
@@ -39,7 +40,7 @@ dependencies {
 }
 
 bootJar {
-    mainClassName = 'com.ims.workflow.WorkflowServiceApplication'
+    mainClass.set('com.ims.workflow.WorkflowServiceApplication')
     manifest {
         attributes(
             'Implementation-Title': project.name,
@@ -55,7 +56,6 @@ docker {
     name "ims/workflow-service:${project.version}"
     buildArgs(['JAR_FILE': "${bootJar.archiveFileName.get()}"])
     files bootJar.archiveFile
-    tag 'latest', 'ims/workflow-service:latest'
     labels(['maintainer': 'IMS Team <ims-team@example.com>'])
 }
 
@@ -95,10 +95,12 @@ def jvmArgs = [
     '-XX:+UseStringDeduplication'
 ]
 
-applicationDefaultJvmArgs = [
-    '-Dspring.profiles.active=default',
-    '-Dserver.port=8084',
-    '-Dmanagement.server.port=8085'
-] + jvmArgs
+application {
+    applicationDefaultJvmArgs = [
+            '-Dspring.profiles.active=default',
+            '-Dserver.port=8084',
+            '-Dmanagement.server.port=8085'
+    ] + jvmArgs
+}
 
 test.jvmArgs jvmArgs

@@ -1,8 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.1.0'
-    id 'io.spring.dependency-management' version '1.1.0'
-    id 'com.palantir.docker' version '0.35.0'
+    id 'application'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'com.palantir.docker'
     id 'jacoco'
 }
 
@@ -10,7 +11,9 @@ group = 'com.ims.calculation'
 version = '0.1.0-SNAPSHOT'
 sourceCompatibility = '17'
 
-mainClassName = 'com.ims.calculation.CalculationServiceApplication'
+bootJar {
+    mainClass.set('com.ims.calculation.CalculationServiceApplication')  // adjust the class name as needed
+}
 
 repositories {
     mavenCentral()
@@ -41,7 +44,7 @@ dependencies {
 }
 
 bootJar {
-    mainClassName = 'com.ims.calculation.CalculationServiceApplication'
+    mainClass.set('com.ims.calculation.CalculationServiceApplication')
     manifest {
         attributes(
             'Implementation-Title': project.name,
@@ -55,7 +58,6 @@ bootJar {
 
 docker {
     name "ims/calculation-service"
-    tag project.version
     files bootJar.archiveFile
     dockerfile file('src/main/docker/Dockerfile')
     buildArgs([
@@ -80,11 +82,13 @@ test {
     ])
 }
 
-applicationDefaultJvmArgs = [
-    '-Dspring.profiles.active=default',
-    '-Dserver.port=8082',
-    '-Dmanagement.server.port=8083'
-]
+application {
+    applicationDefaultJvmArgs = [
+            '-Dspring.profiles.active=default',
+            '-Dserver.port=8082',
+            '-Dmanagement.server.port=8083'
+    ]
+}
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
