@@ -51,7 +51,7 @@
     "deepmerge": "^4.3.0",
     "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
-    "focus-trap-react": "^10.1.1",
+    "focus-trap-react": "^11.0.3",
     "i18next": "^22.5.0",
     "i18next-browser-languagedetector": "^7.0.1",
     "i18next-http-backend": "^2.1.1",
