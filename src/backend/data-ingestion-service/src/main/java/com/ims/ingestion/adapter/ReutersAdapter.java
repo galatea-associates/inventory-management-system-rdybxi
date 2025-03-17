@@ -1,35 +1,25 @@
 package com.ims.ingestion.adapter;
 
+import com.refinitiv.ema.access.*;
 import org.springframework.stereotype.Component; // org.springframework.stereotype 6.0.9
 import org.springframework.beans.factory.annotation.Autowired; // org.springframework.beans.factory.annotation 6.0.9
 import org.springframework.beans.factory.annotation.Value; // org.springframework.beans.factory.annotation 6.0.9
 import lombok.extern.slf4j.Slf4j; // lombok.extern.slf4j 1.18.26
 
 import java.io.File; // java.io 17
-import java.io.IOException; // java.io 17
-import java.math.BigDecimal; // java.math 17
 import java.time.Instant; // java.time 17
-import java.time.LocalDate; // java.time 17
 import java.util.List; // java.util 17
 import java.util.ArrayList; // java.util 17
-import java.util.Map; // java.util 17
-import java.util.HashMap; // java.util 17
 import java.util.concurrent.CompletableFuture; // java.util.concurrent 17
 import java.util.concurrent.ExecutorService; // java.util.concurrent 17
 import java.util.concurrent.Executors; // java.util.concurrent 17
 
-import com.refinitiv.ema.access.OmmConsumer; // com.refinitiv.ema.access 3.6.2
-import com.refinitiv.ema.access.OmmConsumerConfig; // com.refinitiv.ema.access 3.6.2
-import com.refinitiv.ema.access.OmmConsumerEvent; // com.refinitiv.ema.access 3.6.2
-import com.refinitiv.ema.access.OmmException; // com.refinitiv.ema.access 3.6.2
-import com.refinitiv.ema.access.ReqMsg; // com.refinitiv.ema.access 3.6.2
 import com.refinitiv.ema.rdm.EmaRdm; // com.refinitiv.ema.rdm 3.6.2
 
 import com.ims.common.model.Security; // src/backend/common-lib/src/main/java/com/ims/common/model/Security.java
-import com.ims.common.model.SecurityIdentifier; // src/backend/common-lib/src/main/java/com/ims/common/model/SecurityIdentifier.java
 import com.ims.common.model.Price; // src/backend/common-lib/src/main/java/com/ims/common/model/Price.java
 import com.ims.ingestion.model.SecurityReferenceData; // src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/model/SecurityReferenceData.java
-import com.ims.ingestion.model.MarketData; // src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/model/MarketData.java
+import com.ims.common.model.MarketData; // src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/model/MarketData.java
 import com.ims.common.event.ReferenceDataEvent; // src/backend/common-lib/src/main/java/com/ims/common/event/ReferenceDataEvent.java
 import com.ims.common.event.MarketDataEvent; // src/backend/common-lib/src/main/java/com/ims/common/event/MarketDataEvent.java
 import com.ims.ingestion.exception.IngestionException; // src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/exception/IngestionException.java
@@ -109,15 +99,14 @@ public class ReutersAdapter {
     public boolean connect() {
         log.info("Attempting to connect to Reuters...");
         try {
-            OmmConsumerConfig config = new OmmConsumerConfig.Builder()
-                    .username(reutersUsername)
-                    .password(reutersPassword)
-                    .serviceName(reutersServiceName)
-                    .host(reutersHostname)
-                    .port(reutersPort)
-                    .build();
+            OmmConsumerConfig config = EmaFactory.createOmmConsumerConfig();
+            config.username(reutersUsername);
+            config.password(reutersPassword);
+            // config.ser(reutersServiceName)
+            config.host(reutersHostname);
+            // config.port(reutersPort);
 
-            consumer = com.refinitiv.ema.access.OmmConsumer.create(config);
+            consumer = EmaFactory.createOmmConsumer(config);
             connected = true;
             log.info("Successfully connected to Reuters.");
             return true;
@@ -199,12 +188,12 @@ public class ReutersAdapter {
             }
 
             for (String ricCode : ricCodes) {
-                ReqMsg reqMsg = new ReqMsg();
+                ReqMsg reqMsg = EmaFactory.createReqMsg();
                 reqMsg.domainType(EmaRdm.MMT_DIRECTORY);
                 reqMsg.serviceName(reutersServiceName);
                 reqMsg.name(ricCode);
 
-                consumer.register(reqMsg, null);
+                consumer.registerClient(reqMsg, null);
                 log.info("Successfully subscribed to reference data for RIC: {}", ricCode);
             }
         } catch (OmmException e) {
@@ -225,12 +214,12 @@ public class ReutersAdapter {
             }
 
             for (String ricCode : ricCodes) {
-                ReqMsg reqMsg = new ReqMsg();
+                ReqMsg reqMsg = EmaFactory.createReqMsg();
                 reqMsg.domainType(EmaRdm.MMT_MARKET_PRICE);
                 reqMsg.serviceName(reutersServiceName);
                 reqMsg.name(ricCode);
 
-                consumer.register(reqMsg, null);
+                consumer.registerClient(reqMsg, null);
                 log.info("Successfully subscribed to market data for RIC: {}", ricCode);
             }
         } catch (OmmException e) {

@@ -6,11 +6,11 @@ import com.ims.common.event.MarketDataEvent;
 import com.ims.common.event.ReferenceDataEvent;
 import com.ims.common.model.IndexComposition;
 import com.ims.common.model.Security;
-import com.ims.common.model.SecurityIdentifier;
 import com.ims.ingestion.exception.IngestionException;
-import com.ims.ingestion.model.MarketData;
+import com.ims.common.model.MarketData;
 import com.ims.ingestion.model.SecurityReferenceData;
 import com.ims.ingestion.service.DataMappingService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j; //lombok.extern.slf4j 1.18.26
 import org.apache.http.client.HttpClient; //org.apache.httpcomponents 4.5.14
 import org.apache.http.client.methods.HttpGet; //org.apache.httpcomponents 4.5.14
@@ -67,10 +67,18 @@ public class MarkITAdapter {
     @Value("${markit.api.password}")
     private String markitPassword;
 
+    /**
+     * -- GETTER --
+     *  Checks if the adapter is connected to MarkIT
+     *
+     * @return True if connected, false otherwise
+     */
+    @Getter
     private boolean connected;
 
     /**
      * Constructor with dependency injection
+     *
      * @param dataMappingService
      */
     public MarkITAdapter(DataMappingService dataMappingService) {
@@ -83,6 +91,7 @@ public class MarkITAdapter {
 
     /**
      * Initializes the MarkIT adapter with configuration values
+     *
      * @param apiKey
      * @param baseUrl
      * @param username
@@ -103,6 +112,7 @@ public class MarkITAdapter {
 
     /**
      * Establishes connection to MarkIT API
+     *
      * @return True if connection successful, false otherwise
      */
     public boolean connect() {
@@ -135,25 +145,13 @@ public class MarkITAdapter {
      */
     public void disconnect() {
         log.info("Attempting to disconnect from MarkIT");
-        try {
-            httpClient.close();
-            connected = false;
-            log.info("Successfully disconnected from MarkIT");
-        } catch (IOException e) {
-            log.error("IOException during disconnection attempt: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Checks if the adapter is connected to MarkIT
-     * @return True if connected, false otherwise
-     */
-    public boolean isConnected() {
-        return connected;
+        connected = false;
+        log.info("Successfully disconnected from MarkIT");
     }
 
     /**
      * Processes a batch file of reference data from MarkIT
+     *
      * @param batchFile
      * @param batchId
      * @return Future containing processed reference data
@@ -192,6 +190,7 @@ public class MarkITAdapter {
 
     /**
      * Processes a batch file of basket composition data from MarkIT
+     *
      * @param batchFile
      * @param batchId
      * @return Future containing processed composition data
@@ -224,6 +223,7 @@ public class MarkITAdapter {
 
     /**
      * Fetches reference data for ETFs and indices from MarkIT API
+     *
      * @param identifiers
      * @param identifierType
      * @return Future containing fetched reference data
@@ -285,6 +285,7 @@ public class MarkITAdapter {
 
     /**
      * Fetches composition data for ETFs and indices from MarkIT API
+     *
      * @param basketIdentifiers
      * @param identifierType
      * @return Future containing fetched composition data mapped by basket identifier
@@ -349,6 +350,7 @@ public class MarkITAdapter {
 
     /**
      * Fetches NAV data for ETFs from MarkIT API
+     *
      * @param etfIdentifiers
      * @param identifierType
      * @return Future containing fetched NAV data
@@ -404,6 +406,7 @@ public class MarkITAdapter {
 
     /**
      * Fetches intraday NAV (iNAV) data for ETFs from MarkIT API
+     *
      * @param etfIdentifiers
      * @param identifierType
      * @return Future containing fetched iNAV data
@@ -459,6 +462,7 @@ public class MarkITAdapter {
 
     /**
      * Subscribes to real-time NAV updates for ETFs
+     *
      * @param etfIdentifiers
      * @param identifierType
      */
@@ -493,12 +497,13 @@ public class MarkITAdapter {
             });
         } catch (IOException e) {
             log.error("IOException while subscribing to MarkIT NAV updates: {}", e.getMessage());
-            throw new IngestionException("Error subscribing to MarkIT NAV updates", e);
+            throw IngestionException.forMarketData("Error subscribing to MarkIT NAV updates", e);
         }
     }
 
     /**
      * Handles NAV update notifications from MarkIT
+     *
      * @param updateJson
      * @return Processed NAV data
      */
@@ -520,12 +525,13 @@ public class MarkITAdapter {
             return marketData;
         } catch (IOException e) {
             log.error("Error processing MarkIT NAV update: {}", e.getMessage());
-            throw new IngestionException("Error processing MarkIT NAV update", e);
+            throw IngestionException.forMarketData("Error processing MarkIT NAV update", e);
         }
     }
 
     /**
      * Maps MarkIT reference data to internal domain model
+     *
      * @param referenceData
      * @return Mapped Security domain object
      */
@@ -535,12 +541,13 @@ public class MarkITAdapter {
             return dataMappingService.mapSecurityReferenceData(referenceData);
         } catch (Exception e) {
             log.error("Error mapping MarkIT reference data: {}", e.getMessage());
-            throw new IngestionException("Error mapping MarkIT reference data", e);
+            throw IngestionException.forReferenceData("Error mapping MarkIT reference data", e);
         }
     }
 
     /**
      * Maps MarkIT composition data to internal domain model
+     *
      * @param basketSecurity
      * @param compositions
      * @return List of mapped IndexComposition domain objects
@@ -558,12 +565,13 @@ public class MarkITAdapter {
             return results;
         } catch (Exception e) {
             log.error("Error mapping MarkIT composition data: {}", e.getMessage());
-            throw new IngestionException("Error mapping MarkIT composition data", e);
+            throw IngestionException.forReferenceData("Error mapping MarkIT composition data", e);
         }
     }
 
     /**
      * Maps MarkIT NAV data to internal domain model
+     *
      * @param navData
      * @return Mapped MarketDataEvent for publishing
      */
@@ -581,12 +589,13 @@ public class MarkITAdapter {
                     .build();
         } catch (Exception e) {
             log.error("Error mapping MarkIT NAV data: {}", e.getMessage());
-            throw new IngestionException("Error mapping MarkIT NAV data", e);
+            throw IngestionException.forMarketData("Error mapping MarkIT NAV data", e);
         }
     }
 
     /**
      * Creates a reference data event from MarkIT data
+     *
      * @param security
      * @param operation
      * @return Event for publishing
@@ -600,6 +609,7 @@ public class MarkITAdapter {
 
     /**
      * Creates a reference data event for index composition from MarkIT data
+     *
      * @param composition
      * @param operation
      * @return Event for publishing

@@ -4,7 +4,6 @@ build/
 out/
 bin/
 dist/
-lib/
 
 # Package files
 *.jar
@@ -13,6 +12,8 @@ lib/
 *.zip
 *.tar.gz
 *.rar
+# Include necessary libs
+!/lib/blpapi-3.25.2-1.jar
 
 # Maven specific
 target/

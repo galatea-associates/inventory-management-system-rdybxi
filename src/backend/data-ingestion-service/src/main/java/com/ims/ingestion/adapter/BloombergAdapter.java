@@ -15,20 +15,16 @@ import com.ims.common.event.MarketDataEvent; // internal
 import com.ims.common.event.ReferenceDataEvent; // internal
 import com.ims.common.model.Price; // internal
 import com.ims.common.model.Security; // internal
-import com.ims.common.model.SecurityIdentifier; // internal
 import com.ims.ingestion.exception.IngestionException; // internal
-import com.ims.ingestion.model.MarketData; // internal
+import com.ims.common.model.MarketData; // internal
 import com.ims.ingestion.model.SecurityReferenceData; // internal
 import com.ims.ingestion.service.DataMappingService; // internal
 import java.io.File; // java.io 17
 import java.io.IOException; // java.io 17
 import java.math.BigDecimal; // java.math 17
 import java.time.Instant; // java.time 17
-import java.time.LocalDate; // java.time 17
 import java.util.ArrayList; // java.util 17
-import java.util.HashMap; // java.util 17
 import java.util.List; // java.util 17
-import java.util.Map; // java.util 17
 import java.util.concurrent.CompletableFuture; // java.util.concurrent 17
 import java.util.concurrent.ExecutorService; // java.util.concurrent 17
 import java.util.concurrent.Executors; // java.util.concurrent 17
@@ -110,7 +106,7 @@ public class BloombergAdapter {
     }
 
     try {
-      session = new Session(sessionOptions, new BloombergEventHandler(this), eventQueue);
+      session = new Session(sessionOptions, new BloombergEventHandler(this));
       session.start();
       referenceDataService = session.getService(REFERENCE_DATA_SERVICE);
       marketDataService = session.getService(MARKET_DATA_SERVICE);
@@ -170,21 +166,21 @@ public class BloombergAdapter {
             // Create and send reference data request to Bloomberg
             Request request = createReferenceDataRequest(securityIds);
             CorrelationID cid = new CorrelationID(batchId);
-            session.send(request, cid, eventQueue);
+            session.sendRequest(request, cid);
 
             // Process response and create SecurityReferenceData objects
             while (true) {
-              Event event = eventQueue.nextEvent();
+              Event event = session.nextEvent();
               if (event.eventType() == EventType.RESPONSE) {
                 for (Message message : event) {
-                  SecurityReferenceData refData = processReferenceDataResponse(message);
-                  refData.setSource(SOURCE_NAME);
-                  refData.setBatchId(batchId);
-                  results.add(refData);
+                  if (message.correlationID().equals(cid)) {
+                    SecurityReferenceData refData = processReferenceDataResponse(message);
+                    refData.setSource(SOURCE_NAME);
+                    refData.setBatchId(batchId);
+                    results.add(refData);
+                  }
                 }
-                if (event.correlationID() == cid) {
-                  break; // End loop when response for this batch is received
-                }
+                break; // End loop once all RESPONSE messages are processed
               }
             }
 
@@ -211,7 +207,7 @@ public class BloombergAdapter {
 
     try {
       Request request = createReferenceDataRequest(securityIds);
-      session.send(request, null, eventQueue);
+      session.sendRequest(request, null);
       log.info("Successfully subscribed to reference data for securities: {}", securityIds);
     } catch (Exception e) {
       log.error("Failed to subscribe to reference data: {}", e.getMessage(), e);
@@ -232,7 +228,7 @@ public class BloombergAdapter {
 
     try {
       Request request = createMarketDataRequest(securityIds);
-      session.send(request, null, eventQueue);
+      session.sendRequest(request, null);
       log.info("Successfully subscribed to market data for securities: {}", securityIds);
     } catch (Exception e) {
       log.error("Failed to subscribe to market data: {}", e.getMessage(), e);
@@ -477,45 +473,23 @@ public class BloombergAdapter {
     @Override
     public void processEvent(Event event, Session session) {
       try {
-        switch (event.eventType()) {
-          case SUBSCRIPTION_DATA:
-            MarketData marketData = adapter.handleMarketDataEvent(event);
-            // Process market data event
-            break;
-          case RESPONSE:
-            List<SecurityReferenceData> refDataList = adapter.handleReferenceDataEvent(event);
-            // Process reference data event
-            break;
-          case PARTIAL_RESPONSE:
-            // Handle partial responses
-            break;
-          case SUBSCRIPTION_STATUS:
-            // Handle subscription status
-            break;
-          case SERVICE_STATUS:
-            // Handle service status
-            break;
-          case SESSION_STATUS:
-            // Handle session status
-            break;
-          case AUTHORIZATION_STATUS:
-            // Handle authorization status
-            break;
-          case RESOLUTION_STATUS:
-            // Handle resolution status
-            break;
-          case ADMIN:
-            // Handle admin events
-            break;
-          case ROUTE_STATUS:
-            // Handle route status
-            break;
-          case UNKNOWN:
-            // Handle unknown events
-            break;
-          default:
-            log.warn("Unhandled event type: {}", event.eventType());
-        }
+          EventType eventType = event.eventType();
+          if (eventType.equals(EventType.SUBSCRIPTION_DATA)) {
+              MarketData marketData = adapter.handleMarketDataEvent(event);
+              // Process market data event
+          } else if (eventType.equals(EventType.RESPONSE)) {
+              List<SecurityReferenceData> refDataList = adapter.handleReferenceDataEvent(event);
+              // Process reference data event
+          } else if (eventType.equals(EventType.PARTIAL_RESPONSE)) {// Handle partial responses
+          } else if (eventType.equals(EventType.SUBSCRIPTION_STATUS)) {// Handle subscription status
+          } else if (eventType.equals(EventType.SERVICE_STATUS)) {// Handle service status
+          } else if (eventType.equals(EventType.SESSION_STATUS)) {// Handle session status
+          } else if (eventType.equals(EventType.AUTHORIZATION_STATUS)) {// Handle authorization status
+          } else if (eventType.equals(EventType.RESOLUTION_STATUS)) {// Handle resolution status
+          } else if (eventType.equals(EventType.ADMIN)) {// Handle admin events
+          } else {
+              log.warn("Unhandled event type: {}", event.eventType());
+          }
       } catch (Exception e) {
         log.error("Error processing Bloomberg event: {}", e.getMessage(), e);
       }

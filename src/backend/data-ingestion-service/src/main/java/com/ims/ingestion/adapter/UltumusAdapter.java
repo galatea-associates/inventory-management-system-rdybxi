@@ -1,5 +1,3 @@
-# src/backend/data-ingestion-service/src/main/java/com/ims/ingestion/adapter/UltumusAdapter.java
-```java
 package com.ims.ingestion.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper; // version 2.14.2

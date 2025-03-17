@@ -1,7 +1,5 @@
-package com.ims.ingestion.model;
+package com.ims.common.model;
 
-import com.ims.common.model.BaseEntity;
-import com.ims.common.model.Security;
 import com.ims.common.util.DateUtil;
 
 import jakarta.persistence.Entity;
