@@ -39,7 +39,7 @@
     "@mui/x-date-pickers": "^6.5.0",
     "@react-hook/resize-observer": "^1.2.6",
     "@reduxjs/toolkit": "^1.9.5",
-    "ag-grid-community": "^29.3.0",
+    "ag-grid-community": "^33.1.1",
     "ag-grid-react": "^29.3.0",
     "axios": "^1.4.0",
     "big.js": "^6.2.1",
