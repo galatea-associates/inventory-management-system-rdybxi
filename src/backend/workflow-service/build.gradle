@@ -26,9 +26,9 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
-    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter:7.18.0'
-    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp:7.18.0'
-    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-rest:7.18.0'
+    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter:7.22.0'
+    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp:7.22.0'
+    implementation 'org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-rest:7.22.0'
     
     implementation 'org.postgresql:postgresql:42.6.0'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
