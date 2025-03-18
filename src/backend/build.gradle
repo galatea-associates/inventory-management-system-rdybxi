@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '3.1.4'
+        springBootVersion = '3.4.3'
         springDependencyManagementVersion = '1.1.7'
         dockerPluginVersion = '0.35.0'
     }
@@ -23,7 +23,7 @@ plugins {
 //    id 'com.diffplug.spotless' version '6.18.0'
     id 'org.sonarqube' version '4.0.0.2929'
     id 'com.github.ben-manes.versions' version '0.46.0'
-    id 'org.springframework.boot' version '3.1.4' apply false
+    id 'org.springframework.boot' version '3.4.3' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'com.palantir.docker' version '0.35.0' apply false
 }
@@ -51,7 +51,7 @@ subprojects {
     apply plugin: 'com.palantir.docker'
 
     ext {
-        springCloudVersion = '2022.0.2'
+        springCloudVersion = '2024.0.0'
     }
 
     java {
@@ -74,7 +74,7 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
-        implementation 'org.springframework.kafka:spring-kafka:3.0.7'
+        implementation 'org.springframework.kafka:spring-kafka:3.3.4'
         implementation 'io.github.resilience4j:resilience4j-spring-boot2:2.0.2'
         implementation 'com.hazelcast:hazelcast:5.3.0'
         implementation 'org.eclipse.collections:eclipse-collections:11.1.0'
@@ -92,7 +92,7 @@ subprojects {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
         testImplementation 'org.mockito:mockito-core:4.5.1'
-        testImplementation 'org.springframework.kafka:spring-kafka-test:3.0.5'
+        testImplementation 'org.springframework.kafka:spring-kafka-test:3.3.4'
         testImplementation 'org.assertj:assertj-core:3.24.2'
     }
 

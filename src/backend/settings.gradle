@@ -7,7 +7,7 @@ pluginManagement {
         maven { url 'https://repo.spring.io/milestone' }
     }
     plugins {
-        id 'org.springframework.boot' version '3.1.4'
+        id 'org.springframework.boot' version '3.4.3'
         id 'io.spring.dependency-management' version '1.1.7'
         id 'com.palantir.docker' version '0.35.0'
         id 'com.diffplug.spotless' version '6.18.0'
