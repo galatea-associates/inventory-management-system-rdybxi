@@ -25,7 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     
-    implementation 'org.springframework.kafka:spring-kafka:3.0.7'
+    implementation 'org.springframework.kafka:spring-kafka:3.3.4'
     implementation 'io.micrometer:micrometer-registry-prometheus:1.10.5'
     implementation 'org.postgresql:postgresql:42.6.0'
     implementation 'org.flywaydb:flyway-core:9.8.3'
